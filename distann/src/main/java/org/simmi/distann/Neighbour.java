@@ -1245,19 +1245,22 @@ public class Neighbour {
 									}
 									
 									if( next.getNext() != null ) {
-										tegevals = next.getNext().getGene().getGeneGroup().getTegevals();
-										total = tegevals.size();
-										for( Annotation tev : tegevals ) {
-											Annotation thenext = tev.getPrevious();
-											GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
-											int val = 0;
-											if( shanmap.containsKey(c) ) val = shanmap.get(c);
-											shanmap.put( c, val+1 );
-										}
-										for( GeneGroup c : shanmap.keySet() ) {
-											int val = shanmap.get(c);
-											double p = (double)val/(double)total;
-											res -= p*Math.log(p)/Math.log(2.0);
+										GeneGroup nextgg = next.getNext().getGeneGroup();
+										if (nextgg!=null) {
+											tegevals = nextgg.getTegevals();
+											total = tegevals.size();
+											for (Annotation tev : tegevals) {
+												Annotation thenext = tev.getPrevious();
+												GeneGroup c = thenext == null ? null : thenext.getGeneGroup();
+												int val = 0;
+												if (shanmap.containsKey(c)) val = shanmap.get(c);
+												shanmap.put(c, val + 1);
+											}
+											for (GeneGroup c : shanmap.keySet()) {
+												int val = shanmap.get(c);
+												double p = (double) val / (double) total;
+												res -= p * Math.log(p) / Math.log(2.0);
+											}
 										}
 									}
 									
@@ -1497,19 +1500,22 @@ public class Neighbour {
 								}
 								
 								if( prev.getNext() != null ) {
-									tegevals = prev.getNext().getGene().getGeneGroup().getTegevals();
-									total = tegevals.size();
-									for( Annotation tev : tegevals ) {
-										Annotation thenext = tev.getPrevious();
-										GeneGroup c = thenext == null ? null : thenext.getGene().getGeneGroup();
-										int val = 0;
-										if( shanmap.containsKey(c) ) val = shanmap.get(c);
-										shanmap.put( c, val+1 );
-									}
-									for( GeneGroup c : shanmap.keySet() ) {
-										int val = shanmap.get(c);
-										double p = (double)val/(double)total;
-										res -= p*Math.log(p)/Math.log(2.0);
+									GeneGroup nextgg = prev.getNext().getGeneGroup();
+									if (nextgg!=null) {
+										tegevals = nextgg.getTegevals();
+										total = tegevals.size();
+										for (Annotation tev : tegevals) {
+											Annotation thenext = tev.getPrevious();
+											GeneGroup c = thenext == null ? null : thenext.getGeneGroup();
+											int val = 0;
+											if (shanmap.containsKey(c)) val = shanmap.get(c);
+											shanmap.put(c, val + 1);
+										}
+										for (GeneGroup c : shanmap.keySet()) {
+											int val = shanmap.get(c);
+											double p = (double) val / (double) total;
+											res -= p * Math.log(p) / Math.log(2.0);
+										}
 									}
 								}
 								
