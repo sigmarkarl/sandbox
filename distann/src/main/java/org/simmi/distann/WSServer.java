@@ -94,7 +94,7 @@ public class WSServer {
                                     String symbol = gg.getSymbol();
                                     if( cog != null && symbol == null ) symbol = cog.genesymbol;
 
-                                    String seqstr = g.id + "\t" + gg.getName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + geneset.cazymap.get(g.refid) + "\t" + gg.getCommonGO(false, true, null) + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\t" + new String(bb) + "\n";
+                                    String seqstr = g.id + "\t" + gg.getName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + geneset.cazymap.get(g.getRefid()) + "\t" + gg.getCommonGO(false, true, null) + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\t" + new String(bb) + "\n";
                                     //String old =  g.id + "\t" + gg.getCommonName() + "\t" + gg.getCommonSymbol() + "\t" + gg.getCommonEc() + "\t" + gg.getCommonCazy(cazymap) + "\t" + gg.getCommonGO(false, true, null) + "\t" + g.getSpecies() + "\t" + new String(bb) + "\n";
                                     cs[0].sendToAll( seqstr );
                                 }
@@ -212,7 +212,7 @@ public class WSServer {
 									if( cont ) {
 										sgg.add( gg );
 									} else {
-										String cazy = geneset.cazymap.get( g.refid );
+										String cazy = geneset.cazymap.get( g.getRefid() );
 										if( cazy != null ) {
 											//String ec = g.getGeneGroup().getCommonEc();
 											String kegg = null;
@@ -321,7 +321,7 @@ public class WSServer {
 						Set<String>							specset = new HashSet<>();
 						Map<GeneGroup,Integer>				genegroups = new HashMap<>();
 						for( Gene g : geneset.genelist ) {
-							if( str.contains(g.refid) ) {
+							if( str.contains(g.getRefid()) ) {
 								GeneGroup gg = g.getGeneGroup();
 								specset.addAll( gg.getSpecies() );
 								for( Annotation tv : gg.getTegevals() ) {
@@ -404,10 +404,10 @@ public class WSServer {
 									String symbol = gg.getSymbol();
 									String go = gg.getCommonGO(false, true, null);
 									if( cog != null && symbol == null ) symbol = cog.genesymbol;
-									String seqstr = g.id + "\t" + gg.getName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + geneset.cazymap.get(g.refid) + "\t" + go + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\n";
+									String seqstr = g.id + "\t" + gg.getName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + geneset.cazymap.get(g.getRefid()) + "\t" + go + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\n";
 									sb.append( seqstr );
 								} else {
-									String cazy = geneset.cazymap.get( g.refid );
+									String cazy = geneset.cazymap.get( g.getRefid() );
 									if( cazy != null ) {
 										//String ec = g.getGeneGroup().getCommonEc();
 										String kegg = null;
@@ -426,7 +426,7 @@ public class WSServer {
 											String cogid = cog != null ? cog.id : null;
 											String symbol = gg.getSymbol();
 											if( cog != null && symbol == null ) symbol = cog.genesymbol;
-											sb.append( g.id + "\t" + gg.getName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + geneset.cazymap.get(g.refid) + "\t" + gg.getCommonGO(false, true, null) + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\n" );
+											sb.append( g.id + "\t" + gg.getName() + "\t" + symbol + "\t" + ec + "\t" + cogid + "\t" + geneset.cazymap.get(g.getRefid()) + "\t" + gg.getCommonGO(false, true, null) + "\t" + kegg + "\t" + g.getSpecies() + "\t" + gg.genes.size() + "\n" );
 										}
 									}
 								}
@@ -469,7 +469,7 @@ public class WSServer {
 					} else if( message.contains("specs:") ) {
 						Set<String> cz = new TreeSet<String>();
 						for( Gene g : geneset.genelist ) {
-							String cazy = geneset.cazymap.get( g.refid );
+							String cazy = geneset.cazymap.get( g.getRefid() );
 							if( cazy != null ) {
 								int i = cazy.indexOf('(');
 								if( i == -1 ) i = cazy.length();

@@ -55,11 +55,11 @@ public class Blast {
 						Gene newgene = genestuff( uclusterlist, query, desc, teg, val+" new", ret );
 						
 						if( newgene == null ) {
-							newgene = new Gene(null, gene.refid + " new", desc);
+							newgene = new Gene(null, gene.getRefid() + " new", desc);
 							newgene.allids = new HashSet();
 							//newgene.species = new HashMap<String, Teginfo>();
 							//newgene.refid = gene.refid + " new";
-							ret.put( newgene.refid, newgene );
+							ret.put( newgene.getRefid(), newgene );
 						}
 						
 						return newgene;
@@ -491,7 +491,7 @@ public class Blast {
 						gene.allids = new HashSet<>();
 						//gene.species = new HashMap<String, Teginfo>();
 						ret.put(aaid, gene);
-						gene.refid = aaid;
+						gene.setRefid(aaid);
 					}
 					gene.allids.add(aaid);
 	

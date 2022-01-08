@@ -582,18 +582,24 @@ public class Neighbour {
 								Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
 								g.setColor( rc );
 							} else if( relcol.isSelected() ) {
-								if( spec1 != null ) {
-									
+								if (spec1 != null) {
+
 									//StringBuilder seq = next.seq;
 									Color rc = Color.green;
 									GeneGroup gg = next.getGene().getGeneGroup();
-									List<Annotation> ltv = gg.getTegevals( spec1 );
-									if( ltv != null && ltv.size() > 0 ) {
-										rc = GeneCompare.blosumColor( ltv.get(0).getAlignedSequence(), next.getSpecies(), gg, blosumap, false );
+									List<Annotation> ltv = gg.getTegevals(spec1);
+									if (ltv != null && ltv.size() > 0) {
+										rc = GeneCompare.blosumColor(ltv.get(0).getAlignedSequence(), next.getSpecies(), gg, blosumap, false);
 									} else {
 										rc = Color.white;
 									}
-									if( rc != null ) g.setColor( rc );
+									if (rc != null) g.setColor(rc);
+								}
+							} else if( designcol.isSelected() ) {
+								if( next != null && next.designation != null && next.designation.length() > 0 ) {
+									g.setColor(Color.red);
+								} else {
+									g.setColor( Color.white );
 								}
 							} else if( sgradcol.isSelected() ) {
 								if( spec1 != null ) {													
@@ -921,17 +927,23 @@ public class Neighbour {
 								float abu = numspec/39.0f;
 								Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
 								g.setColor( rc );
-							} else if( relcol.isSelected() ) {												
+							} else if( relcol.isSelected() ) {
 								//StringBuilder seq = next.seq;
 								Color rc = Color.green;
 								GeneGroup gg = prev.getGene().getGeneGroup();
-								List<Annotation> ltv = gg.getTegevals( spec1 );
-								if( ltv != null && ltv.size() > 0 ) {
-									rc = GeneCompare.blosumColor( ltv.get(0).getAlignedSequence(), prev.getSpecies(), gg, blosumap, false );
+								List<Annotation> ltv = gg.getTegevals(spec1);
+								if (ltv != null && ltv.size() > 0) {
+									rc = GeneCompare.blosumColor(ltv.get(0).getAlignedSequence(), prev.getSpecies(), gg, blosumap, false);
 								} else {
 									rc = Color.white;
 								}
-								if( rc != null ) g.setColor( rc );												
+								if (rc != null) g.setColor(rc);
+							} else if( designcol.isSelected() ) {
+								if( prev != null && prev.designation != null && prev.designation.length() > 0 ) {
+									g.setColor(Color.red);
+								} else {
+									g.setColor( Color.white );
+								}
 							} else if( sgradcol.isSelected() ) {
 								if( spec1 != null ) {													
 									//StringBuilder seq = next.seq;
@@ -1193,13 +1205,19 @@ public class Neighbour {
 									//StringBuilder seq = next.seq;
 									Color rc = Color.green;
 									GeneGroup gg = next.getGene().getGeneGroup();
-									List<Annotation> ltv = gg.getTegevals( spec1 );
-									if( ltv != null && ltv.size() > 0 ) {
-										rc = GeneCompare.blosumColor( ltv.get(0).getAlignedSequence(), next.getSpecies(), gg, blosumap, false );
+									List<Annotation> ltv = gg.getTegevals(spec1);
+									if (ltv != null && ltv.size() > 0) {
+										rc = GeneCompare.blosumColor(ltv.get(0).getAlignedSequence(), next.getSpecies(), gg, blosumap, false);
 									} else {
 										rc = Color.white;
 									}
-									if( rc != null ) g.setColor( rc );
+									if (rc != null) g.setColor(rc);
+								} else if( designcol.isSelected() ) {
+									if( next != null && next.designation != null && next.designation.length() > 0 ) {
+										g.setColor(Color.red);
+									} else {
+										g.setColor( Color.white );
+									}
 								} else if( sgradcol.isSelected() ) {
 									if( spec1 != null ) {								
 										//StringBuilder seq = next.seq;
@@ -1453,10 +1471,16 @@ public class Neighbour {
 								}
 							} else if( abucol.isSelected() ) {
 								GeneGroup gg = prev.getGene().getGeneGroup();
-								int numspec = Math.min( 39, gg.species.size() );
-								float abu = numspec/39.0f;
-								Color rc = new Color( 0.0f+abu, 1.0f, 0.0f+abu );
-								g.setColor( rc );
+								int numspec = Math.min(39, gg.species.size());
+								float abu = numspec / 39.0f;
+								Color rc = new Color(0.0f + abu, 1.0f, 0.0f + abu);
+								g.setColor(rc);
+							} else if( designcol.isSelected() ) {
+								if( prev != null && prev.designation != null && prev.designation.length() > 0 ) {
+									g.setColor(Color.red);
+								} else {
+									g.setColor( Color.white );
+								}
 							} else if( sgradcol.isSelected() ) {
 								if( spec1 != null ) {													
 									//StringBuilder seq = next.seq;
@@ -1622,6 +1646,7 @@ public class Neighbour {
 	final JRadioButtonMenuItem relcol = new JRadioButtonMenuItem("Relation");
 	final JRadioButtonMenuItem sgradcol = new JRadioButtonMenuItem("Synteny gradient");
 	final JRadioButtonMenuItem precol = new JRadioButtonMenuItem("Proximity preservation");
+	final JRadioButtonMenuItem designcol = new JRadioButtonMenuItem("Designation");
 	
 	final Map<Set<Function>,Color>	funcMap = new HashMap<>();
 	final Random rand = new Random();
@@ -1682,6 +1707,7 @@ public class Neighbour {
 		bg.add( relcol );
 		bg.add( sgradcol );
 		bg.add( precol );
+		bg.add( designcol );
 		mnu.add( funcol );
 		mnu.add( gccol );
 		mnu.add( gcskewcol );
@@ -1689,6 +1715,7 @@ public class Neighbour {
 		mnu.add( relcol );
 		mnu.add( sgradcol );
 		mnu.add( precol );
+		mnu.add( designcol );
 		
 		final JFrame frame = new JFrame();
 		JSplitPane splitpane = new JSplitPane();
@@ -1722,7 +1749,7 @@ public class Neighbour {
 						GeneGroup gg = g != null ? g.getGeneGroup() : null;
 						if( gg != null ) return "<html>"+
 											//(g.getName().equals( g.refid ) ? gg.getName() : g.getName())+ "<br>" + te.getGene().refid + "<br>" + gg.getFunctions() + "<br>" + te.start + ".." + te.stop
-											gg.getName() + "<br>" + te.getGene().refid + "<br>" + gg.getFunctions() + "<br>" + te.start + ".." + te.stop
+											gg.getName() + "<br>" + te.getGene().getRefid() + "<br>" + gg.getFunctions() + "<br>" + te.start + ".." + te.stop
 											+ "</html>";
 					}
 					return null;
@@ -1843,6 +1870,7 @@ public class Neighbour {
 			names.addItem("Ids");
 			names.addItem("Cog");
 			names.addItem("Cazy");
+			names.addItem("Designated");
 			
 			smallerRows.addActionListener( new AbstractAction("^") {
 				@Override
@@ -2602,7 +2630,7 @@ public class Neighbour {
 					//System.err.println();
 					if( te != null ) {
 						if( me.getClickCount() == 2 ) {
-							c.setToolTipText( "<html>"+te.getGene().getName()+ "<br>" + te.getGene().refid+"<br>"+ te.getGene().getGeneGroup().getFunctions() + "<br>" + te.start + ".." + te.stop + "</html>" );
+							c.setToolTipText( "<html>"+te.getGene().getName()+ "<br>" + te.getGene().getRefid()+"<br>"+ te.getGene().getGeneGroup().getFunctions() + "<br>" + te.start + ".." + te.stop + "</html>" );
 							//c.sett
 						} else {
 							currentTe = te;

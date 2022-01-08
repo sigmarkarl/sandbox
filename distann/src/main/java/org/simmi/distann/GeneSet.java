@@ -159,9 +159,11 @@ public class GeneSet implements GenomeSet {
 						}
 					}
 					String key = mapid.trim();
-					Cog cog = new Cog(cogid, cogsymbol, cogname, desc);
-					cog.genesymbol = cogsymbol;
-					cogmap.put(key, cog);
+					if (!cogmap.containsKey(key)) {
+						Cog cog = new Cog(cogid, cogsymbol, cogname, desc);
+						cog.genesymbol = cogsymbol;
+						cogmap.put(key, cog);
+					}
 				}
 			}
 		});
@@ -211,7 +213,7 @@ public class GeneSet implements GenomeSet {
 	public void addPhaster(Gene gene, String phaster) {
 		if(gene.phaster==null||gene.phaster.isEmpty()) gene.phaster = phaster;
 		else {
-			Set<String> phasters = new HashSet<>(Arrays.asList(gene.phaster.split(",")));
+			Set<String> phasters = Arrays.stream(gene.phaster.split(",")).map(String::trim).collect(Collectors.toSet());
 			phasters.add(phaster);
 			var phasterset = phasters.toString();
 			gene.phaster = phasterset.substring(1,phasterset.length()-1);
@@ -311,10 +313,13 @@ public class GeneSet implements GenomeSet {
 		double evalue = 0.01;
 		while( line != null ) {
 			if( line.startsWith("Query:") || line.startsWith("Query=") ) {
-				if( hit != null && id != null ) {
-					cazymap.put( id, hit );
-					addPhaster(id, hit + "("+evalue+")");
-				}
+				/*if( hit != null && id != null ) {
+					System.err.println("   " + hit);
+					if (!hit.toLowerCase().contains("hypothetical")) {
+						cazymap.put(id, hit);
+						addPhaster(id, hit + "(" + evalue + ")");
+					}
+				}*/
 				String[] split = line.split("[\t ]+");
 
 				//int k = line.lastIndexOf('[');
@@ -347,25 +352,40 @@ public class GeneSet implements GenomeSet {
 				if (end==-1) end = line.length();
 				String eval = line.substring(i+8,end).trim();
 				double e = Double.parseDouble(eval);
-				if( e < 0.01 && e < evalue) {
+				if( e < 10/*0.01*/ && e < evalue) {
 					evalue = e;
 					//hit += "("+evalue+")";
 				} else {
 					hit = null;
 					evalue = 0.01;
 				}
+
+				if( hit != null && id != null ) {
+					if (!hit.toLowerCase().contains("hypothetical")) {
+						cazymap.put(id, hit);
+						addPhaster(id, hit + "(" + evalue + ")");
+					}
+				}
 			} else if( hit == null && line.startsWith(">") ) {
-				hit = line.substring(line.lastIndexOf('|')+1,line.lastIndexOf('[')-1);
+				var next = br.readLine();
+				while(!next.startsWith("Length=")) {
+					line += next;
+					next = br.readLine();
+				}
+				var lastspec = line.lastIndexOf('[');
+				if(lastspec==-1) lastspec = line.length();
+				else lastspec = lastspec-1;
+				hit = line.substring(line.lastIndexOf('|')+1,lastspec).trim();
 				//hit = hit.split("\\|")[1];
 			}
 
 			line = br.readLine();
 		}
 
-		if( hit != null && id != null ) {
+		/*if( hit != null && id != null ) {
 			cazymap.put( id, hit );
 			addPhaster(id, hit + "("+evalue+")");
-		}
+		}*/
 	}
 	
 	public Map<String,Cog> loadcogmap(Reader rd, Map<String,String> cogidmap, boolean pfam ) throws IOException {
@@ -503,39 +523,40 @@ public class GeneSet implements GenomeSet {
 		
 		BufferedReader br = new BufferedReader( rd );
 		String line = br.readLine();
-		String current = null;
+		StringBuilder current;
 		String id = null;
 		while( line != null ) {
 			if( line.startsWith("Query=") ) {
-				current = line.substring(7);
+				current = new StringBuilder(line.substring(7));
 				line = br.readLine();
 				while( !line.startsWith("Length") ) {
-					current += line;
+					current.append(line);
 					line = br.readLine();
 				}
-				current = current.trim();
-				int i = current.indexOf(' ');
+				current = new StringBuilder(current.toString().trim());
+				int i = current.toString().indexOf(' ');
 				if( i == -1 ) i = current.length();
 				id = current.substring(0, i);
 			} else if( line.startsWith(">") ) {
-				String val = line.substring(1);
+				StringBuilder val = new StringBuilder(line.substring(1));
 				line = br.readLine();
 				while( !line.startsWith("Length") ) {
-					val += line;
+					val.append(line);
 					line = br.readLine();
 				}
 				
-				line = br.readLine();
+				br.readLine();
 				line = br.readLine();
 				int e = line.indexOf("Expect =");
 				int n = line.indexOf(',', e);
 				double eval = Double.parseDouble( line.substring(e+9, n).trim() );
 				
-				if( eval < 1e-5 ) {
-					val = val.trim();
-					n = val.indexOf(']');
-				
-					map.put( id, val.substring(0, n+1) );
+				if( eval < 10 ) {
+					val = new StringBuilder(val.toString().trim());
+					n = val.toString().indexOf(']');
+
+					var split = val.toString().split("\\|");
+					map.merge( id, split[split.length-1].trim(), (s1,s2) -> s1+s2);
 				}
 			}
 			line = br.readLine();
@@ -560,7 +581,7 @@ public class GeneSet implements GenomeSet {
 		} else if( selectedItem.equals("Ids") ) {
 			return gene.id;
 		} else if( selectedItem.equals("Refids") ) {
-			return gene.refid;
+			return gene.getRefid();
 		} else if( selectedItem.equals("Cog") ) {
 			Cog cog = gene.getGeneGroup().getCog(cogmap);
 			if( cog != null ) return cog.id;
@@ -771,7 +792,7 @@ public class GeneSet implements GenomeSet {
 					Gene gene = new Gene( null, id, newname );
 					//tv.teg = origin;
 					tv.designation = designations != null ? designations.get( id ) : null;
-					gene.refid = newid;
+					gene.setRefid(newid);
 					gene.setIdStr( idstr );
 					gene.allids = new HashSet<>();
 					gene.allids.add( newid );
@@ -804,7 +825,7 @@ public class GeneSet implements GenomeSet {
 						if (g.id == null) g.id = id;
 
 						g.getTegeval().designation = designations != null ? designations.get(id) : null;
-						if (g.refid == null) g.refid = newid;
+						if (g.getRefid() == null) g.setRefid(newid);
 						if (g.allids == null) {
 							g.allids = new HashSet<>();
 							g.allids.add(newid);
@@ -997,7 +1018,7 @@ public class GeneSet implements GenomeSet {
 				String newname = (addname.length() == 0 ? name : addname.substring(1)); //name+addname
 				Gene gene = new Gene(null, id, newname);
 				tv.designation = designations != null ? designations.get(id) : null;
-				gene.refid = newid;
+				gene.setRefid(newid);
 				gene.setIdStr(idstr);
 				gene.allids = new HashSet<>();
 				gene.allids.add(newid);
@@ -1239,7 +1260,7 @@ public class GeneSet implements GenomeSet {
 				String newname = addname.length() == 0 ? name : addname.substring(1);
 				Gene gene = new Gene( null, id, newname);
 				tv.designation = designations != null ? designations.get( id ) : null;
-				gene.refid = newid;
+				gene.setRefid(newid);
 				gene.allids = new HashSet<>();
 				gene.allids.add( newid );
 				refmapPut(id, tv);
@@ -2925,6 +2946,11 @@ public class GeneSet implements GenomeSet {
 	@Override
 	public Map<String, String> getCazyPLMap() {
 		return cazyplmap;
+	}
+
+	@Override
+	public Map<String, String> getDesignationMap() {
+		return designations;
 	}
 
 	public static class StrCont {
@@ -5753,6 +5779,40 @@ public class GeneSet implements GenomeSet {
 
 		return idMapping(new FileReader(idfile), outfile, ind, secind, refids, genmap, gimap);
 	}
+
+	public Map<String,String> loadExpress( InputStreamReader id, Map<String,String> deset ) throws IOException {
+		Map<String,String>	ret = new TreeMap<>();
+
+		var seqlist = speccontigMap.get("v156");
+		if(seqlist!=null) {
+			BufferedReader br = new BufferedReader(id);
+			String line = br.readLine();
+			while (line != null) {
+				String[] split = line.split("\t");
+				if (split.length > 1) {
+					var subspl = split[1].split("-");
+					if (subspl.length < 2) subspl = split[1].split("–");
+					if (subspl.length > 1) {
+						int start = Integer.parseInt(subspl[0].trim());
+						int stop = Integer.parseInt(subspl[1].trim());
+						for (var seq : seqlist) {
+							for (var a : seq.annset) {
+								if (a.start > start - 2 && a.start < start + 2) {
+									a.designation = "express";
+									if (a.id != null) designations.put(a.id, "express");
+									break;
+								}
+							}
+						}
+					}
+				}
+				line = br.readLine();
+			}
+		}
+		//br.close();
+
+		return ret;
+	}
 	
 	public Map<String,String> loadDesignations( InputStreamReader id, Set<String> deset ) throws IOException {
 		Map<String,String>	ret = new TreeMap<>();
@@ -5844,7 +5904,7 @@ public class GeneSet implements GenomeSet {
 		for( String key : refids.keySet() ) {
 			Annotation a = refids.get(key);
 			Gene g = a.getGene();
-			nrefids.put(g.refid, g);
+			nrefids.put(g.getRefid(), g);
 		}
 
 		int i = 0;
@@ -6850,9 +6910,9 @@ public class GeneSet implements GenomeSet {
 	}
 
 	public static double[] load16SCorrelation(Reader r, List<String> order) throws IOException {
-		List<Double> ret = new ArrayList<Double>();
+		List<Double> ret = new ArrayList<>();
 
-		Map<String, Map<String, Integer>> tm = new TreeMap<String, Map<String, Integer>>();
+		Map<String, Map<String, Integer>> tm = new TreeMap<>();
 
 		String currentSpec = null;
 		Map<String, Integer> subtm = null;
@@ -7666,7 +7726,7 @@ public class GeneSet implements GenomeSet {
 								if (gene != null) {
 									gene.name = a.getName();
 									gene.id = refmap.containsKey(a.id) ? a.tag : a.id;
-									gene.refid = gene.id;
+									gene.setRefid(gene.id);
 									refmapPut(gene.id, a);
 								} else {
 									refmapPut(a.id, a);
@@ -7694,7 +7754,6 @@ public class GeneSet implements GenomeSet {
 				}
 			});
 		}
-		
 		// else {
 		nf = zipfilesystem.getPath("/allthermus_aligned.aa");
 		if( Files.exists( nf ) ) loci2aasequence( Files.newBufferedReader(nf), refmap, designations, "" );
@@ -7748,6 +7807,10 @@ public class GeneSet implements GenomeSet {
 					}
 			});
 		}
+
+		nf = zipfilesystem.getPath("/express.txt");
+		if( Files.exists( nf ) ) loadExpress( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)), designations );
+
 		//}
 		//}
 		
@@ -8098,7 +8161,7 @@ public class GeneSet implements GenomeSet {
 				Annotation a = refmap.get(gid);
 				Gene g = a.getGene();
 				if (g != null) {
-					gs.add(g.refid);
+					gs.add(g.getRefid());
 					gset.add(g);
 					countclust++;
 				} else {
@@ -8689,7 +8752,7 @@ public class GeneSet implements GenomeSet {
 				Gene g = locgene.get(cont);
 
 				if (g != null) {
-					gs.add(g.refid);
+					gs.add(g.getRefid());
 					gset.add(g);
 				}
 			}
@@ -9288,8 +9351,7 @@ public class GeneSet implements GenomeSet {
 					List<Future<Optional<List<Set<String>>>>> ll = sparkSeqMap.values().stream().map(fastaSequences -> {
 						var dt = new DiamondThread(sparkBlast, fastaSequences.stream());
 						return es.submit(dt);
-					}).collect(Collectors.toList());
-					es.shutdown();
+					}).toList();
 
 					ReduceClusters reduceCluster = new ReduceClusters();
 					//ForkJoinPool forkJoinPool = new ForkJoinPool(12);
@@ -9302,6 +9364,7 @@ public class GeneSet implements GenomeSet {
 							throw new RuntimeException(e);
 						}
 					}).map(Optional::get).reduce(reduceCluster);
+					es.shutdown();
 					//forkJoinPool.shutdown();
 
 					/*ForkJoinPool fjp = new ForkJoinPool(sparkSeqMap.size());

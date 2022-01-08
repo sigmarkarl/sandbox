@@ -2934,7 +2934,7 @@ public class ActionCollection {
 		cazyexportaction.setOnAction( actionEvent -> {
 				Set<String> cz = new TreeSet<String>();
 				for( Gene g : geneset.genelist ) {
-					String cazy = geneset.cazymap.get( g.refid );
+					String cazy = geneset.cazymap.get( g.getRefid() );
 					if( cazy != null ) {
 						int i = cazy.indexOf('(');
 						if( i == -1 ) i = cazy.length();

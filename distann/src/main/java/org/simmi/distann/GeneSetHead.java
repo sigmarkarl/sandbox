@@ -1301,8 +1301,8 @@ public class GeneSetHead {
 		
 		String OS = System.getProperty("os.name").toLowerCase();
 		int procs = Runtime.getRuntime().availableProcessors();
-		String[] mcmds = { OS.indexOf("mac") >= 0 ? "/usr/local/bin/makeblastdb" : "makeblastdb", "-dbtype", "prot", "-title", "tmp", "-out", "tmp" };
-		List<String>	lcmd = new ArrayList<String>( Arrays.asList(mcmds) );
+		String[] mcmds = {OS.contains("mac") ? "/usr/local/bin/makeblastdb" : "makeblastdb", "-dbtype", "prot", "-title", "tmp", "-out", "tmp" };
+		List<String>	lcmd = new ArrayList<>(Arrays.asList(mcmds));
 		
 		final ProcessBuilder mpb = new ProcessBuilder( lcmd );
 		mpb.redirectErrorStream( true );
@@ -2346,7 +2346,7 @@ public class GeneSetHead {
 				for( GeneGroup gg : geneset.allgenegroups ) {
 					for( Annotation a : gg.genes ) {
 						Gene g = a.getGene();
-						if( g != null && g.refid.toLowerCase().contains(ustr) ) {
+						if( g != null && g.getRefid().toLowerCase().contains(ustr) ) {
 							filterset.add(i);
 							break;
 						}
@@ -2355,7 +2355,7 @@ public class GeneSetHead {
 				}
 			} else {
 				for( Gene g : geneset.genelist ) {
-					if( g.refid.toLowerCase().contains(ustr) ) {
+					if( g.getRefid().toLowerCase().contains(ustr) ) {
 						filterset.add(i);
 					}
 					i++;
@@ -6303,10 +6303,11 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		select.getItems().add( selectdirtyaction );
 		MenuItem	selectdesignationaction = new MenuItem("Select designation");
 		selectdesignationaction.setOnAction( actionEvent -> {
-				JComboBox<String>	descombo = new JComboBox<String>( geneset.deset.toArray( new String[geneset.deset.size()] ) );
+			SwingUtilities.invokeLater(() -> {
+				JComboBox<String>	descombo = new JComboBox<String>( geneset.deset.toArray(new String[0]) );
 				descombo.insertItemAt("", 0);
 				descombo.setSelectedIndex( 0 );
-				
+
 				JOptionPane.showMessageDialog(null, descombo);
 				String seldes = (String)descombo.getSelectedItem();
 				if( !isGeneview() ) {
@@ -6320,6 +6321,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 						i++;
 					}
 				}
+			});
 		});
 		select.getItems().add( selectdesignationaction );
 		
@@ -7529,6 +7531,9 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		TableColumn<GeneGroup, String> unidcol = new TableColumn("Unid");
 		unidcol.setCellValueFactory( new PropertyValueFactory<>("unid"));
 		table.getColumns().add( unidcol );
+		TableColumn<GeneGroup, String> descol = new TableColumn("Designation");
+		descol.setCellValueFactory( new PropertyValueFactory<>("designation"));
+		table.getColumns().add( descol );
 		TableColumn<GeneGroup, String> goidcol = new TableColumn("Goid");
 		goidcol.setCellValueFactory( new PropertyValueFactory<>("goid"));
 		table.getColumns().add( goidcol );
@@ -8645,23 +8650,32 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		popup.getItems().add( plasmid );
 		MenuItem designate = new MenuItem("Designate");
 		designate.setOnAction( e -> { SwingUtilities.invokeLater(() -> {
-            JComboBox<String>	descombo = new JComboBox<>( geneset.deset.toArray( new String[geneset.deset.size()] ) );
+            JComboBox<String>	descombo = new JComboBox<>( geneset.deset.toArray(new String[0]) );
             descombo.setEditable( true );
             JOptionPane.showMessageDialog(null, descombo);
-            String val = descombo.getSelectedItem().toString();
+            String val = Objects.requireNonNull(descombo.getSelectedItem()).toString();
             geneset.deset.add( val );
-            for( Gene g : gtable.getSelectionModel().getSelectedItems() ) {
-                g.getTegeval().designation = val;
-                if( g.id != null ) {
-                    geneset.designations.put( g.id, val );
-                } else {
-                    System.err.println( g.refid );
-                }
-                //ta.append( g.tegeval.id + "\n" );
-            }
+			if(isGeneview()) {
+				for (Gene g : gtable.getSelectionModel().getSelectedItems()) {
+					g.getTegeval().designation = val;
+					if (g.id != null) {
+						geneset.designations.put(g.id, val);
+					} else {
+						System.err.println(g.getRefid());
+					}
+					//ta.append( g.tegeval.id + "\n" );
+				}
+			} else {
+				for (GeneGroup gg : table.getSelectionModel().getSelectedItems()) {
+					gg.genes.stream().filter(g -> g.id != null).forEach(g -> {
+						geneset.designations.put(g.id, val);
+						if(g.getGene()!=null && g.getGene().getTegeval()!=null) g.getGene().getTegeval().designation = val;
+					});
+				}
+			}
 
             try {
-                Map<String,String> env = new HashMap<String,String>();
+                Map<String,String> env = new HashMap<>();
                 env.put("create", "true");
                 //Path path = zipfile.toPath();
                 String uristr = "jar:" + geneset.zippath.toUri();
@@ -9370,7 +9384,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 						}
 					}
 				}
-				ffilteredData.setPredicate( p -> fset.contains(p) );
+				ffilteredData.setPredicate(fset::contains);
 			}
 			tableisselecting = false;
 		});
@@ -9393,7 +9407,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 						}
 					}
 				}
-				ffilteredData.setPredicate( p -> fset.contains(p) );
+				ffilteredData.setPredicate(fset::contains);
 			}
 			tableisselecting = false;
 		});
@@ -9464,7 +9478,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			if( isGeneview() ) {
 				Predicate<Gene> p = gene -> {
 					GeneGroup genegroup = gene.getGeneGroup();
-					if (newValue == null || newValue.isEmpty()) {
+					if (newValue.isEmpty()) {
 						return true;
 					}
 
@@ -9483,8 +9497,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				};
 				if (filter.isSelected()) {
 					geneFilteredList.setPredicate(p);
-					if (label != null)
-						label.setText(gtable.getItems().size() + "/" + gtable.getSelectionModel().getSelectedIndices().size());
+					label.setText(gtable.getItems().size() + "/" + gtable.getSelectionModel().getSelectedIndices().size());
 					//if( searchcolcomb.getSelectionModel().getSelectedItem().equals("Symbol") ) updateFilter(0, text, table, genefilter, genefilterset, label, 8, 9, 10, 16 );
 					//else updateFilter(0, text, table, genefilter, genefilterset, label, 0 );
 				} else {
@@ -9498,7 +9511,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				}
 			} else {
 				Predicate<GeneGroup> p = genegroup -> {
-					if (newValue == null || newValue.isEmpty()) {
+					if (newValue.isEmpty()) {
 						return true;
 					}
 
@@ -9610,9 +9623,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				Gene g = gtable.getSelectionModel().getSelectedItem();
 				try {
 					Desktop.getDesktop().browse(new URI("http://www.genome.jp/dbget-bin/www_bget?" + g.keggid));
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				} catch (URISyntaxException e1) {
+				} catch (IOException | URISyntaxException e1) {
 					e1.printStackTrace();
 				}
 		});
@@ -9995,7 +10006,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			GeneGroup ggroup = gg.getGeneGroup();
 			for( Annotation a : ggroup.genes ) {
 				Gene g = a.getGene();
-				ct.add( g.refid );
+				ct.add( g.getRefid() );
 			}
 			// genefilterset.add( gg.index );
 			/*Tegeval tv = gg.tegeval;
@@ -10016,7 +10027,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				//System.err.println( tv.cont );
 				//int li = tv.cont.lastIndexOf('_');
 				//String tvshort = tv.contshort+tv.cont.substring(li);
-			if( ct.contains(g.refid) ) {
+			if( ct.contains(g.getRefid()) ) {
 				if (remove)
 					genefilterset.remove( genelist.indexOf( g ) );
 				else
