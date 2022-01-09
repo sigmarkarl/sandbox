@@ -3434,7 +3434,7 @@ public class GeneSetHead {
 									break;
 								}
 								Sequence gs = a.getProteinSequence();
-								gs.setName(a.id);
+								gs.setName(a.getId());
 								gs.writeSequence(sb);
 							}
 						}
@@ -5384,7 +5384,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
                                 name = gg.getName();
                             }
                             Annotation anno = new Annotation( c, tv.start, tv.stop, tv.ori, name );
-                            anno.id = tv.getGene().getId();
+                            anno.setId(tv.getGene().getId());
                             anno.type = "CDS";
 
                             String cazy = gg != null ? gg.getCommonCazy(geneset.cazymap) : null;
@@ -8497,7 +8497,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 								//.filter( f -> f.toString().endsWith(".aa") )
 								.filter( f -> {
 								String filename = f.getFileName().toString();
-								return gg.stream().flatMap(ggg -> ggg.genes.stream()).anyMatch( g -> g.id.equals(filename));
+								return gg.stream().flatMap(ggg -> ggg.genes.stream()).anyMatch( g -> g.getId().equals(filename));
 						}).forEach(p -> {
 							try {
 								Files.deleteIfExists(p);
@@ -8522,7 +8522,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 						}*/
 						final Path p = root.resolve("/aligned");
 						for (GeneGroup fgg : c) {
-							Path np = p.resolve(fgg.genes.iterator().next().id);
+							Path np = p.resolve(fgg.genes.iterator().next().getId());
 							try {
 								Writer w = Files.newBufferedWriter(np);
 								fgg.getFasta(w, false);
@@ -8534,7 +8534,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 
 						Path clustersPath = root.resolve("simpleclusters.txt");
 						BufferedWriter fos = Files.newBufferedWriter(clustersPath, StandardOpenOption.TRUNCATE_EXISTING);
-						geneset.writeClusters(fos, geneset.allgenegroups.stream().map(ggg -> ggg.genes.stream().map(g -> g.id).collect(Collectors.toSet())));
+						geneset.writeClusters(fos, geneset.allgenegroups.stream().map(ggg -> ggg.genes.stream().map(g -> g.getId()).collect(Collectors.toSet())));
 						fos.close();
 						break;
 					}
@@ -8667,8 +8667,8 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				}
 			} else {
 				for (GeneGroup gg : table.getSelectionModel().getSelectedItems()) {
-					gg.genes.stream().filter(g -> g.id != null).forEach(g -> {
-						geneset.designations.put(g.id, val);
+					gg.genes.stream().filter(g -> g.getId() != null).forEach(g -> {
+						geneset.designations.put(g.getId(), val);
 						if(g.getGene()!=null && g.getGene().getTegeval()!=null) g.getGene().getTegeval().designation = val;
 					});
 				}
@@ -10083,7 +10083,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 
                                     Annotation anno = new Annotation(c, tv.start, tv.stop, tv.ori, gg != null ? gg.getName() : tv.getGene().getName());
                                     anno.type = "CDS";
-                                    anno.id = tv.getGene().id;
+                                    anno.setId(tv.getGene().id);
 
                                     String cazy = gg != null ? gg.getCommonCazy(geneset.cazymap) : null;
                                     if (cazy != null) anno.addDbRef("CAZY:" + cazy);
@@ -10120,7 +10120,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 
 						Annotation anno = new Annotation(c, tv.start, tv.stop, tv.ori, gg != null ? gg.getName() : tv.getGene().getName());
 						anno.type = "CDS";
-						anno.id = tv.getGene().id;
+						anno.setId(tv.getGene().id);
 
 						String cazy = gg != null ? gg.getCommonCazy(geneset.cazymap) : null;
 						if (cazy != null) anno.addDbRef("CAZY:" + cazy);

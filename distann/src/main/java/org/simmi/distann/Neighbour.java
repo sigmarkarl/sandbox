@@ -2406,7 +2406,7 @@ public class Neighbour {
 									Gene tgene = tv.getGene();
 									String symb = null;
 									String name = null;
-									if( tv.id == null || !tv.id.equals(tv.getName()) ) {
+									if( tv.getId() == null || !tv.getId().equals(tv.getName()) ) {
 										if( tgene != null ) {
 											symb = tgene.getGeneGroup().getSymbol();
 											if( symb == null || (!symb.contains(",") && symb.length() > 4) ) {
@@ -2442,7 +2442,7 @@ public class Neighbour {
 										name = null;
 										symb = null;
 										tgene = ntev.getGene();
-										if( ntev.id == null || !ntev.id.equals(ntev.getName()) ) {
+										if( ntev.getId() == null || !ntev.getId().equals(ntev.getName()) ) {
 											if( tgene != null ) {
 												symb = tgene.getGeneGroup().getSymbol();
 												if( symb == null || (!symb.contains(",") && symb.length() > 4) ) {
@@ -2504,7 +2504,7 @@ public class Neighbour {
 										name = null;
 										symb = null;
 										tgene = ntev.getGene();
-										if( ntev.id == null || !ntev.id.equals(ntev.getName()) ) {
+										if( ntev.getId() == null || !ntev.getId().equals(ntev.getName()) ) {
 											if( tgene != null ) {
 												symb = tgene.getGeneGroup().getSymbol();
 												if( symb == null || (!symb.contains(",") && symb.length() > 4) ) {
@@ -2580,7 +2580,7 @@ public class Neighbour {
 						for( int r : rr ) {
 							int i = rowheader.convertRowIndexToModel(r);
 							Annotation tv = hteg.get(i);
-							Sequence seq = new Sequence( ((Tegeval)tv).getSpecies(), null );
+							Sequence seq = new Sequence( tv.getSpecies(), null );
 							seq.append( tv.getSubstring(-3000, tv.getLength()+3000) );
 							serifier.addSequence( seq );
 						}

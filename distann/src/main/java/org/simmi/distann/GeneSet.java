@@ -1009,7 +1009,7 @@ public class GeneSet implements GenomeSet {
 
 				((Tegeval)tv).init(lname, contig, start, stop, dir);
 				tv.setName(prevline.substring(1));
-				tv.id = id;
+				tv.setId(id);
 				//ac.setName( lname );
 				//tv.setAlignedSequence( ac );
 				aas.put(lname, tv);
@@ -5799,7 +5799,7 @@ public class GeneSet implements GenomeSet {
 							for (var a : seq.annset) {
 								if (a.start > start - 2 && a.start < start + 2) {
 									a.designation = "express";
-									if (a.id != null) designations.put(a.id, "express");
+									if (a.getId() != null) designations.put(a.getId(), "express");
 									break;
 								}
 							}
@@ -6343,7 +6343,7 @@ public class GeneSet implements GenomeSet {
 										if( seqstr.length() != len ) {
 											//System.err.println( "        bleh " + spec + "  " + seqstr.length() + "   " + ggroup.size() + "  " + ggroup.getCommonName() + "  " + ggroup.getIndex() );
 											for( Annotation a : ggroup.genes ) {
-												System.err.println( a.getGene().getSpecies() + "  " + a.getAlignedSequence().length() + "   " + a.id);
+												System.err.println( a.getGene().getSpecies() + "  " + a.getAlignedSequence().length() + "   " + a.getId());
 											}
 										}
 										tseq.append( seqstr );
@@ -7725,11 +7725,11 @@ public class GeneSet implements GenomeSet {
 								Gene gene = a.getGene();
 								if (gene != null) {
 									gene.name = a.getName();
-									gene.id = refmap.containsKey(a.id) ? a.tag : a.id;
+									gene.id = refmap.containsKey(a.getId()) ? a.getTag() : a.getId();
 									gene.setRefid(gene.id);
 									refmapPut(gene.id, a);
 								} else {
-									refmapPut(a.id, a);
+									refmapPut(a.getId(), a);
 								}
 							}
 						}
@@ -8353,7 +8353,7 @@ public class GeneSet implements GenomeSet {
 			ggList.add( gg );
 			
 			for( Annotation a : gg.genes ) {
-				refmapPut( a.id, a );
+				refmapPut( a.getId(), a );
 				Gene g = a.getGene();
 				if(g != null) genelist.add( g );
 				
@@ -8385,7 +8385,7 @@ public class GeneSet implements GenomeSet {
             }).forEach(t -> {
                 if( Files.exists( t ) )
                     try {
-                        System.err.println("loading " + t.toString() );
+                        System.err.println("loading " + t);
                         loadsignalp( spids, Files.newBufferedReader(t) );
                         System.err.println("spids " + spids.size() );
                     } catch (IOException e) {
