@@ -12,7 +12,9 @@ import org.apache.spark.sql.SparkSession;
 import org.simmi.javafasta.shared.GeneGroup;
 import scala.Tuple2;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.nio.file.*;
 import java.util.*;
@@ -56,7 +58,7 @@ public class AlignClusterAction implements EventHandler<ActionEvent> {
         List<Tuple2<String, String>> fastaList = ggset.stream().filter(gg -> gg.getGroupCount() >= 2).map(gg -> {
             try {
                 return new Tuple2<>(gg.getCommonId(), gg.getFasta(true));
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 return null;
             }
@@ -69,16 +71,21 @@ public class AlignClusterAction implements EventHandler<ActionEvent> {
         if(local) {
             try {
                 final Map<String, String> rmap = new ConcurrentHashMap<>();
-                fastaList.parallelStream().map(t -> {
+                fastaList.parallelStream().filter(Objects::nonNull).map(t -> {
                     try {
                         return mafft.call(t);
-                    } catch (IOException | ExecutionException | InterruptedException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                         return null;//e.printStackTrace();
                     }
-                }).forEach(s -> rmap.put(s._1, s._2));
+                }).filter(Objects::nonNull).forEach(s -> rmap.put(s._1, s._2));
                 resmap = rmap;
             } catch(Exception e) {
+                var baos = new ByteArrayOutputStream();
+                var p = new PrintWriter(baos);
+                e.printStackTrace(p);
+                p.close();
+                var s = baos.toString();
                 e.printStackTrace();
             }
         } else {

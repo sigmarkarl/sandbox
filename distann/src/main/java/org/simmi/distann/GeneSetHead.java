@@ -5911,8 +5911,15 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				}
 			}*/
 		});
+		MenuItem selhiAction = new MenuItem("Select hilighted");
+		selhiAction.setOnAction( actionEvent -> {
+			for (GeneGroup gg : table.getSelectionModel().getSelectedItems()) {
+				gg.setSelected(true);
+			}
+		});
 		select.getItems().add( breakpointselAction );
 		select.getItems().add( saveselAction );
+		select.getItems().add( selhiAction );
 		select.getItems().add( new SeparatorMenuItem() );
 		
 		MenuItem showall = new MenuItem("Show all");
@@ -7069,9 +7076,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 								e.printStackTrace();
 							}
 						}
-					} catch (UnsupportedFlavorException e) {
-						e.printStackTrace();
-					} catch (IOException e) {
+					} catch (UnsupportedFlavorException | IOException e) {
 						e.printStackTrace();
 					}
 

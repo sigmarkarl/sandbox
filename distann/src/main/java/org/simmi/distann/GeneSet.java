@@ -5783,7 +5783,7 @@ public class GeneSet implements GenomeSet {
 	public Map<String,String> loadExpress( InputStreamReader id, Map<String,String> deset ) throws IOException {
 		Map<String,String>	ret = new TreeMap<>();
 
-		var seqlist = speccontigMap.get("v156");
+		var seqlist = speccontigMap.get("15-6");
 		if(seqlist!=null) {
 			BufferedReader br = new BufferedReader(id);
 			String line = br.readLine();
