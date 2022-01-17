@@ -9231,6 +9231,7 @@ public class GeneSet implements GenomeSet {
 
 	float id;
 	float len;
+	String evalue;
 	public void clusterGenes( Collection<String> species, boolean headless ) throws IOException {
 		if( zippath != null ) {
 		//SwingUtilities.invokeAndWait(() -> {
@@ -9281,6 +9282,8 @@ public class GeneSet implements GenomeSet {
 
 			id = Float.parseFloat(tb11.getText());
 			len = Float.parseFloat(tb21.getText());
+			evalue = epar1.getText();
+			if(evalue==null||evalue.length()==0) evalue = "0.00001";
 		//});
 
 			Map<String,List<FastaSequence>> sparkSeqMap = new HashMap<>();
@@ -9344,7 +9347,7 @@ public class GeneSet implements GenomeSet {
 			boolean local = true;
 			if(local) {
 				var sparkMakeDb = new SparkMakedb(makeblastdb, envMap, dbPath);
-				var sparkBlast = new SparkBlast(blastp, envMap, dbPath, tmpPath, id, len);
+				var sparkBlast = new SparkBlast(blastp, envMap, dbPath, tmpPath, id, len, evalue);
 				try {
 					sparkMakeDb.call(allSeqList.iterator());
 					ExecutorService es = Executors.newFixedThreadPool(24);//sparkSeqMap.size());

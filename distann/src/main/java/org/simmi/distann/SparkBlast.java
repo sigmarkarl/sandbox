@@ -20,18 +20,20 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
     String envMap;
     double id;
     double len;
+    String evalue;
 
     public SparkBlast(String[] blastp,String env,String rootpath,String tmppath) {
-        this(blastp, env, rootpath, tmppath, 0.5, 0.5);
+        this(blastp, env, rootpath, tmppath, 0.5, 0.5, "0.00001");
     }
 
-    public SparkBlast(String[] blastp,String env,String rootpath,String tmppath, double id, double len) {
+    public SparkBlast(String[] blastp,String env,String rootpath,String tmppath, double id, double len, String evalue) {
         this.root = rootpath;
         this.blastp = Arrays.asList(blastp);
         this.tmp = tmppath;
         this.envMap = env;
         this.id = id;
         this.len = len;
+        this.evalue = evalue;
     }
 
     @Override
@@ -56,7 +58,7 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
 
         int procs = Runtime.getRuntime().availableProcessors();
         List<String> pargs = new ArrayList<>(blastp);
-        pargs.addAll(Arrays.asList("--db", dbpath.toString(), "--threads", Integer.toString(procs), "--evalue", "0.00001", "--outfmt", "0"));
+        pargs.addAll(Arrays.asList("--db", dbpath.toString(), "--threads", Integer.toString(procs), "--evalue", evalue, "--outfmt", "0"));
         ProcessBuilder pb = new ProcessBuilder(pargs); //"-out", resPath.toString(),
         if(envMap!=null) Arrays.stream(envMap.split(",")).map(env -> env.split("=")).filter(s -> s.length==2).forEach(s -> pb.environment().put(s[0],s[1]));
         Process pc = pb.start();
@@ -134,7 +136,7 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
 
             int procs = Runtime.getRuntime().availableProcessors();
             List<String> pargs = new ArrayList<>(blastp);
-            pargs.addAll(Arrays.asList("--db", dbpath.toString(), "--threads", Integer.toString(procs), "--evalue", "0.00001", "--outfmt", "0"));
+            pargs.addAll(Arrays.asList("--db", dbpath.toString(), "--threads", Integer.toString(procs), "--evalue", evalue, "--outfmt", "0"));
             ProcessBuilder pb = new ProcessBuilder(pargs); //"-out", resPath.toString(),
             if(envMap!=null) Arrays.stream(envMap.split(",")).map(env -> env.split("=")).filter(s -> s.length==2).forEach(s -> pb.environment().put(s[0],s[1]));
             Process pc = pb.start();
