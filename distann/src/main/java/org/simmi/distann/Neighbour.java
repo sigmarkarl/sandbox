@@ -841,7 +841,7 @@ public class Neighbour {
 						//xoff -= bil;
 					}
 					
-					if( prev == null ) {
+					if( prev == null && te != null ) {
 						Sequence prevcont = te.getContig();
 						if( prevcont != null ) {
 							if( prevcont.isChromosome() ) {
@@ -2782,7 +2782,7 @@ public class Neighbour {
 						if( forward.isSelected() ) {
 							Annotation con = cont.getEndAnnotation().getNext();
 							while( con != null ) {
-								cont = (Sequence)con.getContig();
+								cont = con.getContig();
 								con = cont.isReverse() ? cont.getStartAnnotation().getPrevious() : cont.getEndAnnotation().getNext();
 								
 								if( con != null && con.getContig().equals( cont ) ) {
@@ -2792,7 +2792,7 @@ public class Neighbour {
 						} else {
 							Annotation con = cont.getStartAnnotation().getPrevious();
 							while( con != null ) {
-								cont = (Sequence)con.getContig();
+								cont = con.getContig();
 								con = cont.isReverse() ? cont.getStartAnnotation().getPrevious() : cont.getEndAnnotation().getNext();
 								
 								if( con != null && con.getContig().equals( cont ) ) {
@@ -2923,12 +2923,13 @@ public class Neighbour {
 				public Object getValueAt(int rowIndex, int columnIndex) {
 					//String species = speclist.get( rowIndex );
 					Annotation te = hteg.get(rowIndex);
-					if( columnIndex == 0 ) {
-						return te.getSpecies(); //geneset.nameFix( te.getSpecies() );
+					if(te!=null) {
+						if (columnIndex == 0) {
+							return te.getSpecies(); //geneset.nameFix( te.getSpecies() );
+						} else if (columnIndex == 1) return te.getContig().getName();
+						else if (columnIndex == 2) return te.getLength();
+						else if (columnIndex == 3) return te.getContig().isReverse();
 					}
-					else if( columnIndex == 1 ) return te.getContig().getName();
-					else if( columnIndex == 2 ) return te.getLength();
-					else if( columnIndex == 3 ) return te.getContig().isReverse();
 					/*for( Gene selectedGene : selectedGenes ) {
 						if( selectedGene.species.containsKey( species ) ) {
 							Teginfo ti = selectedGene.species.get( species );
@@ -2956,12 +2957,7 @@ public class Neighbour {
 			// scrollpane.setCorner( JScrollPane.UPPER_LEFT_CORNER,
 			// rowheader.getTableHeader() );
 
-			rowheader.getRowSorter().addRowSorterListener(new RowSorterListener() {
-				@Override
-				public void sorterChanged(RowSorterEvent e) {
-					c.repaint();
-				}
-			});
+			rowheader.getRowSorter().addRowSorterListener(e -> c.repaint());
 			
 			DataFlavor tdf = null;
 			try {
@@ -2974,13 +2970,13 @@ public class Neighbour {
 			final String charset = df.getParameter("charset");
 			final Transferable transferable = new Transferable() {
 				@Override
-				public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {					
+				public Object getTransferData(DataFlavor arg0) throws IOException {
 					if( arg0.equals( ndf ) ) {
 						int[] rr = currentRowSelection; //table.getSelectedRows();
-						List<Sequence>	selseq = new ArrayList<Sequence>( rr.length );
+						List<Annotation>	selseq = new ArrayList<>(rr.length);
 						for( int r : rr ) {
 							int i = rowheader.convertRowIndexToModel(r);
-							selseq.add( hteg.get(i).getAlignedSequence() );
+							selseq.add( hteg.get(i) );
 						}
 						return selseq;
 					} else {
@@ -2988,9 +2984,7 @@ public class Neighbour {
 						for( int r = 0; r < rowheader.getRowCount(); r++ ) {
 							Object o = rowheader.getValueAt(r, 0);
 							if( o != null ) {
-								ret.append(o.toString());
-							} else {
-								ret.append("");
+								ret.append(o);
 							}
 							for( int c = 1; c < rowheader.getColumnCount(); c++ ) {
 								o = rowheader.getValueAt(r, c);
@@ -3046,7 +3040,7 @@ public class Neighbour {
 							Object obj = support.getTransferable().getTransferData( ndf );
 							List<Annotation>	seqs = (ArrayList<Annotation>)obj;
 							
-							List<Annotation> newlist = new ArrayList<Annotation>( hteg.size() );
+							List<Annotation> newlist = new ArrayList<>(hteg.size());
 							for( int r = 0; r < rowheader.getRowCount(); r++ ) {
 								int i = rowheader.convertRowIndexToModel(r);
 								newlist.add( hteg.get(i) );

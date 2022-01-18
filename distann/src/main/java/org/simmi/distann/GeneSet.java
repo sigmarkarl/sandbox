@@ -9232,6 +9232,7 @@ public class GeneSet implements GenomeSet {
 	float id;
 	float len;
 	String evalue;
+	List<String> extrapar;
 	public void clusterGenes( Collection<String> species, boolean headless ) throws IOException {
 		if( zippath != null ) {
 		//SwingUtilities.invokeAndWait(() -> {
@@ -9249,6 +9250,11 @@ public class GeneSet implements GenomeSet {
 			JTextField epar1 = new JTextField();
 			epar1.setSize(d);
 			epar1.setPreferredSize(d);
+
+			//Dimension d = new Dimension(300, 30);
+			JTextField extpar = new JTextField("--ultra-sensitive");
+			extpar.setSize(d);
+			extpar.setPreferredSize(d);
 
 			JCheckBox fromscratch = new JCheckBox("From scratch");
 			fromscratch.setSelected(true);
@@ -9276,6 +9282,10 @@ public class GeneSet implements GenomeSet {
 			c.gridx = 0;
 			c.gridy = 3;
 			c.gridwidth = 2;
+			panel.add(extpar, c);
+			c.gridx = 0;
+			c.gridy = 4;
+			c.gridwidth = 2;
 			panel.add(fromscratch, c);
 
 			JOptionPane.showMessageDialog(null, new Object[]{panel}, "Clustering parameters", JOptionPane.PLAIN_MESSAGE);
@@ -9284,6 +9294,7 @@ public class GeneSet implements GenomeSet {
 			len = Float.parseFloat(tb21.getText());
 			evalue = epar1.getText();
 			if(evalue==null||evalue.length()==0) evalue = "0.00001";
+			extrapar = Arrays.asList(extpar.getText().split(" "));
 		//});
 
 			Map<String,List<FastaSequence>> sparkSeqMap = new HashMap<>();
@@ -9347,7 +9358,7 @@ public class GeneSet implements GenomeSet {
 			boolean local = true;
 			if(local) {
 				var sparkMakeDb = new SparkMakedb(makeblastdb, envMap, dbPath);
-				var sparkBlast = new SparkBlast(blastp, envMap, dbPath, tmpPath, id, len, evalue);
+				var sparkBlast = new SparkBlast(blastp, envMap, dbPath, tmpPath, id, len, evalue, extrapar);
 				try {
 					sparkMakeDb.call(allSeqList.iterator());
 					ExecutorService es = Executors.newFixedThreadPool(24);//sparkSeqMap.size());

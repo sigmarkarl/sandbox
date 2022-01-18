@@ -21,12 +21,13 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
     double id;
     double len;
     String evalue;
+    List<String> extrapar;
 
     public SparkBlast(String[] blastp,String env,String rootpath,String tmppath) {
-        this(blastp, env, rootpath, tmppath, 0.5, 0.5, "0.00001");
+        this(blastp, env, rootpath, tmppath, 0.5, 0.5, "0.00001", Collections.emptyList());
     }
 
-    public SparkBlast(String[] blastp,String env,String rootpath,String tmppath, double id, double len, String evalue) {
+    public SparkBlast(String[] blastp,String env,String rootpath,String tmppath, double id, double len, String evalue, List<String> extrapar) {
         this.root = rootpath;
         this.blastp = Arrays.asList(blastp);
         this.tmp = tmppath;
@@ -34,6 +35,7 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
         this.id = id;
         this.len = len;
         this.evalue = evalue;
+        this.extrapar = extrapar;
     }
 
     @Override
@@ -58,7 +60,8 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
 
         int procs = Runtime.getRuntime().availableProcessors();
         List<String> pargs = new ArrayList<>(blastp);
-        pargs.addAll(Arrays.asList("--db", dbpath.toString(), "--threads", Integer.toString(procs), "--evalue", evalue, "--outfmt", "0"));
+        pargs.addAll(Arrays.asList("--db", dbpath.getFileName().toString(), "--threads", Integer.toString(procs), "--evalue", evalue, "--outfmt", "0"));
+        pargs.addAll(extrapar);
         ProcessBuilder pb = new ProcessBuilder(pargs); //"-out", resPath.toString(),
         if(envMap!=null) Arrays.stream(envMap.split(",")).map(env -> env.split("=")).filter(s -> s.length==2).forEach(s -> pb.environment().put(s[0],s[1]));
         Process pc = pb.start();
@@ -91,7 +94,7 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
         InputStreamReader isr = new InputStreamReader(pc.getInputStream());
         BufferedReader br = new BufferedReader(isr);
         ClusterGenes clusterGenes = new ClusterGenes(id, len);
-        return clusterGenes.getClusterStream(br).map(Collections::singletonList);
+        return clusterGenes.getClusterStream(br).map(Collections::singletonList).onClose(clusterGenes::close);
 
         /*List<String> qlist = new ArrayList<>();
         int count = 0;
@@ -137,6 +140,7 @@ public class SparkBlast implements MapPartitionsFunction<FastaSequence, String> 
             int procs = Runtime.getRuntime().availableProcessors();
             List<String> pargs = new ArrayList<>(blastp);
             pargs.addAll(Arrays.asList("--db", dbpath.toString(), "--threads", Integer.toString(procs), "--evalue", evalue, "--outfmt", "0"));
+            pargs.addAll(extrapar);
             ProcessBuilder pb = new ProcessBuilder(pargs); //"-out", resPath.toString(),
             if(envMap!=null) Arrays.stream(envMap.split(",")).map(env -> env.split("=")).filter(s -> s.length==2).forEach(s -> pb.environment().put(s[0],s[1]));
             Process pc = pb.start();

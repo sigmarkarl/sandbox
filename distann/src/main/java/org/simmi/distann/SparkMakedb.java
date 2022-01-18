@@ -42,7 +42,7 @@ public class SparkMakedb implements ForeachPartitionFunction<FastaSequence> {
         int procs = Runtime.getRuntime().availableProcessors();
         List<String> cmds = new ArrayList<>(makeblastdbcmd);    
         //cmds.addAll(Arrays.asList("-dbtype", "prot", "-title", dbPath.getFileName().toString(), "-out", dbPath.toString()));
-        cmds.addAll(Arrays.asList("--db", dbPath.getFileName().toString(), "--out", dbPath.toString()+"_out"));
+        cmds.addAll(Arrays.asList("--db", dbPath.getFileName().toString(), "--out", dbPath +"_out"));
 
         ProcessBuilder pb = new ProcessBuilder(cmds);
         if(envMap!=null) Arrays.stream(envMap.split(",")).map(env -> env.split("=")).filter(s -> s.length==2).forEach(s -> pb.environment().put(s[0],s[1]));

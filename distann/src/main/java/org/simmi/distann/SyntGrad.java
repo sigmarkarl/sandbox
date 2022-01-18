@@ -207,7 +207,7 @@ public class SyntGrad {
                             List<Double> ratios = new ArrayList<>();
                             if( o1.getAnnotations() != null ) {
                                 for( Annotation ann : o1.getAnnotations() ) {
-                                	if(ann instanceof Tegeval) {
+                                	if(ann != null && ann instanceof Tegeval) {
 										Tegeval tv = (Tegeval) ann;
 										GeneGroup gg = tv.getGene().getGeneGroup();
 										double val = tv.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, -1.0, gg, tv) : -1;
@@ -221,7 +221,7 @@ public class SyntGrad {
                             ratios = new ArrayList<>();
                             if( o2.getAnnotations() != null ) {
                                 for( Annotation ann : o2.getAnnotations() ) {
-                                	if(ann instanceof Tegeval) {
+                                	if(ann != null && ann instanceof Tegeval) {
 										Tegeval tv = (Tegeval) ann;
 										GeneGroup gg = tv.getGene().getGeneGroup();
 										double val = tv.getGene() != null ? GeneCompare.invertedGradientRatio(spec1, contigs1, -1.0, gg, tv) : -1;

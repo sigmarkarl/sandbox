@@ -39,6 +39,7 @@ public class DiamondThread implements Callable<Optional<List<Set<String>>> > {
 						}*/
             ReduceClusters reduceCluster = new ReduceClusters();
             Optional<List<Set<String>>> ototali = repart.reduce(reduceCluster);
+            repart.close();
             return ototali;
             //return subpart;
         } catch (IOException | ExecutionException | InterruptedException e) {

@@ -10,7 +10,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class ClusterGenes implements MapFunction<String, String>, Function<String,Set<String>> {
+public class ClusterGenes implements MapFunction<String, String>, Function<String,Set<String>>, AutoCloseable {
     double id;
     double cmplen;
 
@@ -93,7 +93,8 @@ public class ClusterGenes implements MapFunction<String, String>, Function<Strin
                             queryLine(line);
                             break;
                         } else if (line.startsWith(">")) {
-                            StringBuilder trim = new StringBuilder(line.substring(1).trim());
+                            var hit = line.substring(1).trim();
+                            StringBuilder trim = new StringBuilder(hit);
                             line = br.readLine();
                             while (line != null && !line.startsWith("Length")) {
                                 trim.append(line);
@@ -224,6 +225,9 @@ public class ClusterGenes implements MapFunction<String, String>, Function<Strin
         //}
         //return all;*/
     }
+
+    @Override
+    public void close() {}
 
     @Override
     public String call(String input) throws Exception {
