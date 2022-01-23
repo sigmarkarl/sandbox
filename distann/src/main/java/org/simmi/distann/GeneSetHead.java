@@ -5176,6 +5176,34 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				frame.setVisible( true );*/
 		});
 		windowmenu.getItems().add( compareplotaction );
+
+		MenuItem loccompareplotaction = new MenuItem("Location Gene atlas");
+		loccompareplotaction.setOnAction( actionEvent -> {
+			SwingUtilities.invokeLater(() -> {
+				try {
+					new IGeneCompare().comparePlot( GeneSetHead.this, comp, geneset.genelist, geneset.clusterMap, 8192, 8192 );
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+			});
+
+				/*gatest("MAT4726");
+
+				final JFrame frame = new JFrame();
+				frame.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+				frame.setSize(800, 600);
+
+				final JComponent c = new JComponent() {
+					public void paintComponent( Graphics g ) {
+						g.drawImage(bimg, 0, 0, frame);
+					}
+				};
+				c.setPreferredSize( new Dimension(bimg.getWidth(), bimg.getHeight()) );
+				JScrollPane	scrollpane = new JScrollPane( c );
+				frame.add( scrollpane );
+				frame.setVisible( true );*/
+		});
+		windowmenu.getItems().add( loccompareplotaction );
 		
 		MenuItem syntenygradientaction = new MenuItem("Synteny gradient");
 		syntenygradientaction.setOnAction( actionEvent -> {
