@@ -2472,7 +2472,7 @@ public class GeneSetHead {
 							serifier.addSequence(seq);
 						} else if(toShow.contains(ToShow.IDS)) {
 							Sequence seq = dna ? tv.createSequence() : tv.getProteinSequence();
-							seq.setName( tv.getGeneGroup().getRefid() );
+							seq.setName( tv.getId() );
 							serifier.mseq.put( seq.getName(), seq );
 							//Sequence seq = new Sequence( tv.gene != null ? tv.gene.name : tv.name, seqstr, serifier.mseq );
 							serifier.addSequence(seq);
