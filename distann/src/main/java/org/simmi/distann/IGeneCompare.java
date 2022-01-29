@@ -1022,7 +1022,7 @@ public class IGeneCompare {
 								if( c2 != tv2.seq ) {
 									count2 += c2.length();
 								} else {
-									int idx = tv2.indexOf(); //c2.annset.indexOf( tv2 );
+									int idx = tv2.start; //c2.annset.indexOf( tv2 );
 									count2 += c2.isReverse() ? c2.length() - idx - 1 : idx;
 									break;
 								}
@@ -1037,7 +1037,7 @@ public class IGeneCompare {
 								if( c2 != tv2.seq ) {
 									count2 += c2.length();
 								} else {
-									int idx = tv2.indexOf(); //c2.annset.indexOf( tv2 );
+									int idx = tv2.start; //c2.annset.indexOf( tv2 );
 									count2 += c2.isReverse() ? c2.length() - idx - 1 : idx;
 									hit = c2;
 									break;
@@ -1071,7 +1071,7 @@ public class IGeneCompare {
 							if( ctg2 != tv2.seq ) {
 								count2 += ctg2.length();
 							} else {
-								int idx = tv2.indexOf();
+								int idx = tv2.start;
 								count2 += ctg2.isReverse() ? ctg2.length() - idx - 1 : idx;
 								hit = ctg2;
 								break;
@@ -1127,7 +1127,7 @@ public class IGeneCompare {
 									if( c2 != tv2.seq ) {
 										count2 += c2.length();
 									} else {
-										int idx = tv2.indexOf(); //c2.annset.indexOf( tv2 );
+										int idx = tv2.start; //c2.annset.indexOf( tv2 );
 										count2 += c2.isReverse() ? c2.length() - idx - 1 : idx;
 										break;
 									}
@@ -1142,7 +1142,7 @@ public class IGeneCompare {
 									if( c2 != tv2.seq ) {
 										count2 += c2.length();
 									} else {
-										int idx = tv2.indexOf(); //c2.annset.indexOf( tv2 );
+										int idx = tv2.start; //c2.annset.indexOf( tv2 );
 										count2 += c2.isReverse() ? c2.length() - idx - 1 : idx;
 										hit = c2;
 										break;
@@ -1177,7 +1177,7 @@ public class IGeneCompare {
 								if( ctg2 != tv2.seq ) {
 									count2 += ctg2.length();
 								} else {
-									int idx = tv2.indexOf(); //ctg2.annset.indexOf( tv2 );
+									int idx = tv2.start; //ctg2.annset.indexOf( tv2 );
 									count2 += ctg2.isReverse() ? ctg2.length() - idx - 1 : idx;
 									hit = ctg2;
 									break;
@@ -1230,7 +1230,7 @@ public class IGeneCompare {
 									if( c2 != tv2.seq ) {
 										count2 += c2.length();
 									} else {
-										int idx = tv2.indexOf();
+										int idx = tv2.start;
 										count2 += c2.isReverse() ? c2.length() - idx - 1 : idx;
 										break;
 									}
@@ -1277,7 +1277,7 @@ public class IGeneCompare {
 									if( c2 != tv2.seq ) {
 										count2 += c2.length();
 									} else {
-										int idx = tv2.indexOf();
+										int idx = tv2.start;
 										count2 += c2.isReverse() ? c2.length() - idx - 1 : idx;
 										hit = c2;
 										break;
@@ -1292,7 +1292,7 @@ public class IGeneCompare {
 								if( ctg2 != tv2.seq ) {
 									count2 += ctg2.length();
 								} else {
-									int idx = tv2.indexOf();
+									int idx = tv2.start;
 									count2 += ctg2.isReverse() ? ctg2.length() - idx - 1 : idx;
 									hit = ctg2;
 									break;
@@ -1852,16 +1852,15 @@ public class IGeneCompare {
 				Annotation prev = null;
 				if( ctg.annset != null ) {
 					if( ctg.isReverse() ) {
-						for( int i = ctg.annset.size()-1; i >= 0; i-- ) {
+						for( int i = 0; i < ctg.annset.size(); i++ ) {
 							Annotation tv = ctg.annset.get( i );
 							Sequence seq = tv.getAlignedSequence();
 							Gene gene = tv.getGene();
 							GeneGroup gg = gene != null ? gene.getGeneGroup() : null;
 
-							count = current + ctg.length() - tv.stop;
+							count = current + tv.start;
 							if( gg != null ) {
 								subDraw( g2, offsetMap, tv, prev, genesethead, spec1, count, ctg, spec2s, synbr, w, h, blosumap, gg, seq, total, ptotal );
-								break;
 							}
 							prev = tv;
 							/*} else {
@@ -1919,6 +1918,13 @@ public class IGeneCompare {
 		            g2.translate( -w/2, -h/2 );*/
 				}
 			}
+
+			g2.setColor(Color.white);
+			g2.translate( w/2, h/2 );
+			int blu = 500;
+			g2.fillArc(-blu,-blu,2*blu, 2*blu, 0, 360);
+			g2.translate( -w/2, -h/2 );
+
 			g2.setColor( Color.black );
 			
 			Font oldfont = g2.getFont().deriveFont( Font.ITALIC ).deriveFont(32.0f);
@@ -1960,6 +1966,8 @@ public class IGeneCompare {
 				k++;
 			}
 		}
+
+		//g2.fillRect(0,0,1000,1000);
 	}
 	
 	public void subDraw( Graphics2D g2, Map<String,Integer> offsetMap, Annotation tv, Annotation prev, GeneSetHead genesethead, String spec1, int count, Sequence ctg, List<String> spec2s, int synbr, int w, int h, Map<String,Integer> blosumap, GeneGroup gg, Sequence seq, int total, int ptotal ) {
@@ -2038,7 +2046,7 @@ public class IGeneCompare {
 		
 		//final ExecutorService es = Executors.newFixedThreadPool( Runtime.getRuntime().availableProcessors() );
 		
-		int scount = 0;
+		int scount = spec2s.size();
 		for( String spec2 : spec2s ) {
 			final List<Sequence> contigs2;
 			boolean speceq = false;
@@ -2103,8 +2111,9 @@ public class IGeneCompare {
 							if( scount == 0 ) {
 								if (isContigEnd(contigs2, ti)) {
 									g2.setColor(Color.black);
+									var rad = 500 + 30 * (scount - 1) + 10;
 									if( total + ptotal > 200 ) {
-										g2.fillRect(500 + 30 * (scount - 1) + 10, -1, 20, 3);
+										g2.fillRect(rad, -1, 20, 3);
 									} else {
 										g2.fillRect(500 + 30 * (scount - 1) + 10, -3, 20, 5);
 									}
@@ -2133,9 +2142,9 @@ public class IGeneCompare {
 					Color c = gradientColor( spec1, spec2, contigs2, ratio, pratio, offset2, gg, contiglanesb, tv );
 					g2.setColor( c );
 					
-					double theta = count*360.0/*Math.PI*2.0*//(total+ptotal);
-					//g2.translate( w/2, h/2 );
-					//g2.rotate( theta );
+					double theta = count*Math.PI*2.0/(total+ptotal);
+					g2.translate( w/2, h/2 );
+					g2.rotate( theta );
 					if( contiglanesb ) g2.fillRect( 300+30*(scount)+30*ctgoff, -1, 30, 2);
 					else {
 						// contig markers
@@ -2161,17 +2170,22 @@ public class IGeneCompare {
 							}
 						}
 
+						//g2.setColor(c);
 						int blu = 500+30*scount;
 						if( total + ptotal > 200 ) {
-							g2.drawArc(w/2-blu,h/2-blu,2*blu, 2*blu, (int)theta, (int)theta+1);
-							//g2.fillRect(500 + 30 * (scount), -1, 30, 3);
+							//int width = (int)(2*Math.PI*blu*tv.getLength()/(total+ptotal));
+							int width = (int)(360.0*tv.getLength()/(total+ptotal));
+							g2.fillArc(-blu,-blu,2*blu, 2*blu, 0, -width);
+							//g2.fillRect(500 + 30 * (scount), 0, 30, width);
+							if (tv.getGene()!=null) g2.drawString(tv.getGene().getGeneGroup().getName() + "("+tv.start+","+tv.stop+")", 500 + 30 * (scount)+100, 20);
 						} else {
-							g2.drawArc(w/2-blu,h/2-blu,2*blu, 2*blu, (int)theta, (int)theta+1);
+							int width = (int)(360.0*tv.getLength()/(total+ptotal));
+							g2.fillArc(-blu,-blu,2*blu, 2*blu, 0, -width);
 							//g2.fillRect(500 + 30 * (scount), -3, 30, 5);
 						}
 					}
-					//g2.rotate( -theta );
-                    //g2.translate( -w/2, -h/2 );
+					g2.rotate( -theta );
+                    g2.translate( -w/2, -h/2 );
                     
                     if( gg.species.size() == 1 ) {
                     	g2.setColor( Color.black );
@@ -2413,7 +2427,7 @@ public class IGeneCompare {
 			}
 			if( !speceq && contiglanesb ) {
 				scount += contigs2.size();
-			} else scount++;
+			} else scount--;
 		}
 	}
 	
