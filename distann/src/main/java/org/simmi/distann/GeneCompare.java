@@ -1677,21 +1677,22 @@ public class GeneCompare {
 			Color c = new Color(0,1.0f,(float)((1.0-ratio2)*2.0));
 			g2.setColor( c );
 		}*/
-		
+
+		float scaledown = 0.7f;
 		Color c = Color.white;
 		if( ratio >= 0.0 ) {
 			if( ratio < 1.0/6.0 ) {
-				c = new Color(0.0f,(float)(ratio*6.0),1.0f);
+				c = new Color(0.0f,scaledown*(float)(ratio*6.0),scaledown);
 			} else if( ratio < 2.0/6.0 ) {
-				c = new Color(0.0f,1.0f,(float)((2.0/6.0-ratio)*6.0));
+				c = new Color(0.0f,scaledown,scaledown*(float)((2.0/6.0-ratio)*6.0));
 			} else if( ratio < 3.0/6.0 ) {
-				c = new Color((float)((ratio-2.0/6.0)*6.0),1.0f,0.0f);
+				c = new Color(scaledown*(float)((ratio-2.0/6.0)*6.0),scaledown,0.0f);
 			} else if( ratio < 4.0/6.0 ) {
-				c = new Color(1.0f,(float)((4.0/6.0-ratio)*6.0),0.0f);
+				c = new Color(scaledown,scaledown*(float)((4.0/6.0-ratio)*6.0),0.0f);
 			} else if( ratio < 5.0/6.0 ) {
-				c = new Color(1.0f,0.0f,(float)((ratio-4.0/6.0)*6.0));
+				c = new Color(scaledown,0.0f,scaledown*(float)((ratio-4.0/6.0)*6.0));
 			} else if( ratio <= 1.0 ) {
-				c = new Color((float)((1.0-ratio)*6.0),0.0f,1.0f);
+				c = new Color(scaledown*(float)((1.0-ratio)*6.0),0.0f,scaledown);
 			}
 		} /*else if( ratio > 1.0 ) {
 			c = Color.red;
