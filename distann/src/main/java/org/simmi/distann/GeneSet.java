@@ -14,6 +14,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -8969,6 +8970,30 @@ public class GeneSet implements GenomeSet {
 		if( Files.exists( nf ) ) jgiGeneMap = jgiGeneMap( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)) );
 		nf = zipfilesystem.getPath("/ko.tab.txt");
 		if( Files.exists( nf ) ) jgiGene2KO( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)), jgiGeneMap, refmap );
+
+		nf = zipfilesystem.getPath("/neighbour.txt");
+		if( Files.exists( nf ) ) {
+			Files.lines(nf).forEach(l -> {
+				var split = l.split("\t");
+				var ctg = split[0];
+				if(contigmap.containsKey(ctg)) {
+					var contig = contigmap.get(ctg);
+					var inject = split[1].substring(1,split[1].length()-1).split(", ");
+					var treemap = new TreeMap<Integer,Integer>(Collections.reverseOrder());
+					Arrays.stream(inject).forEach(m -> {
+						var k = m.split("=");
+						treemap.put(Integer.parseInt(k[0]), Integer.parseInt(k[1]));
+					});
+					treemap.forEach((idx, cnt) -> {
+						for(int o = 0; o < cnt; o++) {
+							var tv = new Tegeval( null, 0.0, null, contig, 0, 0, 1, false );
+							contig.annset.add(idx, tv);
+						}
+					});
+				}
+			});
+		}
+
 		zipfilesystem.close();
 	}
 	

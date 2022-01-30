@@ -15,8 +15,10 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.geom.Arc2D;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
 
@@ -1857,6 +1859,9 @@ public class Neighbour {
 		final JButton	recenter = new JButton("Recenter");
 		final JButton	addrelated = new JButton("Add related");
 		final JButton	highrel = new JButton("Highlight related");
+
+		final JButton	clearInserts = new JButton("Clear");
+		final JButton	saveInserts = new JButton("Save");
 		
 		final JMenuBar	mbr = new JMenuBar();
 		final JMenu		seqsmenu = new JMenu("Show");
@@ -2399,6 +2404,57 @@ public class Neighbour {
 							te.setSelected( true );
 						}
 						c.repaint();
+					}
+				}
+			});
+			clearInserts.setAction( new AbstractAction("Clear") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					for (var seq : contigmap.values()) {
+						seq.annset.removeIf(a -> a.start==0 && a.stop==0 && a.getGene()==null);
+					}
+					c.repaint();
+				}
+			});
+			saveInserts.setAction( new AbstractAction("Save") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					Map<String,Map<Integer,Integer>> injectMap = new HashMap<>();
+					for(var seq : contigmap.values()) {
+						var seqid = seq.getName();
+						int k = 0;
+						for (Annotation a : seq.annset) {
+							if (a.start==0&&a.stop==0) {
+								var seqInjectMap = injectMap.computeIfAbsent(seqid, p -> new HashMap<>());
+								seqInjectMap.compute(k, (p,v) -> v == null ? 1 : v + 1);
+							} else {
+								k++;
+							}
+						}
+					}
+					if (injectMap.size()>0) {
+						try {
+							Map<String,String> env = new HashMap<>();
+							env.put("create", "true");
+
+							geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
+							for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
+								Path nbr = root.resolve("neighbour.txt");
+								var strb = new StringBuilder();
+								for(var k : injectMap.entrySet()) {
+									strb.append(k.getKey());
+									strb.append('\t');
+									strb.append(k.getValue());
+									strb.append('\n');
+								}
+								Files.writeString(nbr,strb.toString());
+								break;
+							}
+						} catch( Exception ex ) {
+							ex.printStackTrace();
+						} finally {
+							try{ geneset.zipfilesystem.close(); } catch( IOException ie ) { ie.printStackTrace(); };
+						}
 					}
 				}
 			});
@@ -3295,6 +3351,8 @@ public class Neighbour {
 		toolbar.add( recenter );
 		toolbar.add( addrelated );
 		toolbar.add( highrel );
+		toolbar.add( clearInserts );
+		toolbar.add( saveInserts );
 		toolbar.add( mbr );
 		toolbar.add( turn );
 		toolbar.add( names );

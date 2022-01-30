@@ -9303,6 +9303,25 @@ public class GeneSet {
 		if( Files.exists( nf ) ) jgiGeneMap = jgiGeneMap( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)) );
 		nf = zipfilesystem.getPath("/ko.tab.txt");
 		if( Files.exists( nf ) ) jgiGene2KO( new InputStreamReader(Files.newInputStream(nf, StandardOpenOption.READ)), jgiGeneMap, refmap );
+
+		nf = zipfilesystem.getPath("/neighbour.txt");
+		if( Files.exists( nf ) ) {
+			Files.lines(nf).forEach(l -> {
+				var split = l.split("\t");
+				var ctg = split[0];
+				if(configmap.containsKey(ctg)) {
+					var inject = split[1].substring(1,split[1].length-1).split(", ");
+					var treemap = new TreeMap<Integer,Integer>();
+					Arrays.stream(inject).forEach(l -> {
+						var k = l.split("=");
+						treemap.put(k[0], k[1]);
+					});
+
+
+				}
+			});
+		}
+
 		zipfilesystem.close();
 	}
 	
