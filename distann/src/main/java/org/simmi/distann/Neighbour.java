@@ -1290,7 +1290,8 @@ public class Neighbour {
 										g.setColor( rc );
 									}*/
 								}
-								
+
+								var prevColor = g.getColor();
 								boolean revis = (next.ori == -1) ^ next.getContig().isReverse();
 								int addon = revis ? -5 : 5;
 								int offset = revis ? 5 : 0;
@@ -1304,7 +1305,26 @@ public class Neighbour {
 								xPoints[5] = xoff+offset+addon; yPoints[5] = y * rowheight+2+(rowheight-4)/2;
 								g.fillPolygon(xPoints, yPoints, nPoints);
 
+								g.setColor( next.isSelected() ? Color.black : Color.gray );
+								g.drawPolygon(xPoints, yPoints, nPoints);
+								g.setColor( Color.black );
+
+								int strlen = g.getFontMetrics().stringWidth( genename );
+								int ostrlen = strlen;
+								var ogenename = genename;
+								while( strlen > len ) {
+									genename = genename.substring(0, genename.length()-1);
+									strlen = g.getFontMetrics().stringWidth( genename );
+								}
+
+								if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
+									if( relcol.isSelected() ) g.setColor( Color.white );
+									else g.setColor( Color.black );
+									g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheight-(int)(rowheight*0.3) );
+								}
+
 								if(circleView.isSelected()) {
+									g.setColor(prevColor);
 									int width = 400;
 									double div = 10000.0;
 									double theta = 2 * (xoff + offset - 5000) * Math.PI / div;
@@ -1315,96 +1335,95 @@ public class Neighbour {
 									g.translate(5000, 560);
 									//g.fillArc(-width+y*rowheight,-width+y*rowheight,width*2-y*rowheight*2,width*2-y*rowheight*2,(int)((xoff+offset-5000)/div), (int)((len)/div));
 
-									var arc = new Arc2D.Double(-width + y * rowheight, -width + y * rowheight, width * 2 - y * rowheight * 2, width * 2 - y * rowheight * 2, theta3, (len * 360.0 / div), Arc2D.PIE);
+									int orowheight = rowheight-2;
+									var arc = new Arc2D.Double(-width + y * rowheight +2, -width + y * rowheight +2, width * 2 - y * rowheight * 2 -4, width * 2 - y * rowheight * 2 -4, -theta3, -(len * 360.0 / div), Arc2D.PIE);
 									//g.fillArc(-width+y*rowheight,-width+y*rowheight,width*2-y*rowheight*2,width*2-y*rowheight*2,(int)((xoff+offset-5000)*360/div), (int)((len*360)/div));
 									g2.fill(arc);
-									var prevColor = g2.getColor();
 									g2.setColor(Color.darkGray);
-									var arco = new Arc2D.Double(-width + y * rowheight, -width + y * rowheight, width * 2 - y * rowheight * 2, width * 2 - y * rowheight * 2, theta3, (len * 360.0 / div), Arc2D.OPEN);
+									var arco = new Arc2D.Double(-width + y * rowheight +2, -width + y * rowheight +2, width * 2 - y * rowheight * 2 -4, width * 2 - y * rowheight * 2 -4, -theta3, -(len * 360.0 / div), Arc2D.OPEN);
 									g2.draw(arco);
 									int m = y+1;
-									var arcl = new Arc2D.Double(-width + m * rowheight, -width + m * rowheight, width * 2 - m * rowheight * 2, width * 2 - m * rowheight * 2, theta3, (len * 360.0 / div), Arc2D.OPEN);
+									var arcl = new Arc2D.Double(-width + m * rowheight, -width + m * rowheight, width * 2 - m * rowheight * 2, width * 2 - m * rowheight * 2, -theta3, -(len * 360.0 / div), Arc2D.OPEN);
 									g2.draw(arcl);
 									g2.setColor(prevColor);
 
-									g2.rotate(-ltheta);
+									g2.rotate(ltheta);
 									if (!revis) {
 										xlPoints[0] = width - y * rowheight;
 										ylPoints[0] = 0;
-										xlPoints[1] = width - y * rowheight - rowheight;
+										xlPoints[1] = width - y * rowheight - orowheight;
 										ylPoints[1] = 0;
-										xlPoints[2] = width - y * rowheight - rowheight / 2;
-										ylPoints[2] = -3;
-										g2.fillPolygon(xlPoints, ylPoints, nlPoints);
-										g2.setColor(Color.darkGray);
-										g2.drawLine(width - y * rowheight, 0, width - y * rowheight - rowheight/2, -3);
-										g2.drawLine(width - y * rowheight - rowheight/2, -3, width - y * rowheight - rowheight, 0);
-									} else {
-										g2.setColor(Color.white);
-										xlPoints[0] = width - y * rowheight;
-										ylPoints[0] = 0;
-										xlPoints[1] = width - y * rowheight - rowheight;
-										ylPoints[1] = 0;
-										xlPoints[2] = width - y * rowheight - rowheight / 2;
+										xlPoints[2] = width - y * rowheight - orowheight / 2;
 										ylPoints[2] = 3;
 										g2.fillPolygon(xlPoints, ylPoints, nlPoints);
 										g2.setColor(Color.darkGray);
-										g2.drawLine(width - y * rowheight, 0, width - y * rowheight - rowheight/2, 3);
-										g2.drawLine(width - y * rowheight - rowheight/2, 3, width - y * rowheight - rowheight, 0);
+										g2.drawLine(width - y * rowheight -2, 0, width - y * rowheight - orowheight/2 -2, 3);
+										g2.drawLine(width - y * rowheight - orowheight/2 -2, 3, width - y * rowheight - orowheight -2, 0);
+									} else {
+										g2.setColor(Color.white);
+										xlPoints[0] = width - y * rowheight -2;
+										ylPoints[0] = 0;
+										xlPoints[1] = width - y * rowheight - orowheight -2;
+										ylPoints[1] = 0;
+										xlPoints[2] = width - y * rowheight - orowheight / 2 -2;
+										ylPoints[2] = -3;
+										g2.fillPolygon(xlPoints, ylPoints, nlPoints);
+										g2.setColor(Color.darkGray);
+										g2.drawLine(width - y * rowheight -2, 0, width - y * rowheight - orowheight/2 -2, -3);
+										g2.drawLine(width - y * rowheight - orowheight/2 -2, -3, width - y * rowheight - orowheight -2, 0);
 									}
-									g2.rotate(ltheta);
+									g2.rotate(-ltheta);
 
-									g2.rotate(-theta);
+									g2.rotate(theta);
 									if(revis) {
 										g2.setColor(prevColor);
-										xlPoints[0] = width - y * rowheight;
+										xlPoints[0] = width - y * rowheight -2;
 										ylPoints[0] = 0;
-										xlPoints[1] = width - y * rowheight - rowheight;
+										xlPoints[1] = width - y * rowheight - orowheight -2;
 										ylPoints[1] = 0;
-										xlPoints[2] = width - y * rowheight - rowheight / 2;
-										ylPoints[2] = 3;
-										g2.fillPolygon(xlPoints, ylPoints, nlPoints);
-										g2.setColor(Color.darkGray);
-										g2.drawLine(width - y * rowheight, 0, width - y * rowheight - rowheight/2, 3);
-										g2.drawLine(width - y * rowheight - rowheight/2, 3, width - y * rowheight - rowheight, 0);
-									} else {
-										g2.setColor(Color.white);
-										xlPoints[0] = width - y * rowheight;
-										ylPoints[0] = 0;
-										xlPoints[1] = width - y * rowheight - rowheight;
-										ylPoints[1] = 0;
-										xlPoints[2] = width - y * rowheight - rowheight / 2;
+										xlPoints[2] = width - y * rowheight - orowheight / 2 -2;
 										ylPoints[2] = -3;
 										g2.fillPolygon(xlPoints, ylPoints, nlPoints);
 										g2.setColor(Color.darkGray);
-										g2.drawLine(width - y * rowheight, 0, width - y * rowheight - rowheight/2, -3);
-										g2.drawLine(width - y * rowheight - rowheight/2, -3, width - y * rowheight - rowheight, 0);
+										g2.drawLine(width - y * rowheight -2, 0, width - y * rowheight - orowheight/2 -2, -3);
+										g2.drawLine(width - y * rowheight - orowheight/2 -2, -3, width - y * rowheight - orowheight -2, 0);
+									} else {
+										g2.setColor(Color.white);
+										xlPoints[0] = width - y * rowheight -2;
+										ylPoints[0] = 0;
+										xlPoints[1] = width - y * rowheight - orowheight -2;
+										ylPoints[1] = 0;
+										xlPoints[2] = width - y * rowheight - orowheight / 2 -2;
+										ylPoints[2] = 3;
+										g2.fillPolygon(xlPoints, ylPoints, nlPoints);
+										g2.setColor(Color.darkGray);
+										g2.drawLine(width - y * rowheight -2, 0, width - y * rowheight - orowheight/2 -2, 3);
+										g2.drawLine(width - y * rowheight - orowheight/2 -2, 3, width - y * rowheight - orowheight -2, 0);
 									}
-									g2.rotate(theta);
+									g2.rotate(-theta);
+
+									if(y==0&&!ogenename.contains("hth")&&!ogenename.contains("contig")) {
+										g2.setColor(Color.darkGray);
+										var middle = -(theta + ltheta) / 2.0;
+										//g2.rotate(-middle);
+										int woff = width+10;
+										int xx = (int) (woff * Math.cos(middle));
+										int yy = -(int) (woff * Math.sin(middle));
+										g2.setFont( g.getFont().deriveFont((float)14.0) );
+										int nstrlen = g.getFontMetrics().stringWidth( ogenename );
+										if (xx>=0) g2.drawString(ogenename, xx, yy);
+										else g2.drawString(ogenename, xx-nstrlen,yy);
+										g2.setFont( g.getFont().deriveFont((float)fsize) );
+										//g2.rotate(middle);
+									}
 
 									g.setColor(Color.white);
 									m = y + 1;
 
-									arc = new Arc2D.Double(-width + m * rowheight, -width + m * rowheight, width * 2 - m * rowheight * 2, width * 2 - m * rowheight * 2, theta3, (len * 360.0) / div, Arc2D.PIE);
+									arc = new Arc2D.Double(-width + m * rowheight, -width + m * rowheight, width * 2 - m * rowheight * 2, width * 2 - m * rowheight * 2, -theta3, -(len * 360.0) / div, Arc2D.PIE);
 									g2.fill(arc);
 									//g.fillArc(-width+m*rowheight,-width+m*rowheight,width*2-m*rowheight*2,width*2-m*rowheight*2,(int)((xoff+offset-5000)/div), (int)((len)/div));
 									g.translate(-5000, -560);
-								}
-
-								g.setColor( next.isSelected() ? Color.black : Color.gray );
-								g.drawPolygon(xPoints, yPoints, nPoints);
-								g.setColor( Color.black );
-								
-								int strlen = g.getFontMetrics().stringWidth( genename );
-								while( strlen > len ) {
-									genename = genename.substring(0, genename.length()-1);
-									strlen = g.getFontMetrics().stringWidth( genename );
-								}
-								
-								if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
-									if( relcol.isSelected() ) g.setColor( Color.white );
-									else g.setColor( Color.black );
-									g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheight-(int)(rowheight*0.3) );
 								}
 							}
 						/*g.setColor( Color.green );
@@ -1640,7 +1659,8 @@ public class Neighbour {
 									g.setColor( rc );
 								}*/
 							}
-							
+
+							var prevColor = g.getColor();
 							boolean revis = (prev.ori == -1) ^ prev.getContig().isReverse();
 							int addon = revis ? -5 : 5;
 							int offset = revis ? 5 : 0;
@@ -1653,7 +1673,26 @@ public class Neighbour {
 							xPoints[5] = xoff+offset+addon; yPoints[5] = y * rowheight+2+(rowheight-4)/2;
 							g.fillPolygon(xPoints, yPoints, nPoints);
 
+							g.setColor( prev.isSelected() ? Color.black : Color.gray );
+							g.drawPolygon(xPoints, yPoints, nPoints);
+							g.setColor( Color.black );
+
+							int strlen = g.getFontMetrics().stringWidth( genename );
+							int ostrlen = strlen;
+							var ogenename = genename;
+							while( strlen > len ) {
+								genename = genename.substring(0, genename.length()-1);
+								strlen = g.getFontMetrics().stringWidth( genename );
+							}
+
+							if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
+								if( relcol.isSelected() ) g.setColor( Color.white );
+								g.setColor( Color.black );
+								g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheight-(int)(rowheight*0.3) );
+							}
+
 							if (circleView.isSelected()) {
+								g.setColor(prevColor);
 								int width = 400;
 								double div = 10000.0;
 								double theta = 2 * (xoff + offset - 5000) * Math.PI / div;
@@ -1668,97 +1707,96 @@ public class Neighbour {
 								g.translate(5000, 560);
 
 								//g2.setStroke(STROKE);
-								var arc = new Arc2D.Double(-width + y * rowheight, -width + y * rowheight, width * 2 - y * rowheight * 2, width * 2 - y * rowheight * 2, theta3, (len * 360.0 / div), Arc2D.PIE);
+								var arc = new Arc2D.Double(-width + y * rowheight +2, -width + y * rowheight +2, width * 2 - y * rowheight * 2 -4, width * 2 - y * rowheight * 2 -4, -theta3, -(len * 360.0 / div), Arc2D.PIE);
 								//g.fillArc(-width+y*rowheight,-width+y*rowheight,width*2-y*rowheight*2,width*2-y*rowheight*2,(int)((xoff+offset-5000)*360/div), (int)((len*360)/div));
 								g2.fill(arc);
-								var prevColor = g2.getColor();
 								g2.setColor(Color.darkGray);
-								var arco = new Arc2D.Double(-width + y * rowheight, -width + y * rowheight, width * 2 - y * rowheight * 2, width * 2 - y * rowheight * 2, theta3, (len * 360.0 / div), Arc2D.OPEN);
+								var arco = new Arc2D.Double(-width + y * rowheight +2, -width + y * rowheight +2, width * 2 - y * rowheight * 2 -4, width * 2 - y * rowheight * 2 -4, -theta3, -(len * 360.0 / div), Arc2D.OPEN);
 								g2.draw(arco);
 								int m = y+1;
-								var arcl = new Arc2D.Double(-width + m * rowheight, -width + m * rowheight, width * 2 - m * rowheight * 2, width * 2 - m * rowheight * 2, theta3, (len * 360.0 / div), Arc2D.OPEN);
+								var arcl = new Arc2D.Double(-width + m * rowheight, -width + m * rowheight, width * 2 - m * rowheight * 2, width * 2 - m * rowheight * 2, -theta3, -(len * 360.0 / div), Arc2D.OPEN);
 								g2.draw(arcl);
 								g2.setColor(prevColor);
 
-								g2.rotate(-ltheta);
+								int orowheight = rowheight-2;
+								g2.rotate(ltheta);
 								if (!revis) {
-									xlPoints[0] = width - y * rowheight;
+									xlPoints[0] = width - y * rowheight -2;
 									ylPoints[0] = 0;
-									xlPoints[1] = width - y * rowheight - rowheight;
+									xlPoints[1] = width - y * rowheight - orowheight -2;
 									ylPoints[1] = 0;
-									xlPoints[2] = width - y * rowheight - rowheight / 2;
-									ylPoints[2] = -3;
-									g2.fillPolygon(xlPoints, ylPoints, nlPoints);
-									g2.setColor(Color.darkGray);
-									g2.drawLine(width - y * rowheight, 0, width - y * rowheight - rowheight/2, -3);
-									g2.drawLine(width - y * rowheight - rowheight/2, -3, width - y * rowheight - rowheight, 0);
-								} else {
-									g2.setColor(Color.white);
-									xlPoints[0] = width - y * rowheight;
-									ylPoints[0] = 0;
-									xlPoints[1] = width - y * rowheight - rowheight;
-									ylPoints[1] = 0;
-									xlPoints[2] = width - y * rowheight - rowheight / 2;
+									xlPoints[2] = width - y * rowheight - orowheight / 2 -2;
 									ylPoints[2] = 3;
 									g2.fillPolygon(xlPoints, ylPoints, nlPoints);
 									g2.setColor(Color.darkGray);
-									g2.drawLine(width - y * rowheight, 0, width - y * rowheight - rowheight/2, 3);
-									g2.drawLine(width - y * rowheight - rowheight/2, 3, width - y * rowheight - rowheight, 0);
+									g2.drawLine(width - y * rowheight -2, 0, width - y * rowheight - orowheight/2 -2, 3);
+									g2.drawLine(width - y * rowheight - orowheight/2 -2, 3, width - y * rowheight - orowheight -2, 0);
+								} else {
+									g2.setColor(Color.white);
+									xlPoints[0] = width - y * rowheight -2;
+									ylPoints[0] = 0;
+									xlPoints[1] = width - y * rowheight - orowheight -2;
+									ylPoints[1] = 0;
+									xlPoints[2] = width - y * rowheight - orowheight / 2 -2;
+									ylPoints[2] = -3;
+									g2.fillPolygon(xlPoints, ylPoints, nlPoints);
+									g2.setColor(Color.darkGray);
+									g2.drawLine(width - y * rowheight -2, 0, width - y * rowheight - orowheight/2 -2, -3);
+									g2.drawLine(width - y * rowheight - orowheight/2 -2, -3, width - y * rowheight - orowheight -2, 0);
 								}
-								g2.rotate(ltheta);
+								g2.rotate(-ltheta);
 
-								g2.rotate(-theta);
+								g2.rotate(theta);
 								if(revis) {
 									g2.setColor(prevColor);
-									xlPoints[0] = width - y * rowheight;
+									xlPoints[0] = width - y * rowheight -2;
 									ylPoints[0] = 0;
-									xlPoints[1] = width - y * rowheight - rowheight;
+									xlPoints[1] = width - y * rowheight - orowheight -2;
 									ylPoints[1] = 0;
-									xlPoints[2] = width - y * rowheight - rowheight / 2;
-									ylPoints[2] = 3;
-									g2.fillPolygon(xlPoints, ylPoints, nlPoints);
-									g2.setColor(Color.darkGray);
-									g2.drawLine(width - y * rowheight, 0, width - y * rowheight - rowheight/2, 3);
-									g2.drawLine(width - y * rowheight - rowheight/2, 3, width - y * rowheight - rowheight, 0);
-								} else {
-									g2.setColor(Color.white);
-									xlPoints[0] = width - y * rowheight;
-									ylPoints[0] = 0;
-									xlPoints[1] = width - y * rowheight - rowheight;
-									ylPoints[1] = 0;
-									xlPoints[2] = width - y * rowheight - rowheight / 2;
+									xlPoints[2] = width - y * rowheight - orowheight / 2 -2;
 									ylPoints[2] = -3;
 									g2.fillPolygon(xlPoints, ylPoints, nlPoints);
 									g2.setColor(Color.darkGray);
-									g2.drawLine(width - y * rowheight, 0, width - y * rowheight - rowheight/2, -3);
-									g2.drawLine(width - y * rowheight - rowheight/2, -3, width - y * rowheight - rowheight, 0);
+									g2.drawLine(width - y * rowheight -2, 0, width - y * rowheight - orowheight/2 -2, -3);
+									g2.drawLine(width - y * rowheight - orowheight/2 -2, -3, width - y * rowheight - orowheight -2, 0);
+								} else {
+									g2.setColor(Color.white);
+									xlPoints[0] = width - y * rowheight -2;
+									ylPoints[0] = 0;
+									xlPoints[1] = width - y * rowheight - orowheight -2;
+									ylPoints[1] = 0;
+									xlPoints[2] = width - y * rowheight - orowheight / 2 -2;
+									ylPoints[2] = 3;
+									g2.fillPolygon(xlPoints, ylPoints, nlPoints);
+									g2.setColor(Color.darkGray);
+									g2.drawLine(width - y * rowheight -2, 0, width - y * rowheight - orowheight/2 -2, 3);
+									g2.drawLine(width - y * rowheight - orowheight/2 -2, 3, width - y * rowheight - orowheight -2, 0);
 								}
-								g2.rotate(theta);
+								g2.rotate(-theta);
+
+								if (y==0&&!ogenename.contains("hth")&&!ogenename.contains("contig")) {
+									g2.setColor(Color.darkGray);
+									var middle = -(theta + ltheta) / 2.0;
+									//g2.rotate(-middle);
+									int woff = width + 10;
+									int xx = (int) (woff * Math.cos(middle));
+									int yy = -(int) (woff * Math.sin(middle));
+									g2.setFont( g.getFont().deriveFont((float)14.0) );
+									int nstrlen = g.getFontMetrics().stringWidth( ogenename );
+									if (xx>=0) g2.drawString(ogenename, xx, yy);
+									else g2.drawString(ogenename, xx-nstrlen,yy);
+									g2.setFont( g.getFont().deriveFont((float)fsize) );
+									//g2.rotate(middle);
+								}
 
 								g.setColor(Color.white);
 								m = y + 1;
 
-								arc = new Arc2D.Double(-width + m * rowheight, -width + m * rowheight, width * 2 - m * rowheight * 2, width * 2 - m * rowheight * 2, theta3, (len * 360.0) / div, Arc2D.PIE);
+								arc = new Arc2D.Double(-width + m * rowheight, -width + m * rowheight, width * 2 - m * rowheight * 2, width * 2 - m * rowheight * 2, -theta3, -(len * 360.0) / div, Arc2D.PIE);
 								g2.fill(arc);
 								//g.fillArc(-width+m*rowheight,-width+m*rowheight,width*2-m*rowheight*2,width*2-m*rowheight*2, (xoff+offset-5000)*360/div, (len*360)/div);
 
 								g.translate(-5000, -560);
-							}
-
-							g.setColor( prev.isSelected() ? Color.black : Color.gray );
-							g.drawPolygon(xPoints, yPoints, nPoints);
-							g.setColor( Color.black );
-							
-							int strlen = g.getFontMetrics().stringWidth( genename );
-							while( strlen > len ) {
-								genename = genename.substring(0, genename.length()-1);
-								strlen = g.getFontMetrics().stringWidth( genename );
-							}
-							
-							if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
-								if( relcol.isSelected() ) g.setColor( Color.white );
-								g.setColor( Color.black );
-								g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheight-(int)(rowheight*0.3) );
 							}
 						}
 					}
@@ -1797,6 +1835,32 @@ public class Neighbour {
 					//if( te.getLength() > max ) max = te.getLength();
 				}
 			}
+		}
+
+		if(circleView.isSelected()) {
+			Graphics2D g2 = (Graphics2D) g;
+			g.translate(5000, 560);
+
+			g2.setColor(Color.white);
+			int y = 6;
+			int width = 400;
+			//g2.setStroke(STROKE);
+			var arc = new Arc2D.Double(-width + y * rowheight +2, -width + y * rowheight +2, width * 2 - y * rowheight * 2 -4, width * 2 - y * rowheight * 2 -4, 0, 360.0, Arc2D.PIE);
+			//g.fillArc(-width+y*rowheight,-width+y*rowheight,width*2-y*rowheight*2,width*2-y*rowheight*2,(int)((xoff+offset-5000)*360/div), (int)((len*360)/div));
+			g2.fill(arc);
+			g2.setColor(Color.black);
+			g2.setFont(g.getFont().deriveFont((float)20));
+			for(int i = 0; i < rowheader.getRowCount(); i++) {
+				var row = rowheader.convertRowIndexToModel( i );
+				var spec = (String)rowheader.getValueAt(row,0);
+				if(!spec.contains("Thermus")) spec = "Thermus phage "+spec;
+				spec = spec.replace('_',' ');
+				var strlen = g2.getFontMetrics().stringWidth(spec);
+				g2.drawString(spec, 0-strlen/2, i*20-60);
+			}
+			g2.setFont(g.getFont().deriveFont((float)fsize));
+
+			g.translate(-5000,-560);
 		}
 	}
 	
@@ -1856,6 +1920,8 @@ public class Neighbour {
 		
 		final JButton	zoomIn = new JButton("+");
 		final JButton	zoomOut = new JButton("-");
+		final JButton	zoomInSmall = new JButton("++");
+		final JButton	zoomOutSmall = new JButton("--");
 		final JButton	recenter = new JButton("Recenter");
 		final JButton	addrelated = new JButton("Add related");
 		final JButton	highrel = new JButton("Highlight related");
@@ -2301,6 +2367,21 @@ public class Neighbour {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					neighbourscale *= 0.8;
+					c.repaint();
+				}
+			});
+
+			zoomInSmall.setAction( new AbstractAction("++") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					neighbourscale *= 1.004;
+					c.repaint();
+				}
+			});
+			zoomOutSmall.setAction( new AbstractAction("--") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					neighbourscale *= 0.9765625;
 					c.repaint();
 				}
 			});
@@ -3344,6 +3425,8 @@ public class Neighbour {
 		toolbar.add( circleView );
 		toolbar.add( zoomIn );
 		toolbar.add( zoomOut );
+		toolbar.add( zoomInSmall );
+		toolbar.add( zoomOutSmall );
 		toolbar.add( backTen );
 		toolbar.add( back );
 		toolbar.add( forw );

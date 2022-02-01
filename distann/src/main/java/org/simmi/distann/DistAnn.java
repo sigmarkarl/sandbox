@@ -54,7 +54,7 @@ public class DistAnn extends JPanel {
 		String	e_name;
 		String	admin;
 		Date	date;
-		List<Fasta>	fastalist = new ArrayList<Fasta>();
+		List<Fasta>	fastalist = new ArrayList<>();
 		
 		public Project() {
 			
