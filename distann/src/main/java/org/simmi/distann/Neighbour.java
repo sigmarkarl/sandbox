@@ -2381,7 +2381,7 @@ public class Neighbour {
 			zoomOutSmall.setAction( new AbstractAction("--") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					neighbourscale *= 0.9765625;
+					neighbourscale *= 0.9960159362549801;
 					c.repaint();
 				}
 			});

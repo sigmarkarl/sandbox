@@ -5798,7 +5798,7 @@ public class GeneSet implements GenomeSet {
 						int stop = Integer.parseInt(subspl[1].trim());
 						for (var seq : seqlist) {
 							for (var a : seq.annset) {
-								if ((a.start > start - 2 && a.start < start + 2) || (a.getLength()-a.stop > start - 2 && a.getLength()-a.stop < start + 2)) {
+								if ((a.start > start - 2 && a.start < start + 2) || (seq.length()-a.stop > start - 2 && seq.length()-a.stop < start + 2)) {
 									a.designation = "express";
 									if (a.getId() != null) designations.put(a.getId(), "express");
 									break;

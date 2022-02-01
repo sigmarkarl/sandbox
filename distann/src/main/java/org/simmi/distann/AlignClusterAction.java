@@ -78,7 +78,7 @@ public class AlignClusterAction implements EventHandler<ActionEvent> {
                         e.printStackTrace();
                         return null;//e.printStackTrace();
                     }
-                }).filter(Objects::nonNull).forEach(s -> rmap.put(s._1, s._2));
+                }).filter(Objects::nonNull).filter(s -> s._1!=null).forEach(s -> rmap.put(s._1, s._2));
                 resmap = rmap;
             } catch(Exception e) {
                 var baos = new ByteArrayOutputStream();
