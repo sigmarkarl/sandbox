@@ -6757,6 +6757,34 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				org.apache.poi.ss.usermodel.Cell cell = header.createCell(cn++);
 				cell.setCellValue( tc.getText() );
 			}
+
+			int rc = 1;
+			Row row = sheet.createRow(rc++);
+			XSSFCellStyle cellstyle = (XSSFCellStyle) workbook.createCellStyle();
+			cellstyle.setFillBackgroundColor( new XSSFColor(new Color(0,128,0)) );
+			for( int r : gtable.getSelectionModel().getSelectedIndices() ) {
+				cn = 0;
+				for( TableColumn tc : gtable.getColumns() ) {
+					Object o = tc.getCellData(r);
+					if( o != null ) {
+						org.apache.poi.ss.usermodel.Cell cell = row.createCell(cn);
+						cell.setCellValue( o.toString() );
+						//XSSFCellStyle cellstyle = (XSSFCellStyle) workbook.createCellStyle();
+						//cellstyle.setFillBackgroundColor( new XSSFColor(new Color(0,128,0)) );
+					}
+					cn++;
+				}
+				for( TableColumn tc : gresults.getColumns() ) {
+					Object o = tc.getCellData(r);
+					if( o != null ) {
+						org.apache.poi.ss.usermodel.Cell cell = row.createCell(cn);
+						cell.setCellValue( o.toString() );
+						cell.setCellStyle(cellstyle);
+					}
+					cn++;
+				}
+				row = sheet.createRow(rc++);
+			}
 		} else {
 			int cn = 0;
 			for( TableColumn tc : table.getColumns() ) {
