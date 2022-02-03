@@ -741,14 +741,13 @@ public class GeneSetHead {
 			ObservableList<Gene> ogene = FXCollections.observableList( geneset.genelist );
 			geneFilteredList = new FilteredList<>(ogene, p -> true);
 			geneSortedList = new SortedList<>( geneFilteredList );
-			geneSortedList.comparatorProperty().bind(gtable.comparatorProperty());
 
-			gresults.setOnMouseClicked(event -> {
+			/*gresults.setOnMouseClicked(event -> {
 				geneSortedList.comparatorProperty().bind(gresults.comparatorProperty());
 			});
 			gtable.setOnMouseClicked(event -> {
 				geneSortedList.comparatorProperty().bind(gtable.comparatorProperty());
-			});
+			});*/
 
 			/*gresults.getFocusModel().focusedItemProperty().addListener((observable, oldValue, newValue) -> {
 				geneSortedList.comparatorProperty().bind(gresults.comparatorProperty());
@@ -764,9 +763,23 @@ public class GeneSetHead {
 			gscrollBarOne.valueProperty().bindBidirectional(gscrollBarTwo.valueProperty());
 			gresults.selectionModelProperty().bindBidirectional(gtable.selectionModelProperty());*/
 
+			gresults.setOnMouseClicked(event -> {
+				var y = event.getY();
+				if (y<27) geneSortedList.comparatorProperty().bind(gresults.comparatorProperty());
+			});
+			gtable.setOnMouseClicked(event -> {
+				var y = event.getY();
+				if (y<27) geneSortedList.comparatorProperty().bind(gtable.comparatorProperty());
+			});
+
 			gtable.setItems( geneSortedList );
 			gresults.setItems( geneSortedList );
-			
+
+			geneSortedList.comparatorProperty().bind(gtable.comparatorProperty());
+
+			scrollBarOne.setVisible(false);
+			scrollBarOne.setMaxWidth(0.0);
+
 			int me = 0;
 			int mu = 0;
 			for( Gene g : geneset.genelist ) {
@@ -3675,10 +3688,18 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			splitpane.getItems().add( 0, gsplit );
 			//table.setModel( defaultModel );
 
-			ScrollBar gscrollBarOne = (ScrollBar)gtable.lookup(".scroll-bar:vertical");
+			var scrollBarOne = (ScrollBar)gtable.lookup(".scroll-bar:vertical");
+			var scrollBarTwo = (ScrollBar)gresults.lookup(".scroll-bar:vertical");
+			if (scrollBarOne!=null && scrollBarTwo!=null) {
+				scrollBarOne.valueProperty().bindBidirectional(scrollBarTwo.valueProperty());
+				scrollBarOne.setVisible(false);
+				scrollBarOne.setMaxWidth(0.0);
+			}
+			gresults.selectionModelProperty().bindBidirectional(gtable.selectionModelProperty());
+			/*ScrollBar gscrollBarOne = (ScrollBar)gtable.lookup(".scroll-bar:vertical");
 			ScrollBar gscrollBarTwo = (ScrollBar)gresults.lookup(".scroll-bar:vertical");
 			gscrollBarOne.valueProperty().bindBidirectional(gscrollBarTwo.valueProperty());
-			gresults.selectionModelProperty().bindBidirectional(gtable.selectionModelProperty());
+			gresults.selectionModelProperty().bindBidirectional(gtable.selectionModelProperty());*/
 		});
 		view.getItems().add( gb );
 		ggb = new RadioMenuItem("Gene groups");
@@ -7690,6 +7711,9 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		TableColumn<Gene, String> gunidcol = new TableColumn("Unid");
 		gunidcol.setCellValueFactory( new PropertyValueFactory<>("unid"));
 		gtable.getColumns().add( gunidcol );
+		TableColumn<Gene, String> gdescol = new TableColumn("Designation");
+		gdescol.setCellValueFactory( new PropertyValueFactory<>("designation"));
+		gtable.getColumns().add( gdescol );
 		TableColumn<Gene, String> gkeggidcol = new TableColumn("Keggid");
 		gkeggidcol.setCellValueFactory( new PropertyValueFactory<>("keggid"));
 		gtable.getColumns().add( gkeggidcol );

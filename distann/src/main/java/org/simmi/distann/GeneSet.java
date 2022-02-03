@@ -5796,9 +5796,14 @@ public class GeneSet implements GenomeSet {
 					if (subspl.length > 1) {
 						int start = Integer.parseInt(subspl[0].trim());
 						int stop = Integer.parseInt(subspl[1].trim());
+						int skekk = 5;
 						for (var seq : seqlist) {
 							for (var a : seq.annset) {
-								if ((a.start > start - 2 && a.start < start + 2) || (seq.length()-a.stop > start - 2 && seq.length()-a.stop < start + 2)) {
+								if ((a.start > start - skekk && a.start < start + skekk)
+										|| (seq.length()-a.stop > start - skekk && seq.length()-a.stop < start + skekk)
+										|| (seq.length()-a.start > start - skekk && seq.length()-a.start < start + skekk)
+										|| (seq.length()-a.stop > stop - skekk && seq.length()-a.stop < stop + skekk)
+										|| (seq.length()-a.start > stop - skekk && seq.length()-a.start < stop + skekk)) {
 									a.designation = "express";
 									if (a.getId() != null) designations.put(a.getId(), "express");
 									break;
