@@ -1674,7 +1674,7 @@ public class GeneSet implements GenomeSet {
 		Graphics2D g2 = (Graphics2D) bi.getGraphics();
 		int mstrw = 0;
 		for (String spec : specset) {
-			String spc = nameFix( spec );
+			String spc = spec;//nameFix( spec );
 			int tstrw = g2.getFontMetrics().stringWidth(spc);
 			if (tstrw > mstrw)
 				mstrw = tstrw;
@@ -5694,7 +5694,7 @@ public class GeneSet implements GenomeSet {
 
 		int count = 0;
 		int tcount = 0;
-		Set<String> regset = new HashSet<String>();
+		Set<String> regset = new HashSet<>();
 		String last = "";
 		String lastline = "";
 		String lastsp = "";
@@ -5791,6 +5791,7 @@ public class GeneSet implements GenomeSet {
 			while (line != null) {
 				String[] split = line.split("\t");
 				if (split.length > 1) {
+					var name = split[0];
 					var subspl = split[1].split("-");
 					if (subspl.length < 2) subspl = split[1].split("–");
 					if (subspl.length > 1) {
@@ -5799,14 +5800,35 @@ public class GeneSet implements GenomeSet {
 						int skekk = 5;
 						for (var seq : seqlist) {
 							for (var a : seq.annset) {
-								if ((a.start > start - skekk && a.start < start + skekk)
-										|| (seq.length()-a.stop > start - skekk && seq.length()-a.stop < start + skekk)
-										|| (seq.length()-a.start > start - skekk && seq.length()-a.start < start + skekk)
-										|| (seq.length()-a.stop > stop - skekk && seq.length()-a.stop < stop + skekk)
-										|| (seq.length()-a.start > stop - skekk && seq.length()-a.start < stop + skekk)) {
-									a.designation = "express";
-									if (a.getId() != null) designations.put(a.getId(), "express");
-									break;
+								int rstart = seq.length() - a.stop;
+								int rstop = seq.length() - a.start;
+								int mistart = start-skekk;
+								int mistop = stop-skekk;
+								int mastart = start+skekk;
+								int mastop = stop+skekk;
+								if (//(a.start > start - skekk && a.start < mastart)
+										   (rstart > mistart && rstart < mastart)
+										|| (rstop > mistop && rstop < mastop))
+										//|| (rstart > mistop && rstart < mastop)
+										//|| (rstop > mistart && rstop < mastart))
+								{
+									//if() {
+										var expr = "express-" + name;
+										System.err.println(a.getName());
+										System.err.println(a.getId());
+										if(rstart > mistart && rstart < mastart) System.err.println("one");
+										if(rstop > mistop && rstop < mastop) System.err.println("two");
+										//if(rstart > mistop && rstart < mastop) System.err.println("three");
+										//if(rstop > mistart && rstop < mastart) System.err.println("four");
+										System.err.println(expr);
+										System.err.println(seq.length());
+										System.err.println(start + "  " + stop);
+										System.err.println((seq.length() - a.start) + "  " + (seq.length() - a.stop));
+										if (a.designation != null && a.designation.length() > 0)
+											expr += ";" + a.designation;
+										a.designation = expr;
+										if (a.getId() != null) designations.put(a.getId(), expr);
+									//}
 								}
 							}
 						}
