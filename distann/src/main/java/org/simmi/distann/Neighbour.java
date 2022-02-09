@@ -593,7 +593,13 @@ public class Neighbour {
 								}
 							} else if( designcol.isSelected() ) {
 								if( next != null && next.designation != null && next.designation.length() > 0 ) {
-									g.setColor(Color.red);
+									var d = next.designation;
+									if (d.equals("DNA replication")) g.setColor(new Color(0.2f,0.7f,0.2f));
+									else if (d.equals("DNA metabolism")) g.setColor(new Color(0.2f,0.2f,0.7f));
+									else if (d.equals("Lysis module")) g.setColor(new Color(0.2f,0.7f,0.7f));
+									else if (d.equals("DNA packaging")) g.setColor(new Color(0.7f,0.2f,0.7f));
+									else if (d.equals("Head and tail morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
+									else g.setColor(new Color(0.7f,0.2f,0.2f));
 								} else {
 									g.setColor( Color.white );
 								}
@@ -769,9 +775,17 @@ public class Neighbour {
 							}
 							
 							if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
-								if( relcol.isSelected() ) g.setColor( Color.white );
-								else g.setColor( Color.black );
-								g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheight-(int)(rowheight*0.3) );
+								if (!vertNames.isSelected()) {
+									if (relcol.isSelected()) g.setColor(Color.white);
+									else g.setColor(Color.black);
+									g.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
+								} else if (i == 6 && !genename.contains("hypoth")) {
+									int xx = 5 + xoff + (int) (len - strlen) / 2;
+									int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
+									g.translate(xx, yy);
+									g.drawString(genename, 0, 0);
+									g.translate(-xx, -yy);
+								}
 							}
 						}
 						//}
@@ -936,7 +950,13 @@ public class Neighbour {
 								if (rc != null) g.setColor(rc);
 							} else if( designcol.isSelected() ) {
 								if( prev != null && prev.designation != null && prev.designation.length() > 0 ) {
-									g.setColor(Color.red);
+									var d = prev.designation;
+									if (d.equals("DNA replication")) g.setColor(new Color(0.2f,0.7f,0.2f));
+									else if (d.equals("DNA metabolism")) g.setColor(new Color(0.2f,0.2f,0.7f));
+									else if (d.equals("Lysis module")) g.setColor(new Color(0.2f,0.7f,0.7f));
+									else if (d.equals("DNA packaging")) g.setColor(new Color(0.7f,0.2f,0.7f));
+									else if (d.equals("Head and tail morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
+									else g.setColor(new Color(0.7f,0.2f,0.2f));
 								} else {
 									g.setColor( Color.white );
 								}
@@ -1082,9 +1102,17 @@ public class Neighbour {
 							}
 							
 							if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
-								if( relcol.isSelected() ) g.setColor( Color.white );
-								else g.setColor( Color.black );
-								g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheight-(int)(rowheight*0.3) );
+								if (!vertNames.isSelected()) {
+									if (relcol.isSelected()) g.setColor(Color.white);
+									else g.setColor(Color.black);
+									g.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
+								} else if (i == 6 && !genename.contains("hypoth")) {
+									int xx = 5 + xoff + (int) (len - strlen) / 2;
+									int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
+									g.translate(xx, yy);
+									g.drawString(genename, 0, 0);
+									g.translate(-xx, -yy);
+								}
 							}
 						}
 						//}
@@ -1210,7 +1238,13 @@ public class Neighbour {
 									if (rc != null) g.setColor(rc);
 								} else if( designcol.isSelected() ) {
 									if( next != null && next.designation != null && next.designation.length() > 0 ) {
-										g.setColor(Color.red);
+										var d = next.designation;
+										if (d.equals("DNA replication")) g.setColor(new Color(0.2f,0.7f,0.2f));
+										else if (d.equals("DNA metabolism")) g.setColor(new Color(0.2f,0.2f,0.7f));
+										else if (d.equals("Lysis module")) g.setColor(new Color(0.2f,0.7f,0.7f));
+										else if (d.equals("DNA packaging")) g.setColor(new Color(0.7f,0.2f,0.7f));
+										else if (d.equals("Head and tail morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
+										else g.setColor(new Color(0.7f,0.2f,0.2f));
 									} else {
 										g.setColor( Color.white );
 									}
@@ -1318,9 +1352,18 @@ public class Neighbour {
 								}
 
 								if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
-									if( relcol.isSelected() ) g.setColor( Color.white );
-									else g.setColor( Color.black );
-									g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheight-(int)(rowheight*0.3) );
+									if (!vertNames.isSelected()) {
+										if (relcol.isSelected()) g.setColor(Color.white);
+										else g.setColor(Color.black);
+										g.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
+									} else if (i == 6 && !genename.contains("hypoth")) {
+										int xx = 5 + xoff + (int) (len - strlen) / 2;
+										int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
+										g.translate(xx, yy);
+										g.rotate(Math);
+										g.drawString(genename, 0, 0);
+										g.translate(-xx, -yy);
+									}
 								}
 
 								if(circleView.isSelected()) {
@@ -1581,7 +1624,13 @@ public class Neighbour {
 								g.setColor(rc);
 							} else if( designcol.isSelected() ) {
 								if( prev != null && prev.designation != null && prev.designation.length() > 0 ) {
-									g.setColor(Color.red);
+									var d = prev.designation;
+									if (d.equals("DNA replication")) g.setColor(new Color(0.2f,0.7f,0.2f));
+									else if (d.equals("DNA metabolism")) g.setColor(new Color(0.2f,0.2f,0.7f));
+									else if (d.equals("Lysis module")) g.setColor(new Color(0.2f,0.7f,0.7f));
+									else if (d.equals("DNA packaging")) g.setColor(new Color(0.7f,0.2f,0.7f));
+									else if (d.equals("Head and tail morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
+									else g.setColor(new Color(0.7f,0.2f,0.2f));
 								} else {
 									g.setColor( Color.white );
 								}
@@ -1686,9 +1735,21 @@ public class Neighbour {
 							}
 
 							if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
-								if( relcol.isSelected() ) g.setColor( Color.white );
-								g.setColor( Color.black );
-								g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheight-(int)(rowheight*0.3) );
+								if (!vertNames.isSelected()) {
+									if (relcol.isSelected()) g.setColor(Color.white);
+									g.setColor(Color.black);
+									g.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
+								} else if (i == 6 && !genename.contains("hypoth")) {
+									int xx = 5 + xoff + (int) (len - strlen) / 2;
+									int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
+									g.translate(xx, yy);
+									g.drawString(genename, 0, 0);
+									g.translate(-xx, -yy);
+								}
+							}
+
+							if (vertNames.isSelected()) {
+
 							}
 
 							if (circleView.isSelected()) {
@@ -1904,6 +1965,7 @@ public class Neighbour {
 	final JRadioButton	realView = new JRadioButton("Real");
 
 	final JCheckBox circleView = new JCheckBox();
+	final JCheckBox vertNames = new JCheckBox();
 	
 	public final JComboBox<String>			names = new JComboBox<>();
 	JComponent c;
@@ -2932,6 +2994,7 @@ public class Neighbour {
 			realView.setText("Real");
 
 			circleView.setText("Circle");
+			vertNames.setText("Vertical");
 			
 			sequenceView.setSelected( true );
 			
@@ -3423,6 +3486,7 @@ public class Neighbour {
 		toolbar.add( blocksView );
 		toolbar.add( realView );
 		toolbar.add( circleView );
+		toolbar.add( vertNames );
 		toolbar.add( zoomIn );
 		toolbar.add( zoomOut );
 		toolbar.add( zoomInSmall );
