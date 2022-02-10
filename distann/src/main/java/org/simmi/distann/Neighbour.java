@@ -556,6 +556,7 @@ public class Neighbour {
 						}
 						if( genename != null ) genename = genename.contains("hypothetical") ? "hth-p" : genename;*/
 						String genename = gene != null ? geneset.getGeneName(showNames, gene) : next.type;
+						var id = next.getId();
 						if (genename==null) genename = "unknown";
 						if( xoff+len > clip.x ) {
 							if( funcol.isSelected() ) {
@@ -601,7 +602,7 @@ public class Neighbour {
 									else if (d.equals("Head and tail morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
 									else g.setColor(new Color(0.7f,0.2f,0.2f));
 								} else {
-									g.setColor( Color.white );
+									g.setColor( Color.lightGray );
 								}
 							} else if( sgradcol.isSelected() ) {
 								if( spec1 != null ) {													
@@ -773,7 +774,8 @@ public class Neighbour {
 								genename = genename.substring(0, genename.length()-1);
 								strlen = g.getFontMetrics().stringWidth( genename );
 							}
-							
+
+							Graphics2D g2 = (Graphics2D) g;
 							if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
 								if (!vertNames.isSelected()) {
 									if (relcol.isSelected()) g.setColor(Color.white);
@@ -782,9 +784,11 @@ public class Neighbour {
 								} else if (i == 6 && !genename.contains("hypoth")) {
 									int xx = 5 + xoff + (int) (len - strlen) / 2;
 									int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
-									g.translate(xx, yy);
-									g.drawString(genename, 0, 0);
-									g.translate(-xx, -yy);
+									g2.translate(xx, yy);
+									g2.rotate(Math.PI/2);
+									g2.drawString(genename, 0, 0);
+									g2.rotate(-Math.PI/2);
+									g2.translate(-xx, -yy);
 								}
 							}
 						}
@@ -958,7 +962,7 @@ public class Neighbour {
 									else if (d.equals("Head and tail morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
 									else g.setColor(new Color(0.7f,0.2f,0.2f));
 								} else {
-									g.setColor( Color.white );
+									g.setColor( Color.lightGray );
 								}
 							} else if( sgradcol.isSelected() ) {
 								if( spec1 != null ) {													
@@ -1100,7 +1104,8 @@ public class Neighbour {
 								genename = genename.substring(0, genename.length()-1);
 								strlen = g.getFontMetrics().stringWidth( genename );
 							}
-							
+
+							Graphics2D g2 = (Graphics2D) g;
 							if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
 								if (!vertNames.isSelected()) {
 									if (relcol.isSelected()) g.setColor(Color.white);
@@ -1109,9 +1114,11 @@ public class Neighbour {
 								} else if (i == 6 && !genename.contains("hypoth")) {
 									int xx = 5 + xoff + (int) (len - strlen) / 2;
 									int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
-									g.translate(xx, yy);
-									g.drawString(genename, 0, 0);
-									g.translate(-xx, -yy);
+									g2.translate(xx, yy);
+									g2.rotate(Math.PI/2);
+									g2.drawString(genename, 0, 0);
+									g2.rotate(-Math.PI/2);
+									g2.translate(-xx, -yy);
 								}
 							}
 						}
@@ -1188,6 +1195,8 @@ public class Neighbour {
 						Annotation next = te;
 						if( te.getGene() != null ) {
 							String genename = geneset.getGeneName(showNames, next.getGene());
+							var id = next.getId();
+							var d = next.designation;
 							/*if( names.getSelectedItem().equals("Default names") ) {
 								genename = next.getGene().getName();
 								//if( commonname.isSelected() && genename.contains("_") ) genename = next.getGene().getGeneGroup().getName();
@@ -1238,7 +1247,6 @@ public class Neighbour {
 									if (rc != null) g.setColor(rc);
 								} else if( designcol.isSelected() ) {
 									if( next != null && next.designation != null && next.designation.length() > 0 ) {
-										var d = next.designation;
 										if (d.equals("DNA replication")) g.setColor(new Color(0.2f,0.7f,0.2f));
 										else if (d.equals("DNA metabolism")) g.setColor(new Color(0.2f,0.2f,0.7f));
 										else if (d.equals("Lysis module")) g.setColor(new Color(0.2f,0.7f,0.7f));
@@ -1246,7 +1254,7 @@ public class Neighbour {
 										else if (d.equals("Head and tail morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
 										else g.setColor(new Color(0.7f,0.2f,0.2f));
 									} else {
-										g.setColor( Color.white );
+										g.setColor( Color.lightGray );
 									}
 								} else if( sgradcol.isSelected() ) {
 									if( spec1 != null ) {								
@@ -1351,18 +1359,21 @@ public class Neighbour {
 									strlen = g.getFontMetrics().stringWidth( genename );
 								}
 
+								Graphics2D g2 = (Graphics2D) g;
 								if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
 									if (!vertNames.isSelected()) {
 										if (relcol.isSelected()) g.setColor(Color.white);
 										else g.setColor(Color.black);
-										g.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
-									} else if (i == 6 && !genename.contains("hypoth")) {
+										g2.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
+									} else if (i == 6 && ((!ogenename.contains("hth") && !ogenename.contains("contig")) || (d!=null&&d.length()>0))) {
 										int xx = 5 + xoff + (int) (len - strlen) / 2;
 										int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
-										g.translate(xx, yy);
-										g.rotate(Math);
-										g.drawString(genename, 0, 0);
-										g.translate(-xx, -yy);
+										g2.translate(xx, yy);
+										g2.rotate(Math.PI/2);
+										if (ogenename.contains("contig")) ogenename = "Unknown";
+										g2.drawString(ogenename + " (" + id + ")", 10, 0);
+										g2.rotate(-Math.PI/2);
+										g2.translate(-xx, -yy);
 									}
 								}
 
@@ -1374,7 +1385,6 @@ public class Neighbour {
 									double ltheta = 2 * (xoff + offset + len - 5000) * Math.PI / div;
 									double theta3 = (xoff + offset - 5000) * 360.0 / div;
 
-									Graphics2D g2 = (Graphics2D) g;
 									g.translate(5000, 560);
 									//g.fillArc(-width+y*rowheight,-width+y*rowheight,width*2-y*rowheight*2,width*2-y*rowheight*2,(int)((xoff+offset-5000)/div), (int)((len)/div));
 
@@ -1583,6 +1593,8 @@ public class Neighbour {
 						Annotation prev = te;
 						if( te.getGene() != null ) {
 							String genename = geneset.getGeneName( showNames, prev.getGene() );
+							var id = prev.getId();
+							var d = prev.designation;
 							/*String genename = prev.getGene().getName();
 							if( commonname.isSelected() && genename.contains("_") ) genename = prev.getGene().getGeneGroup().getName();
 							genename = genename.contains("hypothetical") ? "hth-p" : genename;*/
@@ -1624,7 +1636,6 @@ public class Neighbour {
 								g.setColor(rc);
 							} else if( designcol.isSelected() ) {
 								if( prev != null && prev.designation != null && prev.designation.length() > 0 ) {
-									var d = prev.designation;
 									if (d.equals("DNA replication")) g.setColor(new Color(0.2f,0.7f,0.2f));
 									else if (d.equals("DNA metabolism")) g.setColor(new Color(0.2f,0.2f,0.7f));
 									else if (d.equals("Lysis module")) g.setColor(new Color(0.2f,0.7f,0.7f));
@@ -1632,7 +1643,7 @@ public class Neighbour {
 									else if (d.equals("Head and tail morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
 									else g.setColor(new Color(0.7f,0.2f,0.2f));
 								} else {
-									g.setColor( Color.white );
+									g.setColor( Color.lightGray );
 								}
 							} else if( sgradcol.isSelected() ) {
 								if( spec1 != null ) {													
@@ -1734,17 +1745,21 @@ public class Neighbour {
 								strlen = g.getFontMetrics().stringWidth( genename );
 							}
 
+							Graphics2D g2 = (Graphics2D) g;
 							if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
 								if (!vertNames.isSelected()) {
 									if (relcol.isSelected()) g.setColor(Color.white);
-									g.setColor(Color.black);
-									g.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
-								} else if (i == 6 && !genename.contains("hypoth")) {
+									g2.setColor(Color.black);
+									g2.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
+								} else if (i == 6 && ((!ogenename.contains("hth") && !ogenename.contains("contig")) || (d!=null&&d.length()>0))) {
 									int xx = 5 + xoff + (int) (len - strlen) / 2;
 									int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
-									g.translate(xx, yy);
-									g.drawString(genename, 0, 0);
-									g.translate(-xx, -yy);
+									g2.translate(xx, yy);
+									g2.rotate(Math.PI/2);
+									if (ogenename.contains("contig")) ogenename = "Unknown";
+									g2.drawString(ogenename + " (" + id + ")", 10, 0);
+									g2.rotate(-Math.PI/2);
+									g2.translate(-xx, -yy);
 								}
 							}
 
@@ -1760,7 +1775,6 @@ public class Neighbour {
 								double ltheta = 2 * (xoff + offset + len - 5000) * Math.PI / div;
 								double theta3 = (xoff + offset - 5000) * 360.0 / div;
 
-								Graphics2D g2 = (Graphics2D) g;
 								//var arc = new Arc2D.Double(-width+y*rowheight,-width+y*rowheight,width*2-y*rowheight*2,width*2-y*rowheight*2,theta3, (len*360.0/div), Arc2D.OPEN);
 								//g.fillArc(-width+y*rowheight,-width+y*rowheight,width*2-y*rowheight*2,width*2-y*rowheight*2,(int)((xoff+offset-5000)*360/div), (int)((len*360)/div));
 								//g2.fill(arc);
