@@ -8,9 +8,11 @@ import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.simmi.javafasta.shared.*;
 import org.simmi.javafasta.unsigned.JavaFasta;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -95,12 +97,12 @@ public class ANITools {
                             int score = 0;
                             int tscore = 1;
                             for (Annotation tv1 : ti1.tset) {
+                                //int maxscore;
+                                //int maxtscore;
                                 for (Annotation tv2 : ti2.tset) {
                                     Sequence seq1 = tv1.getAlignedSequence();
                                     Sequence seq2 = tv2.getAlignedSequence();
                                     if (seq1 != null && seq2 != null) {
-                                        count++;
-
                                         int mest = 0;
                                         int tmest = 0;
 
@@ -167,6 +169,7 @@ public class ANITools {
                                     //else d2.add( gg.getCommonName() );
                                 }
                             }
+                            if(score>0) count++;
                             totalscore += score;
                             totaltscore += tscore;
 
@@ -201,10 +204,21 @@ public class ANITools {
         f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         f.setSize(500, 500);
 
+        var ff = new File("c:/Users/sigma/simmi.png");
+        try {
+            ImageIO.write(bi, "PNG", ff);
+            Desktop.getDesktop().open(ff);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         JComponent comp2 = new JComponent() {
             public void paintComponent( Graphics g ) {
                 super.paintComponent(g);
-                g.drawImage(bi, 0, 0, bi.getWidth(), bi.getHeight(), 0, 0, bi.getWidth(), bi.getHeight(), this);
+                var g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                g2.drawImage(bi, 0, 0, bi.getWidth(), bi.getHeight(), 0, 0, bi.getWidth(), bi.getHeight(), this);
             }
         };
         Dimension dim = new Dimension(bi.getWidth(),bi.getHeight());
