@@ -781,13 +781,13 @@ public class Neighbour {
 									if (relcol.isSelected()) g.setColor(Color.white);
 									else g.setColor(Color.black);
 									g.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
-								} else if (i == 6 && !genename.contains("hypoth")) {
+								} else if (i == 0 && !genename.contains("hypoth")) {
 									int xx = 5 + xoff + (int) (len - strlen) / 2;
 									int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
 									g2.translate(xx, yy);
-									g2.rotate(Math.PI/2);
+									g2.rotate(-Math.PI/4);
 									g2.drawString(genename, 0, 0);
-									g2.rotate(-Math.PI/2);
+									g2.rotate(Math.PI/4);
 									g2.translate(-xx, -yy);
 								}
 							}
@@ -1111,13 +1111,13 @@ public class Neighbour {
 									if (relcol.isSelected()) g.setColor(Color.white);
 									else g.setColor(Color.black);
 									g.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
-								} else if (i == 6 && !genename.contains("hypoth")) {
+								} else if (i == 0 && !genename.contains("hypoth")) {
 									int xx = 5 + xoff + (int) (len - strlen) / 2;
 									int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
 									g2.translate(xx, yy);
-									g2.rotate(Math.PI/2);
+									g2.rotate(-Math.PI/4);
 									g2.drawString(genename, 0, 0);
-									g2.rotate(-Math.PI/2);
+									g2.rotate(Math.PI/4);
 									g2.translate(-xx, -yy);
 								}
 							}
@@ -1333,6 +1333,8 @@ public class Neighbour {
 									}*/
 								}
 
+								g.translate(0,500);
+
 								var prevColor = g.getColor();
 								boolean revis = (next.ori == -1) ^ next.getContig().isReverse();
 								int addon = revis ? -5 : 5;
@@ -1365,14 +1367,14 @@ public class Neighbour {
 										if (relcol.isSelected()) g.setColor(Color.white);
 										else g.setColor(Color.black);
 										g2.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
-									} else if (i == 6 && ((!ogenename.contains("hth") && !ogenename.contains("contig")) || (d!=null&&d.length()>0))) {
+									} else if (i == 0 && ((!ogenename.contains("hth") && !ogenename.contains("contig")) || (d!=null&&d.length()>0))) {
 										int xx = 5 + xoff + (int) (len - strlen) / 2;
 										int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
 										g2.translate(xx, yy);
-										g2.rotate(Math.PI/2);
+										g2.rotate(-Math.PI/4);
 										if (ogenename.contains("contig")) ogenename = "Unknown";
-										g2.drawString(ogenename + " (" + id + ")", 10, 0);
-										g2.rotate(-Math.PI/2);
+										g2.drawString(ogenename + " (" + id + ")", 20, -10);
+										g2.rotate(Math.PI/4);
 										g2.translate(-xx, -yy);
 									}
 								}
@@ -1478,6 +1480,7 @@ public class Neighbour {
 									//g.fillArc(-width+m*rowheight,-width+m*rowheight,width*2-m*rowheight*2,width*2-m*rowheight*2,(int)((xoff+offset-5000)/div), (int)((len)/div));
 									g.translate(-5000, -560);
 								}
+								g.translate(0,-500);
 							}
 						/*g.setColor( Color.green );
 						Set<Function> funcset = te.getGene().getGeneGroup().getFunctions();
@@ -1720,6 +1723,8 @@ public class Neighbour {
 								}*/
 							}
 
+							g.translate(0,500);
+
 							var prevColor = g.getColor();
 							boolean revis = (prev.ori == -1) ^ prev.getContig().isReverse();
 							int addon = revis ? -5 : 5;
@@ -1751,14 +1756,14 @@ public class Neighbour {
 									if (relcol.isSelected()) g.setColor(Color.white);
 									g2.setColor(Color.black);
 									g2.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
-								} else if (i == 6 && ((!ogenename.contains("hth") && !ogenename.contains("contig")) || (d!=null&&d.length()>0))) {
+								} else if (i == 0 && ((!ogenename.contains("hth") && !ogenename.contains("contig")) || (d!=null&&d.length()>0))) {
 									int xx = 5 + xoff + (int) (len - strlen) / 2;
 									int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
 									g2.translate(xx, yy);
-									g2.rotate(Math.PI/2);
+									g2.rotate(-Math.PI/4);
 									if (ogenename.contains("contig")) ogenename = "Unknown";
-									g2.drawString(ogenename + " (" + id + ")", 10, 0);
-									g2.rotate(-Math.PI/2);
+									g2.drawString(ogenename + " (" + id + ")", 20, -10);
+									g2.rotate(Math.PI/4);
 									g2.translate(-xx, -yy);
 								}
 							}
@@ -1873,6 +1878,7 @@ public class Neighbour {
 
 								g.translate(-5000, -560);
 							}
+							g.translate(0,-500);
 						}
 					}
 				}
