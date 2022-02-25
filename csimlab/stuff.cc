@@ -4251,7 +4251,7 @@ JNIEXPORT int lg10( simlab wh ) {
 	func.type = 32;
 	func.length = 0;
 
-	func.buffer = (long)log10;
+	func.buffer = (long)(double (*)(double))log10;
 	dfunc( func, wh );
 
 	return current;
@@ -4262,7 +4262,7 @@ JNIEXPORT int simlab_log2( simlab wh ) {
 	func.type = 32;
 	func.length = 0;
 
-	func.buffer = (long)log2;
+	func.buffer = (long)(double (*)(double))log2;
 	dfunc( func, wh );
 
 	return 1;
@@ -4273,7 +4273,7 @@ JNIEXPORT int simlab_ln( simlab wh ) {
 	func.type = 32;
 	func.length = 0;
 
-	func.buffer = (long)log;
+	func.buffer = (long)(double (*)(double))log;
 	dfunc( func, wh );
 
 	return 1;
@@ -4284,7 +4284,7 @@ JNIEXPORT int simlab_log10( simlab wh ) {
 	func.type = 32;
 	func.length = 0;
 
-	func.buffer = (long)log10;
+	func.buffer = (long)(double (*)(double))log10;
 	dfunc( func, wh );
 
 	return 1;
@@ -4296,11 +4296,11 @@ JNIEXPORT int simlab_cos( simlab wh ) {
 	func.length = 0;
 
 	if( data.type == 34 ) {
-		func.buffer = (long)cos;
-		dfunc( func, wh );
-	} else {
-		func.buffer = (long)cosf;
+		func.buffer = (long)(float (*)(float))cosf;
 		ffunc( func, wh );
+	} else {
+		func.buffer = (long)(double (*)(double))cos;
+		dfunc( func, wh );
 	}
 
 	return current;
@@ -4327,10 +4327,10 @@ JNIEXPORT int simlab_sin( simlab wh ) {
 	func.length = 0;
 
 	if( data.type == 34 ) {
-		func.buffer = (long)sinf;
+		func.buffer = (long)(float (*)(float))sinf;
 		ffunc( func, wh );
 	} else {
-		func.buffer = (long)sin;
+		func.buffer = (long)(double (*)(double))sin;
 		dfunc( func, wh );
 	}
 	return 1;
@@ -4342,11 +4342,11 @@ JNIEXPORT int simlab_asin( simlab wh ) {
 	func.length = 0;
 
 	if( data.type == 34 ) {
-		func.buffer = (long)asin;
-		dfunc( func, wh );
-	} else {
-		func.buffer = (long)acosf;
+		func.buffer = (long)(float (*)(float))asinf;
 		ffunc( func, wh );
+	} else {
+		func.buffer = (long)(double (*)(double))acos;
+		dfunc( func, wh );
 	}
 	return current;
 }

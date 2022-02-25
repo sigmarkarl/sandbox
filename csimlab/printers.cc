@@ -257,8 +257,8 @@ JNIEXPORT int printi( simlab sl ) {
 	va_end( args );
 	//printf("%d %d %d\n", (int)val.length, (int)val.type, (int)val.buffer );*/
 
-	printf( "%d %d %d\n", (int)sl.buffer, (int)sl.type, (int)sl.length );
-	printf( "%d %d %d\n", (int)data.buffer, (int)data.type, (int)data.length );
+	//printf( "%d %d %d\n", (int)sl.buffer, (int)sl.type, (int)sl.length );
+	//printf( "%d %d %d\n", (int)data.buffer, (int)data.type, (int)data.length );
 	passnext.dw = sl;
 	return print( "%d\t", "\n", passnext );
 }

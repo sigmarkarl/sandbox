@@ -315,6 +315,7 @@ template <typename T, typename K> void t_copy( T buffer, int length, K value, in
 }
 
 template <typename T, typename K> void t_add( T buffer, int length, K value, int vallen ) {
+	println("lllalalal\n");
 	if( vallen < length ) {
 		for( int i = 0; i < length; i++ ) {
 			buffer[i] += value[i%vallen];
@@ -546,9 +547,18 @@ template<template<typename T, typename V> class c_func, typename K> void specari
 }
 
 template<template<typename T, typename V> class c_func, typename K> void subarith( K kbuf, long klen ) {
-	//printf("subarith\n");
+	printf("subarith\n");
 	if( data.length == -1 ) {
-
+		if( data.type == -66 ) c_func< c_simlab<double&>&,K >( *(c_simlab<double&>*)data.buffer, data.length, kbuf, klen );
+		else if( data.type == -65 ) c_func< c_simlab<long long&>&,K >( *(c_simlab<long long&>*)data.buffer, data.length, kbuf, klen );
+		else if( data.type == -64 ) c_func< c_simlab<unsigned long long&>&,K >( *(c_simlab<unsigned long long&>*)data.buffer, data.length, kbuf, klen );
+		else if( data.type == -34 ) c_func< c_simlab<float&>&,K >( *(c_simlab<float&>*)data.buffer, data.length, kbuf, klen );
+		else if( data.type == -33 ) c_func< c_simlab<int&>&,K >( *(c_simlab<int&>*)data.buffer, data.length, kbuf, klen );
+		else if( data.type == -32 ) {
+			printf("yes2! %lld\n", klen);
+			c_func< c_simlab<unsigned int&>&,K >( *(c_simlab<unsigned int&>*)data.buffer, data.length, kbuf, klen );
+		}
+		else if( data.type == -16 ) c_func< c_simlab<short&>&,K >( *(c_simlab<short&>*)data.buffer, data.length, kbuf, klen );
 	} else if( data.length == 0 ) {
 		if( data.type == 66 ) c_func<double*,K>( (double*)&data.buffer, 1, kbuf, klen );
 		else if( data.type == 65 ) {
@@ -564,10 +574,16 @@ template<template<typename T, typename V> class c_func, typename K> void subarit
 	} else if( data.type < 0 ) {
 		if( data.type == -66 ) c_func< c_simlab<double&>&,K >( *(c_simlab<double&>*)data.buffer, data.length, kbuf, klen );
 		else if( data.type == -65 ) c_func< c_simlab<long long&>&,K >( *(c_simlab<long long&>*)data.buffer, data.length, kbuf, klen );
-		else if( data.type == -64 ) c_func< c_simlab<unsigned long long&>&,K >( *(c_simlab<unsigned long long&>*)data.buffer, data.length, kbuf, klen );
+		else if( data.type == -64 ) {
+			printf("lala\n");
+			c_func< c_simlab<unsigned long long&>&,K >( *(c_simlab<unsigned long long&>*)data.buffer, data.length, kbuf, klen );
+		}
 		else if( data.type == -34 ) c_func< c_simlab<float&>&,K >( *(c_simlab<float&>*)data.buffer, data.length, kbuf, klen );
 		else if( data.type == -33 ) c_func< c_simlab<int&>&,K >( *(c_simlab<int&>*)data.buffer, data.length, kbuf, klen );
-		else if( data.type == -32 ) c_func< c_simlab<unsigned int&>&,K >( *(c_simlab<unsigned int&>*)data.buffer, data.length, kbuf, klen );
+		else if( data.type == -32 ) {
+			printf("yes!\n");
+			c_func< c_simlab<unsigned int&>&,K >( *(c_simlab<unsigned int&>*)data.buffer, data.length, kbuf, klen );
+		}
 		else if( data.type == -16 ) c_func< c_simlab<short&>&,K >( *(c_simlab<short&>*)data.buffer, data.length, kbuf, klen );
 	} else {
 		if( data.type == 66 ) c_func<double*,K>( (double*)data.buffer, data.length, kbuf, klen );
@@ -592,12 +608,14 @@ template<template<typename T, typename K> class c_func> void specarith( simlab &
 }
 
 template<template<typename T, typename K> class c_func> void arith( simlab & value ) {
-	//printf("arith\n");
+	printf("arith %lld %lld %lld\n",value.length,value.buffer,value.type);
 	if( value.length == 0 ) {
 		if( value.type == 32 ) {
+			printf("heyhey\n");
 			c_const<unsigned int>	sl( *(unsigned int*)&value.buffer );
 			subarith< c_func, c_simlab<unsigned int>& >( sl, 1 );
 		} else if( value.type == 33 ) {
+			printf("heyhey2\n");
 			c_const<int>	sl( *(int*)&value.buffer );
 			subarith< c_func, c_simlab<int>& >( sl, 1 );
 		} else if( value.type == 34 ) {
