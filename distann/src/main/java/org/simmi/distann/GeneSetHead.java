@@ -2758,8 +2758,12 @@ public class GeneSetHead {
 		file.getItems().add( new SeparatorMenuItem() );
 
 		MenuItem excelitem = new MenuItem("Open selection in Excel");
-		excelitem.setOnAction(actionEvent -> excelExport( geneset.projectname ));
+		excelitem.setOnAction(actionEvent -> excelExport( geneset.projectname, false ));
 		file.getItems().add( excelitem );
+
+		MenuItem exseqitem = new MenuItem("Open sequences in Excel");
+		exseqitem.setOnAction(actionEvent -> excelExport( geneset.projectname, true ));
+		file.getItems().add( exseqitem );
 		file.getItems().add( new SeparatorMenuItem() );
 		
 		MenuItem importitem = new MenuItem("Import genomes");
@@ -6747,7 +6751,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		if( f != null ) geneset.zippath = f.toPath();
 	}
 
-	public void excelExport( String sheetname ) {
+	public void excelExport( String sheetname, boolean sequences ) {
 		Workbook workbook = new XSSFWorkbook();
 		Sheet sheet = workbook.createSheet(sheetname);
 		Row header = sheet.createRow(0);
@@ -6812,14 +6816,27 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					}
 					cn++;
 				}
-				for( TableColumn tc : results.getColumns() ) {
-					Object o = tc.getCellData(r);
-					if( o != null ) {
-						org.apache.poi.ss.usermodel.Cell cell = row.createCell(cn);
-						cell.setCellValue( o.toString() );
-						cell.setCellStyle(cellstyle);
+				if (sequences) {
+					for (TableColumn tc : results.getColumns()) {
+						Teginfo o = (Teginfo)tc.getCellData(r);
+						if (o != null) {
+							org.apache.poi.ss.usermodel.Cell cell = row.createCell(cn);
+							var seqstr = o.tset.stream().map(a -> a.getProteinSequence()).map(a -> a.getSequence()).map(a -> a.toString()).collect(Collectors.joining(","));
+							cell.setCellValue(seqstr);
+							cell.setCellStyle(cellstyle);
+						}
+						cn++;
 					}
-					cn++;
+				} else {
+					for (TableColumn tc : results.getColumns()) {
+						Object o = tc.getCellData(r);
+						if (o != null) {
+							org.apache.poi.ss.usermodel.Cell cell = row.createCell(cn);
+							cell.setCellValue(o.toString());
+							cell.setCellStyle(cellstyle);
+						}
+						cn++;
+					}
 				}
 				row = sheet.createRow(rc++);
 			}
@@ -10146,6 +10163,9 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			JComponent[] comps = new JComponent[]{joincontigs, translations, editdefaults};
 			List scl = getSelspecContigs(Arrays.asList(comps), speccontigMap);
 
+			var ob = table.getSelectionModel().getSelectedItems();
+			var ggset = ob.stream().collect(Collectors.toUnmodifiableSet());
+
 			if (scl.get(0) instanceof String) {
 				List<String> lspec = (List<String>) scl;
 
@@ -10166,18 +10186,20 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
                                     Tegeval tv = (Tegeval) ann;
                                     GeneGroup gg = tv.getGene().getGeneGroup();
 
-                                    Annotation anno = new Annotation(c, tv.start, tv.stop, tv.ori, gg != null ? gg.getName() : tv.getGene().getName());
-                                    anno.type = "CDS";
-                                    anno.setId(tv.getGene().id);
+									if(ggset.size()==0 || ggset.contains(gg)) {
+										Annotation anno = new Annotation(c, tv.start, tv.stop, tv.ori, gg != null ? gg.getName() : tv.getGene().getName());
+										anno.type = "CDS";
+										anno.setId(tv.getGene().id);
 
-                                    String cazy = gg != null ? gg.getCommonCazy(geneset.cazymap) : null;
-                                    if (cazy != null) anno.addDbRef("CAZY:" + cazy);
-                                    Cog cog = gg != null ? gg.getCog(geneset.cogmap) : null;
-                                    if (cog != null) anno.addDbRef("COG:" + cog.id);
-                                    String ec = gg != null ? gg.getEc() : null;
-                                    if (ec != null) anno.addDbRef("EC:" + ec);
+										String cazy = gg != null ? gg.getCommonCazy(geneset.cazymap) : null;
+										if (cazy != null) anno.addDbRef("CAZY:" + cazy);
+										Cog cog = gg != null ? gg.getCog(geneset.cogmap) : null;
+										if (cog != null) anno.addDbRef("COG:" + cog.id);
+										String ec = gg != null ? gg.getEc() : null;
+										if (ec != null) anno.addDbRef("EC:" + ec);
 
-                                    lann.add(anno);
+										lann.add(anno);
+									}
                                 }
                                 mapan.put(c.getName(), lann);
                             }
@@ -10199,17 +10221,40 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					serifier.mseq.put(c.getName(), c);
 
 					List<Annotation> lann = new ArrayList<>();
-					if (c.getAnnotations() != null) for (Annotation ann : c.getAnnotations()) {
-						Tegeval tv = (Tegeval) ann;
-						GeneGroup gg = tv.getGene().getGeneGroup();
+					if (c.getAnnotations() != null) {
+						/*if(c.isReverse()) {
+							var loann = c.getAnnotations();
+							for (int k = loann.size()-1; k >= 0; k--) {
+								var ann = loann.get(k);
+								Tegeval tv = (Tegeval) ann;
+								GeneGroup gg = tv.getGene().getGeneGroup();
 
-						Annotation anno = new Annotation(c, tv.start, tv.stop, tv.ori, gg != null ? gg.getName() : tv.getGene().getName());
-						anno.type = "CDS";
-						anno.setId(tv.getGene().id);
+								if (ggset.size() == 0 || ggset.contains(gg)) {
+									Annotation anno = new Annotation(c, c.length()-tv.stop, c.length()-tv.start, tv.ori == -1 ? 0 : -1, gg != null ? gg.getName() : tv.getGene().getName());
+									anno.type = "CDS";
+									anno.setId(tv.getGene().id);
 
-						String cazy = gg != null ? gg.getCommonCazy(geneset.cazymap) : null;
-						if (cazy != null) anno.addDbRef("CAZY:" + cazy);
-						lann.add(anno);
+									String cazy = gg != null ? gg.getCommonCazy(geneset.cazymap) : null;
+									if (cazy != null) anno.addDbRef("CAZY:" + cazy);
+									lann.add(anno);
+								}
+							}
+						} else {*/
+							for (Annotation ann : c.getAnnotations()) {
+								Tegeval tv = (Tegeval) ann;
+								GeneGroup gg = tv.getGene().getGeneGroup();
+
+								if (ggset.size() == 0 || ggset.contains(gg)) {
+									Annotation anno = new Annotation(c, tv.start, tv.stop, tv.ori, gg != null ? gg.getName() : tv.getGene().getName());
+									anno.type = "CDS";
+									anno.setId(tv.getGene().id);
+
+									String cazy = gg != null ? gg.getCommonCazy(geneset.cazymap) : null;
+									if (cazy != null) anno.addDbRef("CAZY:" + cazy);
+									lann.add(anno);
+								}
+							}
+						//}
 					}
 					mapan.put(c.getName(), lann);
 				}

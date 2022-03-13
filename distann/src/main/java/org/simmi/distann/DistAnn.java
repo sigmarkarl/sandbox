@@ -1,5 +1,7 @@
 package org.simmi.distann;
 
+import com.sun.javafx.application.PlatformImpl;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Window;
@@ -9,6 +11,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -405,6 +408,11 @@ public class DistAnn extends JPanel {
 	}
 
 	public static void main(String[] args) {
-		DistannFX.main(args);
+		try {
+			SwingUtilities.invokeAndWait(() -> PlatformImpl.startup(() -> {}));
+			DistannFX.main(args);
+		} catch (InterruptedException | InvocationTargetException e) {
+			e.printStackTrace();
+		}
 	}
 }
