@@ -5,7 +5,7 @@ plugins {
 }
 
 javafx {
-    version = "17.0.1"
+    version = "17.0.2"
     modules("javafx.base", "javafx.graphics", "javafx.controls", "javafx.fxml", "javafx.swing", "javafx.web")
 }
 
@@ -23,22 +23,22 @@ dependencies {
     //implementation group = "org.gorpipe", name = "gor-spark", version = "0.5.6"
 
     // https://mvnrepository.com/artifact/org.openjfx/javafx
-    implementation(group = "org.openjfx", name = "javafx", version = "17.0.1")
+    /*implementation(group = "org.openjfx", name = "javafx", version = "17.0.1")
 
     implementation("org.openjfx:javafx-base:17.0.1:mac")
     implementation("org.openjfx:javafx-controls:17.0.1:mac")
     implementation("org.openjfx:javafx-graphics:17.0.1:mac")
     implementation("org.openjfx:javafx-fxml:17.0.1:mac")
     implementation("org.openjfx:javafx-web:17.0.1:mac")
-    implementation("org.openjfx:javafx-swing:17.0.1:mac")
+    implementation("org.openjfx:javafx-swing:17.0.1:mac")*/
 
-    implementation (group = "org.apache.spark", name = "spark-core_2.13", version = "3.2.0") {
+    implementation (group = "org.apache.spark", name = "spark-core_2.13", version = "3.2.1") {
         exclude(group = "avro-mapred")
     }
-    implementation (group = "org.apache.spark", name = "spark-mllib_2.13", version = "3.2.0") {
+    implementation (group = "org.apache.spark", name = "spark-mllib_2.13", version = "3.2.1") {
         exclude(group = "avro-mapred")
     }
-    implementation (group = "org.apache.spark", name = "spark-kubernetes_2.13", version = "3.2.0") {
+    implementation (group = "org.apache.spark", name = "spark-kubernetes_2.13", version = "3.2.1") {
         exclude(group = "avro-mapred")
     }
 

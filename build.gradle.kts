@@ -18,8 +18,8 @@ plugins {
     id("java")
     id("application")
     id("com.palantir.graal") version "0.9.0"
-    id("org.openjfx.javafxplugin") version "0.0.10"
-    id("com.github.johnrengelman.shadow") version "7.0.0"
+    id("org.openjfx.javafxplugin") version "0.0.12"
+    id("com.github.johnrengelman.shadow") version "7.1.1"
 }
 
 /*ext {

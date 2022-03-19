@@ -3660,7 +3660,7 @@ public class GeneSet implements GenomeSet {
 	}
 
 	//GeneSetHead gsh;
-	//ChatServer cs;
+	ChatServer cs;
 	public GeneSet() {
 		super();
 		//gsh = new GeneSetHead( this );
