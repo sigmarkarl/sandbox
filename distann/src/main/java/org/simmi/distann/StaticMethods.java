@@ -9,8 +9,8 @@ import java.util.zip.GZIPInputStream;
 
 public class StaticMethods {
     public static void aahist(File f1, File f2, int val) throws IOException {
-        Map<String, Long> aa1map = new HashMap<String, Long>();
-        Map<String, Long> aa2map = new HashMap<String, Long>();
+        Map<String, Long> aa1map = new HashMap<>();
+        Map<String, Long> aa2map = new HashMap<>();
 
         long t1 = 0;
         FileReader fr = new FileReader(f1);
@@ -60,8 +60,8 @@ public class StaticMethods {
         int nab = 0;
         int u = 0;
         double dt = 0.0;
-        Set<String> notfound = new HashSet<String>();
-        Set<String> notfound2 = new HashSet<String>();
+        Set<String> notfound = new HashSet<>();
+        Set<String> notfound2 = new HashSet<>();
         for (int i = 0; i < Math.pow(Sequence.uff.size(), val); i++) {
             String e = "";
             for (int k = 0; k < val; k++) {

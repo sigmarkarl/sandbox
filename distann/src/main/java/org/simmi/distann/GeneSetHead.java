@@ -2771,8 +2771,12 @@ public class GeneSetHead {
 		file.getItems().add( importitem );
 		
 		MenuItem exportitem = new MenuItem("Export genomes");
-		exportitem.setOnAction( actionEvent -> exportGenomes( geneset.speccontigMap ) );
+		exportitem.setOnAction( actionEvent -> exportGenomes( geneset.speccontigMap, false ) );
 		file.getItems().add( exportitem );
+
+		MenuItem exportfastaitem = new MenuItem("Export genomes fasta");
+		exportfastaitem.setOnAction( actionEvent -> exportGenomes( geneset.speccontigMap, true ) );
+		file.getItems().add( exportfastaitem );
 		
 		file.getItems().add( new SeparatorMenuItem() );
 		
@@ -6821,7 +6825,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 						Teginfo o = (Teginfo)tc.getCellData(r);
 						if (o != null) {
 							org.apache.poi.ss.usermodel.Cell cell = row.createCell(cn);
-							var seqstr = o.tset.stream().map(a -> a.getProteinSequence()).map(a -> a.getSequence()).map(a -> a.toString()).collect(Collectors.joining(","));
+							var seqstr = o.tset.stream().map(Annotation::getProteinSequence).map(Sequence::getSequence).map(StringBuilder::toString).collect(Collectors.joining(","));
 							cell.setCellValue(seqstr);
 							cell.setCellStyle(cellstyle);
 						}
@@ -10155,7 +10159,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		init(primaryStage, null, null, null, null, null, null, null, null, null, null, null, null);
 	}
 	
-	public void exportGenomes( Map<String,List<Sequence>> speccontigMap ) {
+	public void exportGenomes( Map<String,List<Sequence>> speccontigMap, boolean fasta ) {
 		SwingUtilities.invokeLater(() -> {
 			JCheckBox joincontigs = new JCheckBox("Join contigs");
 			JCheckBox translations = new JCheckBox("Include translations");
@@ -10181,7 +10185,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
                                 serifier.addSequence(c);
                                 serifier.mseq.put(c.getName(), c);
 
-                                List<Annotation> lann = new ArrayList();
+                                var lann = new ArrayList<Annotation>();
                                 if (c.getAnnotations() != null) for (Annotation ann : c.getAnnotations()) {
                                     Tegeval tv = (Tegeval) ann;
                                     GeneGroup gg = tv.getGene().getGeneGroup();
@@ -10205,7 +10209,11 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
                             }
                             Sequences s = new Sequences(null, spec, "nucl", null, contigs.size());
                             try {
-                                serifier.writeGenebank(f.toPath().resolve(spec + ".gbk"), !joincontigs.isSelected(), translations.isSelected(), s, mapan, false);
+                                if (fasta) {
+									serifier.writeFasta(Files.newBufferedWriter(f.toPath()), true);
+								} else {
+									serifier.writeGenebank(f.toPath().resolve(spec + ".gbk"), !joincontigs.isSelected(), translations.isSelected(), s, mapan, false);
+								}
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
@@ -10265,7 +10273,13 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
                     File f = filechooser.showSaveDialog(null);
                     if ( f != null ) {
                         try {
-                            serifier.writeGenebank(f.toPath(), !joincontigs.isSelected(), translations.isSelected(), s, mapan, editdefaults.isSelected());
+							if (fasta) {
+								var writer = Files.newBufferedWriter(f.toPath());
+								serifier.writeFasta(writer, true);
+								writer.close();
+							} else {
+								serifier.writeGenebank(f.toPath(), !joincontigs.isSelected(), translations.isSelected(), s, mapan, editdefaults.isSelected());
+							}
                             Desktop.getDesktop().open(f);
                         } catch (IOException e) {
                             e.printStackTrace();
