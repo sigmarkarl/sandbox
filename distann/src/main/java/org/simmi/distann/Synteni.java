@@ -63,7 +63,7 @@ public class Synteni {
 			}
 		}
 		
-		final List<String>	selspec = new ArrayList( genesethead.getSelspec( genesethead, new ArrayList<String>(tspecies), (JCheckBox[])null) );
+		final List<String>	selspec = new ArrayList( genesethead.getSelspec( genesethead, new ArrayList<>(tspecies), false, (JCheckBox[])null) );
 		final JTable rowheader = new JTable();
 		TableModel model = new TableModel() {
 			@Override

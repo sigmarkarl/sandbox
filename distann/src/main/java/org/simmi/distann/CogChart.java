@@ -54,7 +54,7 @@ public class CogChart {
         JCheckBox cb = new JCheckBox("Plasmid");
         JCheckBox bc = new JCheckBox("Bar chart");
         JCheckBox lr = new JCheckBox("Lowres");
-        Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList<>( geneset.specList ), cb, bc, lr );
+        Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList<>( geneset.specList ), false, cb, bc, lr );
 
         String nohit = "-";
         final Map<String,Map<String,Integer>>	mm = new LinkedHashMap<>();
@@ -738,14 +738,14 @@ public class CogChart {
             final JCheckBox contigs = new JCheckBox("Show contigs");
             final JCheckBox uniform = new JCheckBox("Uniform");
             final JCheckBox accessory = new JCheckBox("Accessory");
-            Set<String> selspec = genesethead.getSelspec(genesethead, new ArrayList<>(geneset.specList), contigs, uniform, accessory);
+            Set<String> selspec = genesethead.getSelspec(genesethead, new ArrayList<>(geneset.specList), false, contigs, uniform, accessory);
 
             final List<String> coglist = new ArrayList<>(Cog.charcog.keySet());
             HashSet<String> includedCogs = new HashSet<>();
             JTable cogtable = new JTable();
             cogtable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
             TableModel cogmodel = new CogTableModel(coglist);
-            boolean web = true;
+            boolean web;
 
             JCheckBox webbox = new JCheckBox("Web based");
             webbox.setSelected(true);

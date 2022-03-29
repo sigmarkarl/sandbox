@@ -68,7 +68,7 @@ public class ANITools {
         double[] corrarr;
     }
 
-    public static ANIResult corr(List<String> speclist, Collection<GeneGroup> agg, boolean diff) {
+    public static ANIResult corr(List<String> speclist, Collection<GeneGroup> agg, boolean diff, boolean all) {
         Map<String, Integer> blosumap = JavaFasta.getBlosumMap();
         Collection<GeneGroup> allgg = Collections.synchronizedCollection(agg);
 
@@ -106,11 +106,10 @@ public class ANITools {
                                         int mest = 0;
                                         int tmest = 0;
 
-                                        int startcheck = 0;
                                         int start = -1;
-                                        int stopcheck = 0;
                                         int stop = -1;
                                         for (int i = 0; i < seq1.length(); i++) {
+                                            int startcheck = 0;
                                             if (seq1.getCharAt(i) != '-') {
                                                 startcheck |= 1;
                                             }
@@ -125,6 +124,7 @@ public class ANITools {
                                         }
 
                                         for (int i = seq1.length() - 1; i >= 0; i--) {
+                                            int stopcheck = 0;
                                             if (seq1.getCharAt(i) != '-') {
                                                 stopcheck |= 1;
                                             }
@@ -139,22 +139,46 @@ public class ANITools {
                                         }
                                         //count += stop-start;
 
-                                        for (int i = start; i < stop; i++) {
-                                            char lc = seq1.getCharAt(i);
-                                            char c = Character.toUpperCase(lc);
-                                            //if( )
-                                            String comb = c + "" + c;
-                                            if (blosumap.containsKey(comb)) tmest += blosumap.get(comb);
-                                        }
+                                        if(all) {
+                                            for (int i = 0; i < seq1.length(); i++) {
+                                                char lc = seq1.getCharAt(i);
+                                                char lc2 = seq2.getCharAt(i);
+                                                //char c = Character.toUpperCase(lc);
+                                                if (lc != '-' && lc2 != '-') {
+                                                    tmest++;
+                                                    /*String comb = c + "" + c;
+                                                    if (blosumap.containsKey(comb)) tmest += blosumap.get(comb);*/
+                                                }
+                                            }
 
-                                        for (int i = start; i < stop; i++) {
-                                            char lc = seq1.getCharAt(i);
-                                            char c = Character.toUpperCase(lc);
-                                            char lc2 = seq2.getCharAt(i);
-                                            char c2 = Character.toUpperCase(lc2);
+                                            for (int i = 0; i < seq1.length(); i++) {
+                                                char lc = seq1.getCharAt(i);
+                                                char c = Character.toUpperCase(lc);
+                                                char lc2 = seq2.getCharAt(i);
+                                                char c2 = Character.toUpperCase(lc2);
 
-                                            String comb = c + "" + c2;
-                                            if (blosumap.containsKey(comb)) mest += blosumap.get(comb);
+                                                if (lc != '-' && lc2 != '-') {
+                                                    if (c == c2) mest++;
+                                                    /*String comb = c + "" + c2;
+                                                    if (blosumap.containsKey(comb)) mest += blosumap.get(comb);*/
+                                                }
+                                            }
+                                        } else {
+                                            for (int i = start; i < stop; i++) {
+                                                char lc = seq1.getCharAt(i);
+                                                char c = Character.toUpperCase(lc);
+                                                String comb = c + "" + c;
+                                                if (blosumap.containsKey(comb)) tmest += blosumap.get(comb);
+                                            }
+
+                                            for (int i = start; i < stop; i++) {
+                                                char lc = seq1.getCharAt(i);
+                                                char c = Character.toUpperCase(lc);
+                                                char lc2 = seq2.getCharAt(i);
+                                                char c2 = Character.toUpperCase(lc2);
+                                                String comb = c + "" + c2;
+                                                if (blosumap.containsKey(comb)) mest += blosumap.get(comb);
+                                            }
                                         }
 
                                         double tani = (double) mest / (double) tmest;
@@ -204,7 +228,7 @@ public class ANITools {
         f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         f.setSize(500, 500);
 
-        var ff = new File("c:/Users/sigma/simmi.png");
+        var ff = new File("/Users/sigmar/simmi.png");
         try {
             ImageIO.write(bi, "PNG", ff);
             Desktop.getDesktop().open(ff);

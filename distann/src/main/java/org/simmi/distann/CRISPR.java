@@ -108,7 +108,7 @@ public class CRISPR {
 		ObservableList<GeneGroup> lgg = genesethead.table.getSelectionModel().getSelectedItems();
 		if( lgg.size() > 0 ) {
 			SwingUtilities.invokeLater(() -> {
-                Set<String> includeSpecs = genesethead.getSelspec(genesethead, geneset.specList, null);
+                Set<String> includeSpecs = genesethead.getSelspec(genesethead, geneset.specList, false, null);
 
                 /*Workbook wb = new XSSFWorkbook();
                 for (GeneGroup gg : lgg) {

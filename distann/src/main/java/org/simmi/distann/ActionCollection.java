@@ -3182,7 +3182,7 @@ public class ActionCollection {
 		MenuItem genomesizeaction = new MenuItem("Genome size");
 		genomesizeaction.setOnAction( actionEvent -> {
 				final JCheckBox	contigs = new JCheckBox("Show contigs");
-				Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ), contigs );
+				Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ), false, contigs );
 				StringBuilder	restext = new StringBuilder();
 				
 				Map<String,Integer>	map = new TreeMap<String,Integer>();
@@ -3475,7 +3475,7 @@ public class ActionCollection {
 				@Override
 				public void run() {
 					final JCheckBox	contigs = new JCheckBox("Show contigs");
-					Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ), contigs );
+					Set<String>	selspec = genesethead.getSelspec( genesethead, new ArrayList( geneset.specList ), false, contigs );
 					StringBuilder	restext = new StringBuilder();
 
 					Map<String,Double>	map = new TreeMap<String,Double>();
