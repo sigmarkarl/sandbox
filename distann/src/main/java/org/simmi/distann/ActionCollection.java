@@ -2656,7 +2656,7 @@ public class ActionCollection {
 				sb.append( "\n" );
 				
 				String 				tree = sb.toString();
-				if( cs.connections().size() > 0 ) {
+				if( cs.getConnections().size() > 0 ) {
 					cs.sendToAll( tree );
 				} else if( Desktop.isDesktopSupported() ) {
 					cs.message = tree;
