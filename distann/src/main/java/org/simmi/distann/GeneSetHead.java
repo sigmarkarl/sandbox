@@ -9086,7 +9086,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			Node root = DataTable.majoRuleConsensus(treeutil, nmap, guidetree, false);
 			String tree = root.toString();
 			
-			if( geneset.cs.connections().size() > 0 ) {
+			if( geneset.cs.getConnections().size() > 0 ) {
 				geneset.cs.sendToAll( tree );
 	    	} else if( Desktop.isDesktopSupported() ) {
 	    		geneset.cs.message = tree;

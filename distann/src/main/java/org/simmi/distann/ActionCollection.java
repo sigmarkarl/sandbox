@@ -12,8 +12,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -181,7 +179,7 @@ public class ActionCollection {
 	}
 	
 	public static void priv() {
-		AccessController.doPrivileged( new PrivilegedAction<String>() {
+		/*AccessController.doPrivileged( new PrivilegedAction<String>() {
 			@Override
 			public String run() {
 				final Object[] cont = new Object[3];
@@ -206,7 +204,7 @@ public class ActionCollection {
 				
 				return "";
 			}
-		});
+		});*/
 	}
 	
 	public static void seqstats( GeneSetHead genesethead ) {
@@ -2656,7 +2654,7 @@ public class ActionCollection {
 				sb.append( "\n" );
 				
 				String 				tree = sb.toString();
-				if( cs.connections().size() > 0 ) {
+				if( cs.getConnections().size() > 0 ) {
 					cs.sendToAll( tree );
 				} else if( Desktop.isDesktopSupported() ) {
 					cs.message = tree;
