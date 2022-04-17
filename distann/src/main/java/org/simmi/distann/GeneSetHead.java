@@ -3496,6 +3496,12 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				}
 			});
         }));
+		MenuItem	hhimportaction = new MenuItem("hhimport");
+		hhimportaction.setOnAction(  actionEvent -> {
+			var fileChooser = new FileChooser();
+			var files = fileChooser.showOpenMultipleDialog(null);
+			//files.stream().map(f -> f)
+		});
 		MenuItem	hhblitsaction = new MenuItem("hhblits");
 		hhblitsaction.setOnAction(  actionEvent -> SwingUtilities.invokeLater(() -> {
 			Set<String> species = getSelspec(null, geneset.getSpecies(), false, null);
@@ -3519,15 +3525,15 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 									//.config("spark.submit.deployMode","cluster")
 
 									//.config("spark.jars","/home/sks17/jars/distann.jar,/home/sks17/jars/javafasta.jar")
-									.master("local[*]")
+									.master("local[1]")
 									/*.master("k8s://https://6A0DA5D06C34D9215711B1276624FFD9.gr7.us-east-1.eks.amazonaws.com")
                                     .config("spark.submit.deployMode","cluster")
                                     .config("spark.driver.memory","4g")
                                     .config("spark.driver.cores",2)
                                     .config("spark.executor.instances",16)
-                                    .config("spark.executor.memory","2g")
-                                    .config("spark.executor.cores",2)
-                                    .config("spark.jars","/Users/sigmar/sandbox/distann/build/install/distann/lib/*.jar")
+                                    .config("spark.executor.memory","2g")*/
+                                    //.config("spark.executor.cores",12)
+                                    //.config("spark.jars","/Users/sigmar/sandbox/distann/build/install/distann/lib/*.jar")
                                 /*.config("spark.executor.instances",10)
                                 .config("spark.kubernetes.namespace","spark")
                                 .config("spark.kubernetes.container.image","nextcode/glow:latest")
@@ -3554,8 +3560,10 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 								res.forEach(s -> {
 									try {
 										var n = s.indexOf('\n');
-										var fname = s.substring(6,n).trim();
-										Files.writeString(Path.of(fname), s);
+										if (n>0) {
+											var fname = s.substring(6, n).trim();
+											Files.writeString(Path.of(fname), s);
+										}
 									} catch (IOException e) {
 										e.printStackTrace();
 									}
@@ -3795,6 +3803,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		edit.getItems().add( cogblastaction );
 		edit.getItems().add( pfamblastaction );
 		edit.getItems().add( unresolvedblastaction );
+		edit.getItems().add( hhblitsaction );
 		edit.getItems().add( new SeparatorMenuItem() );
 		edit.getItems().add( registerlocusidaction );
 		
@@ -7808,6 +7817,10 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		TableColumn<GeneGroup, String> phaster = new TableColumn("Phaster");
 		phaster.setCellValueFactory( new PropertyValueFactory<>("phaster"));
 		table.getColumns().add( phaster );
+
+		TableColumn<GeneGroup, String> hhpred = new TableColumn("HHPred");
+		hhpred.setCellValueFactory( new PropertyValueFactory<>("hhblits"));
+		table.getColumns().add( hhpred );
 
 		TableColumn<GeneGroup, String> symbcol = new TableColumn("Symbol");
 		symbcol.setCellValueFactory( new PropertyValueFactory<>("symbol"));

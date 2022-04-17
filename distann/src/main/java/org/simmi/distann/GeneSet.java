@@ -298,6 +298,22 @@ public class GeneSet implements GenomeSet {
 		}
 	}
 
+	public void loadhhblits() throws IOException {
+		try(var flist = Files.list(Path.of("/Users/sigmarkarl/tmp"))) {
+			flist.filter(f -> f.toString().endsWith(".hhr")).flatMap(f -> {
+				try (var lines = Files.lines(f)) {
+					return lines.filter(l -> l.startsWith(">")).map(s -> {
+						var i = s.indexOf(' ');
+						var k = s.indexOf("n=1", i+1);
+						return s.substring(i+1,k-1).trim();
+					}).filter(p -> !p.contains("Uncharac")).findFirst().stream();
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			});
+		}
+	}
+
 	public void loadphastermap( Map<String,String> cazymap, Reader rd ) throws IOException {
 		BufferedReader br = new BufferedReader( rd );
 		String line = br.readLine();
@@ -5940,6 +5956,13 @@ public class GeneSet implements GenomeSet {
 		if( Files.exists( nf ) ) loadcazymap( cazymap, Files.newBufferedReader(nf) );
 		nf = zipfilesystem.getPath("/phaster");
 		if( Files.exists( nf ) ) loadphastermap( phastermap, Files.newBufferedReader(nf) );
+
+		nf = zipfilesystem.getPath("/hhblits");
+		if( Files.exists( nf ) ) loadphastermap( phastermap, Files.newBufferedReader(nf) );
+		else {
+			loadhhblits();
+		}
+
 		nf = zipfilesystem.getPath("/dbcan");
 		if( Files.exists( nf ) ) loaddbcan( cazymap, Files.newBufferedReader(nf) );
 		nf = zipfilesystem.getPath("/cazyaa");

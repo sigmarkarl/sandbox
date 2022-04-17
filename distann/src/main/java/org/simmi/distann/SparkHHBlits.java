@@ -42,26 +42,28 @@ public class SparkHHBlits implements MapFunction<FastaSequence, String> {
     }*/
 
     public SparkHHBlits() {
-
+        root = "/Users/sigmarkarl/tmp";
     }
 
     @Override
     public String call(FastaSequence input) throws IOException, ExecutionException, InterruptedException {
         var rootpath = Paths.get(root);
-        var name = input.getName();
+        var name = input.getId();
         var inputfasta = rootpath.resolve(name+".fasta");
         try(var writer = Files.newBufferedWriter(inputfasta)) {
-            input.writeSequence(writer);
+            input.writeIdSequence(writer);
         }
 
         var es = Executors.newFixedThreadPool(3);
-        var dbpath = "Volumes/Untitled/UniRef30_2020_06";
-        var output = Path.of(name+".hhr");
+        var dbpath = "/Volumes/Untitled/UniRef30_2020_06";
+        var outputstr = name+".hhr";
+        var output = rootpath.resolve(outputstr);
 
         //int procs = Runtime.getRuntime().availableProcessors();
-        var cmd = new String[] {"docker","run","--rm","-ti","soedinglab/hh-suite","hhblits","-i",inputfasta.toString(),"-o",output.toString(),"-d",dbpath};
+        var cmd = new String[] {"docker","run","--rm","-v","/Users/sigmarkarl:/Users/sigmarkarl","-v","/Volumes/Untitled:/Volumes/Untitled","-w","/Users/sigmarkarl/tmp","soedinglab/hh-suite","hhblits","-i",inputfasta.toString(),"-o",outputstr,"-d",dbpath};
         var pargs = Arrays.asList(cmd);
         var pb = new ProcessBuilder(pargs);
+        //pb.directory(rootpath.toFile());
         if(envMap!=null) Arrays.stream(envMap.split(",")).map(env -> env.split("=")).filter(s -> s.length==2).forEach(s -> pb.environment().put(s[0],s[1]));
         var pc = pb.start();
             /*Future<Long> fout = es.submit(() -> {
@@ -79,15 +81,11 @@ public class SparkHHBlits implements MapFunction<FastaSequence, String> {
             }
         });
         /*Future<Long> fout = es.submit(() -> {
-            try (OutputStream os = pc.getOutputStream(); Writer w = new OutputStreamWriter(os)) {
-                input.forEach(next -> {
-                    try {
-                        next.writeSequence(w);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-                return 0L;
+            Path bout = rootpath.resolve("hhblist"+name+".out");
+            try(InputStream is = pc.getInputStream(); OutputStream fos = Files.newOutputStream(bout)) {
+                fos.write(hostname.getBytes());
+                fos.write('\n');
+                return is.transferTo(fos);
             }
         });*/
         InputStreamReader isr = new InputStreamReader(pc.getInputStream());
@@ -98,7 +96,11 @@ public class SparkHHBlits implements MapFunction<FastaSequence, String> {
         }
         int exit = pc.waitFor();
         es.shutdown();
-        return Files.readString(output);
+        if (Files.exists(output)) {
+            return Files.readString(output);
+        } else {
+            return "";
+        }
     }
 
     public Iterator<List<Set<String>>> iterator(Iterator<FastaSequence> input) throws IOException, ExecutionException, InterruptedException {
