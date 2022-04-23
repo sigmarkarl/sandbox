@@ -298,19 +298,41 @@ public class GeneSet implements GenomeSet {
 		}
 	}
 
-	public void loadhhblits() throws IOException {
-		try(var flist = Files.list(Path.of("/Users/sigmarkarl/tmp"))) {
-			flist.filter(f -> f.toString().endsWith(".hhr")).flatMap(f -> {
+	public Map<String,String> loadhhblitsmap(Map<String,String> hhblitsmap, Reader reader) {
+		return null;
+	}
+
+	public Map<String,String> loadhhblits() throws IOException {
+		try(var flist = Files.list(Path.of("/Users/sigmar/tmp"))) {
+			var resmap = new HashMap<String,String>();
+			flist.filter(f -> f.toString().endsWith(".hhr")).forEach(f -> {
+				var fstr = f.getFileName().toString();
+				var gid = fstr.substring(0,fstr.length()-4);
 				try (var lines = Files.lines(f)) {
-					return lines.filter(l -> l.startsWith(">")).map(s -> {
-						var i = s.indexOf(' ');
-						var k = s.indexOf("n=1", i+1);
-						return s.substring(i+1,k-1).trim();
-					}).filter(p -> !p.contains("Uncharac")).findFirst().stream();
+					lines.filter(s -> {
+						if (s.startsWith(">") && !s.contains("Uncharac") && !s.contains("uncharac") && !s.contains("hypot")) {
+							var i = s.indexOf(' ');
+							var k = s.indexOf("n=", i+1);
+							if (k==-1) {
+								k = s.length()+1;
+							}
+							var hit = s.substring(i+1,k-1).trim();
+							resmap.put(gid, hit);
+						} else if(resmap.containsKey(gid) && s.contains("E-value=")) {
+							return true;
+						}
+						return false;
+					}).findFirst().ifPresent(s -> {
+						var i = s.indexOf("E-value=")+8;
+						var k = s.indexOf(" ", i);
+						var eval = s.substring(i,k).trim();
+						resmap.compute(gid, (key,val) -> val+";"+eval);
+					});
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
 			});
+			return resmap;
 		}
 	}
 
@@ -5723,6 +5745,7 @@ public class GeneSet implements GenomeSet {
 	Map<String,String>						unresolvedmap = new HashMap<>();
 	Map<String,String>						namemap = new HashMap<>();
 	Map<String,String>						phastermap = new HashMap<>();
+	Map<String,String>						hhblitsmap = new HashMap<>();
 	Map<String,String>						cazymap = new HashMap<>();
 	Map<String,String>						cazyaamap = new HashMap<>();
 	Map<String,String>						cazycemap = new HashMap<>();
@@ -5958,9 +5981,12 @@ public class GeneSet implements GenomeSet {
 		if( Files.exists( nf ) ) loadphastermap( phastermap, Files.newBufferedReader(nf) );
 
 		nf = zipfilesystem.getPath("/hhblits");
-		if( Files.exists( nf ) ) loadphastermap( phastermap, Files.newBufferedReader(nf) );
+		if( Files.exists( nf ) ) loadhhblitsmap( hhblitsmap, Files.newBufferedReader(nf) );
 		else {
-			loadhhblits();
+			hhblitsmap = loadhhblits();
+			try(var lines = Files.lines(Path.of("/Users/sigmar/tmp/mapping.txt"))) {
+				lines.map(s -> s.split("\t")).forEach(s -> hhblitsmap.put(s[0],s[1]));
+			}
 		}
 
 		nf = zipfilesystem.getPath("/dbcan");
@@ -6065,7 +6091,7 @@ public class GeneSet implements GenomeSet {
 				ze = zipm.getNextEntry();
 			}
 		}*/
-		genemap = new HashMap<String,Gene>();
+		genemap = new HashMap<>();
 		for(String key : refmap.keySet() ){
 			Annotation a = refmap.get(key);
 			Gene g = a.getGene();
@@ -6186,6 +6212,15 @@ public class GeneSet implements GenomeSet {
 			 * null ) break; } }
 			 */
 		}
+
+		genelist.forEach(g -> {
+			var tag = g.getTegeval().getTag();
+			if (tag!=null) {
+				if (hhblitsmap.containsKey(tag)) {
+					g.hhblits = hhblitsmap.get(tag);
+				}
+			}
+		});
 
 		int id = 0;
 		// Map<Set<String>,ClusterInfo> clustInfoMap = new
