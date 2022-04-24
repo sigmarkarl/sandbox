@@ -303,7 +303,7 @@ public class GeneSet implements GenomeSet {
 	}
 
 	public Map<String,String> loadhhblits() throws IOException {
-		try(var flist = Files.list(Path.of("/Users/sigmar/tmp2"))) {
+		try(var flist = Files.list(Path.of("/Users/sigmarkarl/tmp"))) {
 			var resmap = new HashMap<String,String>();
 			flist.filter(f -> f.toString().endsWith(".hhr")).forEach(f -> {
 				var fstr = f.getFileName().toString();
@@ -1645,7 +1645,7 @@ public class GeneSet implements GenomeSet {
 			d2.removeAll( d1 );
 			System.err.println( d2.size() );
 		}
-		
+
 		return bi;
 	}
 
@@ -5914,7 +5914,7 @@ public class GeneSet implements GenomeSet {
 		if( Files.exists( nf ) ) loadhhblitsmap( hhblitsmap, Files.newBufferedReader(nf) );
 		else {
 			hhblitsmap = loadhhblits();
-			try(var lines = Files.lines(Path.of("/Users/sigmar/tmp/mapping.txt"))) {
+			try(var lines = Files.lines(Path.of("/Users/sigmarkarl/tmp/mapping.txt"))) {
 				lines.map(s -> s.split("\t")).forEach(s -> hhblitsmap.put(s[0],s[1]));
 			}
 		}
@@ -6145,10 +6145,11 @@ public class GeneSet implements GenomeSet {
 
 		genelist.forEach(g -> {
 			var tag = g.getTegeval().getTag();
-			if (tag!=null) {
-				if (hhblitsmap.containsKey(tag)) {
-					g.hhblits = hhblitsmap.get(tag);
-				}
+			var id = g.getTegeval().getId();
+			if (tag != null && hhblitsmap.containsKey(tag)) {
+				g.hhblits = hhblitsmap.get(tag);
+			} else if(id != null && hhblitsmap.containsKey(id)) {
+				g.hhblits = hhblitsmap.get(id);
 			}
 		});
 
