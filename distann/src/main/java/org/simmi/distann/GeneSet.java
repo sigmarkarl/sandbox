@@ -6215,10 +6215,11 @@ public class GeneSet implements GenomeSet {
 
 		genelist.forEach(g -> {
 			var tag = g.getTegeval().getTag();
-			if (tag!=null) {
-				if (hhblitsmap.containsKey(tag)) {
-					g.hhblits = hhblitsmap.get(tag);
-				}
+			var id = g.getTegeval().getId();
+			if (tag != null && hhblitsmap.containsKey(tag)) {
+				g.hhblits = hhblitsmap.get(tag);
+			} else if(id != null && hhblitsmap.containsKey(id)) {
+				g.hhblits = hhblitsmap.get(id);
 			}
 		});
 
