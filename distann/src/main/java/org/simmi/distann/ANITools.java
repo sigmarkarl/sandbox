@@ -63,197 +63,6 @@ public class ANITools {
         //SwingUtilities.invokeLater(() -> ANITools.showAniMatrix(geneset, speclist, corr));
     }
 
-    public static class ANIResult {
-        int[] countarr;
-        double[] corrarr;
-    }
-
-    public static ANIResult corr(List<String> speclist, Collection<GeneGroup> agg, boolean diff, boolean all) {
-        Map<String, Integer> blosumap = JavaFasta.getBlosumMap();
-        Collection<GeneGroup> allgg = Collections.synchronizedCollection(agg);
-
-        ANIResult aniResult = new ANIResult();
-        int[] countarr = new int[speclist.size() * speclist.size()];
-        double[] corrarr = new double[speclist.size() * speclist.size()];
-        IntStream.range(0,speclist.size()).parallel().forEach(where -> {
-            String spec1 = speclist.get(where);
-            int wherex = 0;
-
-            //String spc1 = geneset.nameFix(spec1);
-            for (String spec2 : speclist) {
-                System.err.println(spec1 + " vs " + spec2);
-                if (where != wherex) {
-                    int totalscore = 0;
-                    int totaltscore = 1;
-                    int count = 0;
-                    for (GeneGroup gg : allgg) {
-                        Set<String> species = gg.getSpecies();
-                        if ( species != null && species.contains(spec1) && species.contains(spec2)) {
-                            Teginfo ti1 = gg.species.get(spec1);
-                            Teginfo ti2 = gg.species.get(spec2);
-                            //if( ti1.tset.size() == 1 && ti2.tset.size() == 1 ) {
-                            //double bval = 0.0;
-
-                            int score = 0;
-                            int tscore = 1;
-                            for (Annotation tv1 : ti1.tset) {
-                                //int maxscore;
-                                //int maxtscore;
-                                for (Annotation tv2 : ti2.tset) {
-                                    Sequence seq1 = tv1.getAlignedSequence();
-                                    Sequence seq2 = tv2.getAlignedSequence();
-                                    if (seq1 != null && seq2 != null) {
-                                        int mest = 0;
-                                        int tmest = 0;
-
-                                        int start = -1;
-                                        int stop = -1;
-                                        for (int i = 0; i < seq1.length(); i++) {
-                                            int startcheck = 0;
-                                            if (seq1.getCharAt(i) != '-') {
-                                                startcheck |= 1;
-                                            }
-                                            if (seq2.getCharAt(i) != '-') {
-                                                startcheck |= 2;
-                                            }
-
-                                            if (startcheck == 3) {
-                                                start = i;
-                                                break;
-                                            }
-                                        }
-
-                                        for (int i = seq1.length() - 1; i >= 0; i--) {
-                                            int stopcheck = 0;
-                                            if (seq1.getCharAt(i) != '-') {
-                                                stopcheck |= 1;
-                                            }
-                                            if (seq2.getCharAt(i) != '-') {
-                                                stopcheck |= 2;
-                                            }
-
-                                            if (stopcheck == 3) {
-                                                stop = i + 1;
-                                                break;
-                                            }
-                                        }
-                                        //count += stop-start;
-
-                                        if(all) {
-                                            for (int i = 0; i < seq1.length(); i++) {
-                                                char lc = seq1.getCharAt(i);
-                                                char lc2 = seq2.getCharAt(i);
-                                                //char c = Character.toUpperCase(lc);
-                                                if (lc != '-' && lc2 != '-') {
-                                                    tmest++;
-                                                    /*String comb = c + "" + c;
-                                                    if (blosumap.containsKey(comb)) tmest += blosumap.get(comb);*/
-                                                }
-                                            }
-
-                                            for (int i = 0; i < seq1.length(); i++) {
-                                                char lc = seq1.getCharAt(i);
-                                                char c = Character.toUpperCase(lc);
-                                                char lc2 = seq2.getCharAt(i);
-                                                char c2 = Character.toUpperCase(lc2);
-
-                                                if (lc != '-' && lc2 != '-') {
-                                                    if (c == c2) mest++;
-                                                    /*String comb = c + "" + c2;
-                                                    if (blosumap.containsKey(comb)) mest += blosumap.get(comb);*/
-                                                }
-                                            }
-                                        } else {
-                                            for (int i = start; i < stop; i++) {
-                                                char lc = seq1.getCharAt(i);
-                                                char c = Character.toUpperCase(lc);
-                                                String comb = c + "" + c;
-                                                if (blosumap.containsKey(comb)) tmest += blosumap.get(comb);
-                                            }
-
-                                            for (int i = start; i < stop; i++) {
-                                                char lc = seq1.getCharAt(i);
-                                                char c = Character.toUpperCase(lc);
-                                                char lc2 = seq2.getCharAt(i);
-                                                char c2 = Character.toUpperCase(lc2);
-                                                String comb = c + "" + c2;
-                                                if (blosumap.containsKey(comb)) mest += blosumap.get(comb);
-                                            }
-                                        }
-
-                                        double tani = (double) mest / (double) tmest;
-                                        if (tani > (double) score / (double) tscore) {
-                                            score = mest;
-                                            tscore = tmest;
-                                        }
-                                        //ret = (double)score/(double)tscore; //int cval = tscore == 0 ? 0 : Math.min( 192, 512-score*512/tscore );
-                                        //return ret;
-                                    }
-                                    //if( where == 0 ) d1.add( gg.getCommonName() );
-                                    //else d2.add( gg.getCommonName() );
-                                }
-                            }
-                            if(score>0) count++;
-                            totalscore += score;
-                            totaltscore += tscore;
-
-										/*if( bval > 0 ) {
-											ani += bval;
-											count++;
-										}*/
-                            //}
-                        }
-                    }
-                    double ani = (diff ? (double) (totaltscore - totalscore) : totalscore) / (double) totaltscore;
-                    corrarr[where * speclist.size() + wherex] = ani;
-                    countarr[where * speclist.size() + wherex] = count;
-                }
-                wherex++;
-            }
-        });
-        System.err.println("done");
-        aniResult.countarr = countarr;
-        aniResult.corrarr = corrarr;
-        return aniResult;
-    }
-
-    public static void showAniMatrix(GeneSet geneset, List<String> specList, ANIResult aniResult) {
-        geneset.corrInd.clear();
-        for( String spec : specList ) {
-            geneset.corrInd.add( spec ); //geneset.nameFix( spec ) );
-        }
-
-        final BufferedImage bi = geneset.showRelation( geneset.corrInd, aniResult, false );
-        JFrame f = new JFrame("TNI matrix");
-        f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        f.setSize(500, 500);
-
-        var ff = new File("/Users/sigmar/simmi.png");
-        try {
-            ImageIO.write(bi, "PNG", ff);
-            Desktop.getDesktop().open(ff);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        JComponent comp2 = new JComponent() {
-            public void paintComponent( Graphics g ) {
-                super.paintComponent(g);
-                var g2 = (Graphics2D) g;
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                g2.drawImage(bi, 0, 0, bi.getWidth(), bi.getHeight(), 0, 0, bi.getWidth(), bi.getHeight(), this);
-            }
-        };
-        Dimension dim = new Dimension(bi.getWidth(),bi.getHeight());
-        comp2.setPreferredSize(dim);
-        comp2.setSize( dim );
-        JScrollPane scroll = new JScrollPane(comp2);
-        f.add(scroll);
-
-        f.setVisible( true );
-    }
-
     public static void showAai(GeneSetHead genesethead) {
         GeneSet geneset = genesethead.geneset;
         Set<String> species = genesethead.getSelspec(genesethead, geneset.specList );
@@ -282,8 +91,8 @@ public class ANITools {
 
         List<String> specList = species.stream().map(spec -> {
             int ind = spec.indexOf(' ');
-            return ind == -1 ? spec : spec.substring(0,ind);
-        }).collect(Collectors.toList());
+            return ind == -1 ? spec : spec.substring(0, ind);
+        }).toList();
         List<String> fastaSequences = species.stream().map(spec -> geneset.speccontigMap.get(spec).stream().map(s -> {
             String ret = "";
             try {
@@ -313,11 +122,7 @@ public class ANITools {
 
         spark.close();
 
-        double[] matrix = new double[ specList.size()*specList.size() ];
-        int[] cmatrix = new int[ specList.size()*specList.size() ];
-        ANIResult aniResult = new ANIResult();
-        aniResult.corrarr = matrix;
-        aniResult.countarr = cmatrix;
+        ANIResult aniResult = new ANIResult(specList.size());
         res.stream().map(s -> s.split("/")).forEach(s -> {
             String spec1 = s[0];
             String spec2 = s[1];
@@ -325,8 +130,8 @@ public class ANITools {
             int x = specList.indexOf(spec2);
             double avg = Double.parseDouble(s[2]);
             int cnt = Integer.parseInt(s[3]);
-            matrix[y*specList.size()+x] = avg;
-            cmatrix[y*specList.size()+x] = cnt;
+            aniResult.corrarr[y*specList.size()+x] = avg;
+            aniResult.countarr[y*specList.size()+x] = cnt;
         });
 
         geneset.corrInd.clear();
@@ -334,7 +139,7 @@ public class ANITools {
             geneset.corrInd.add( geneset.nameFix( spec ) );
         }
 
-        final BufferedImage bi = geneset.showRelation( geneset.corrInd, aniResult, false );
+        final BufferedImage bi = JavaFasta.showRelation( geneset.corrInd, aniResult, false );
         JFrame f = new JFrame("TNI matrix");
         f.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         f.setSize(500, 500);
@@ -432,11 +237,7 @@ public class ANITools {
             spark.close();
         }
 
-        double[] matrix = new double[ specList.size()*specList.size() ];
-        int[] cmatrix = new int[ specList.size()*specList.size() ];
-        ANIResult aniResult = new ANIResult();
-        aniResult.corrarr = matrix;
-        aniResult.countarr = cmatrix;
+        ANIResult aniResult = new ANIResult(specList.size());
         res.stream().map(s -> s.split("/")).forEach(s -> {
             String spec1 = s[0];
             String spec2 = s[1];
@@ -444,8 +245,8 @@ public class ANITools {
             int x = specList.indexOf(spec2);
             double avg = Double.parseDouble(s[2]);
             int cnt = Integer.parseInt(s[3]);
-            matrix[y*specList.size()+x] = avg;
-            cmatrix[y*specList.size()+x] = cnt;
+            aniResult.corrarr[y*specList.size()+x] = avg;
+            aniResult.countarr[y*specList.size()+x] = cnt;
         });
 
                 /*for( String dbspec : species ) {
@@ -516,6 +317,6 @@ public class ANITools {
                     y++;
                 }*/
 
-        showAniMatrix(geneset, specList, aniResult);
+        JavaFasta.showAniMatrix(specList, aniResult);
     }
 }

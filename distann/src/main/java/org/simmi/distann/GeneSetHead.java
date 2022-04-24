@@ -5236,8 +5236,8 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				Set<String> species = getSelspec(GeneSetHead.this, geneset.specList, true, all);
 				List<String> speclist = new ArrayList<>(species);
 
-				ANITools.ANIResult aniResult = ANITools.corr(speclist, lagg, false, all.isSelected());
-				ANITools.showAniMatrix(geneset, speclist, aniResult);
+				var aniResult = JavaFasta.corr(speclist, lagg, false, all.isSelected());
+				JavaFasta.showAniMatrix(speclist, aniResult);
 			});
 			/*SwingUtilities.invokeLater(() -> {
 				ANITools.aaiAction(GeneSetHead.this,agg);
@@ -5251,7 +5251,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				List<String> speclist = new ArrayList<>(species);
 				List<GeneGroup> agg = table.getSelectionModel().getSelectedItems();
 
-				ANITools.ANIResult aniResult = ANITools.corr(speclist, agg, true, false);
+				ANIResult aniResult = JavaFasta.corr(speclist, agg, true, false);
 				org.simmi.treedraw.shared.TreeUtil tu = new org.simmi.treedraw.shared.TreeUtil();
 				geneset.corrInd.clear();
 				for (String spec : speclist) {
