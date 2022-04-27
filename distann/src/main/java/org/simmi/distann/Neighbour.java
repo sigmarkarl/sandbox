@@ -781,7 +781,7 @@ public class Neighbour {
 									if (relcol.isSelected()) g.setColor(Color.white);
 									else g.setColor(Color.black);
 									g.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
-								} else if (i == 0 && !genename.contains("hypoth")) {
+								} else if (i == 0 && !genename.contains("hypoth") && !genename.contains("Hypoth") && !genename.startsWith("Phage ")) {
 									int xx = 5 + xoff + (int) (len - strlen) / 2;
 									int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
 									g2.translate(xx, yy);
@@ -1111,7 +1111,7 @@ public class Neighbour {
 									if (relcol.isSelected()) g.setColor(Color.white);
 									else g.setColor(Color.black);
 									g.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
-								} else if (i == 0 && !genename.contains("hypoth")) {
+								} else if (i == 0 && !genename.contains("hypoth") && !genename.contains("Hypoth") && !genename.startsWith("Phage ")) {
 									int xx = 5 + xoff + (int) (len - strlen) / 2;
 									int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
 									g2.translate(xx, yy);
@@ -1333,7 +1333,7 @@ public class Neighbour {
 									}*/
 								}
 
-								g.translate(0,500);
+								//g.translate(0,500);
 
 								var prevColor = g.getColor();
 								boolean revis = (next.ori == -1) ^ next.getContig().isReverse();
@@ -1457,7 +1457,7 @@ public class Neighbour {
 									}
 									g2.rotate(-theta);
 
-									if(y==0&&!ogenename.contains("hth")&&!ogenename.contains("contig")) {
+									if(y==0&&!ogenename.contains("hth")&&!ogenename.startsWith("Hypoth")&&!ogenename.startsWith("hypoth")&&!ogenename.startsWith("Phage ")&&!ogenename.contains("contig")) {
 										g2.setColor(Color.darkGray);
 										var middle = -(theta + ltheta) / 2.0;
 										//g2.rotate(-middle);
@@ -1480,7 +1480,7 @@ public class Neighbour {
 									//g.fillArc(-width+m*rowheight,-width+m*rowheight,width*2-m*rowheight*2,width*2-m*rowheight*2,(int)((xoff+offset-5000)/div), (int)((len)/div));
 									g.translate(-5000, -560);
 								}
-								g.translate(0,-500);
+								//g.translate(0,-500);
 							}
 						/*g.setColor( Color.green );
 						Set<Function> funcset = te.getGene().getGeneGroup().getFunctions();
@@ -1723,7 +1723,7 @@ public class Neighbour {
 								}*/
 							}
 
-							g.translate(0,500);
+							//g.translate(0,500);
 
 							var prevColor = g.getColor();
 							boolean revis = (prev.ori == -1) ^ prev.getContig().isReverse();
@@ -1756,7 +1756,7 @@ public class Neighbour {
 									if (relcol.isSelected()) g.setColor(Color.white);
 									g2.setColor(Color.black);
 									g2.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
-								} else if (i == 0 && ((!ogenename.contains("hth") && !ogenename.contains("contig")) || (d!=null&&d.length()>0))) {
+								} else if (i == 0 && ((!ogenename.contains("hth") && !ogenename.contains("hypoth") && !ogenename.contains("Hypoth") && !ogenename.contains("contig")) || (d!=null&&d.length()>0))) {
 									int xx = 5 + xoff + (int) (len - strlen) / 2;
 									int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
 									g2.translate(xx, yy);
@@ -1854,7 +1854,7 @@ public class Neighbour {
 								}
 								g2.rotate(-theta);
 
-								if (y==0&&!ogenename.contains("hth")&&!ogenename.contains("contig")) {
+								if (y==0&&!ogenename.contains("hth")&&!ogenename.contains("hypoth")&&!ogenename.contains("Hypoth")&&!ogenename.contains("Phage ")&&!ogenename.contains("contig")) {
 									g2.setColor(Color.darkGray);
 									var middle = -(theta + ltheta) / 2.0;
 									//g2.rotate(-middle);
@@ -1878,7 +1878,7 @@ public class Neighbour {
 
 								g.translate(-5000, -560);
 							}
-							g.translate(0,-500);
+							//g.translate(0,-500);
 						}
 					}
 				}
@@ -2820,7 +2820,7 @@ public class Neighbour {
 										}
 										name = symb != null ? symb : tv.getGene() == null ? tv.getName() : tv.getGene().getGeneGroup().getName();
 									}
-									if( name != null && name.contains("hypo") ) name = "hyp";
+									if( name != null && name.contains("hypo") ) name = "hth";
 									//name += tv.ori == 1 ? "->" : "<-";
 									
 									Annotation newann = new Annotation(seq, -upph+offset, -upph+offset+tv.stop-tv.start, 1, name);
@@ -2856,7 +2856,7 @@ public class Neighbour {
 											}
 											name = symb != null ? symb : ntev.getGene() == null ? ntev.getName() : ntev.getGene().getGeneGroup().getName();
 										}
-										if( name != null && name.contains("hypo") ) name = "hyp";
+										if( name != null && name.contains("hypo") ) name = "hth";
 										
 										if( tv.ori == -1 ) {
 											//int bil = ntev.stop-tv.start;

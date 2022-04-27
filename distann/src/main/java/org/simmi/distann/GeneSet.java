@@ -5913,8 +5913,9 @@ public class GeneSet implements GenomeSet {
 		nf = zipfilesystem.getPath("/hhblits");
 		if( Files.exists( nf ) ) loadhhblitsmap( hhblitsmap, Files.newBufferedReader(nf) );
 		else {
-			hhblitsmap = loadhhblits();
-			try(var lines = Files.lines(Path.of("/Users/sigmarkarl/tmp/mapping.txt"))) {
+			//hhblitsmap = loadhhblits();
+			nf = zipfilesystem.getPath("/mapping.txt");
+			if (Files.exists(nf)) try(var lines = Files.lines(nf)) {
 				lines.map(s -> s.split("\t")).forEach(s -> hhblitsmap.put(s[0],s[1]));
 			}
 		}
