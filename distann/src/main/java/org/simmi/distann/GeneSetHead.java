@@ -23,6 +23,7 @@ import javafx.collections.transformation.SortedList;
 import javafx.embed.swing.JFXPanel;
 import javafx.event.Event;
 import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -7129,6 +7130,79 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		return Files.newBufferedReader(Paths.get("distann/src/main/java/"+res ));
 	}
 
+	public void saveGeneGroups(List<GeneGroup> gg, List<GeneGroup> c) {
+		Map<String,String> env = new HashMap<>();
+		env.put("create", "true");
+		try(var zfsystem = FileSystems.newFileSystem( geneset.zipuri, env )) {
+			//geneset.zipfilesystem = zfsystem;
+			for( Path root : zfsystem.getRootDirectories() ) {
+				try(var fstream = Files.walk(root)) {
+					fstream.filter(f -> f.toString().startsWith("/aligned"))
+							//.filter( f -> f.toString().endsWith(".aa") )
+							.filter(f -> {
+								String filename = f.getFileName().toString();
+								return gg.stream().flatMap(ggg -> ggg.genes.stream()).anyMatch(g -> g.getId().equals(filename));
+							}).forEach(p -> {
+								try {
+									Files.deleteIfExists(p);
+								} catch (IOException e1) {
+									e1.printStackTrace();
+								}
+							});
+				}
+						/*for( Gene g : gg.genes ) {
+							if( g.keggpathway != null ) {
+								String sub = g.keggpathway.substring(0,3);
+								Path subf = root.resolve(sub);
+								if( Files.exists(subf) ) {
+									String[] split = g.keggpathway.split(" ");
+									for( String s : split ) {
+										Path pimg = subf.resolve(s+".png");
+										if( Files.exists(pimg) ) {
+											showKeggPathway( sub, pimg );
+										}
+									}
+								}
+							}
+						}*/
+				final Path p = root.resolve("/aligned");
+				for (GeneGroup fgg : c) {
+					Path np = p.resolve(fgg.genes.iterator().next().getId());
+					try (Writer w = Files.newBufferedWriter(np)) {
+						fgg.getFasta(w, false);
+					}
+				}
+
+				var clustersPath = root.resolve("simpleclusters.txt");
+				try(var fos = Files.newBufferedWriter(clustersPath, StandardOpenOption.TRUNCATE_EXISTING)) {
+					var gset = geneset.allgenegroups.stream().map(ggg -> ggg.genes.stream().map(Annotation::getId).collect(Collectors.toSet()));
+					geneset.writeClusters(fos, gset);
+				}
+				break;
+			}
+		} catch( Exception ex ) {
+			ex.printStackTrace();
+		}
+	}
+
+	public void saveSimpleClusters() {
+		Map<String,String> env = new HashMap<>();
+		env.put("create", "true");
+		try(var zfsystem = FileSystems.newFileSystem( geneset.zipuri, env )) {
+			//geneset.zipfilesystem = zfsystem;
+			for( Path root : zfsystem.getRootDirectories() ) {
+				var clustersPath = root.resolve("simpleclusters.txt");
+				try(var fos = Files.newBufferedWriter(clustersPath, StandardOpenOption.TRUNCATE_EXISTING)) {
+					var gset = geneset.allgenegroups.stream().map(ggg -> ggg.genes.stream().map(Annotation::getId).collect(Collectors.toSet()));
+					geneset.writeClusters(fos, gset);
+				}
+				break;
+			}
+		} catch( Exception ex ) {
+			ex.printStackTrace();
+		}
+	}
+
 	Set<GeneGroup> updateSplit(GeneGroup gg, double d, double l) {
 		Set<GeneGroup> ggmap = new HashSet<>();
 		Map<String,Integer> blosumMap = JavaFasta.getBlosumMap( true );
@@ -7311,9 +7385,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 
 					try {
 						obj = support.getTransferable().getTransferData(DataFlavor.imageFlavor);
-					} catch (UnsupportedFlavorException e) {
-						e.printStackTrace();
-					} catch (IOException e) {
+					} catch (UnsupportedFlavorException | IOException e) {
 						e.printStackTrace();
 					}
 
@@ -8760,67 +8832,36 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				geneset.allgenegroups.removeAll(gg);
 				geneset.allgenegroups.addAll( c );
 
-				Map<String,String> env = new HashMap<>();
-				env.put("create", "true");
-				try {
-					geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
-					for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
-						Files.walk(root)
-								.filter( f -> f.toString().startsWith("/aligned"))
-								//.filter( f -> f.toString().endsWith(".aa") )
-								.filter( f -> {
-								String filename = f.getFileName().toString();
-								return gg.stream().flatMap(ggg -> ggg.genes.stream()).anyMatch( g -> g.getId().equals(filename));
-						}).forEach(p -> {
-							try {
-								Files.deleteIfExists(p);
-							} catch (IOException e1) {
-								e1.printStackTrace();
-							}
-						});
-						/*for( Gene g : gg.genes ) {
-							if( g.keggpathway != null ) {
-								String sub = g.keggpathway.substring(0,3);
-								Path subf = root.resolve(sub);
-								if( Files.exists(subf) ) {
-									String[] split = g.keggpathway.split(" ");
-									for( String s : split ) {
-										Path pimg = subf.resolve(s+".png");
-										if( Files.exists(pimg) ) {
-											showKeggPathway( sub, pimg );
-										}
-									}
-								}
-							}
-						}*/
-						final Path p = root.resolve("/aligned");
-						for (GeneGroup fgg : c) {
-							Path np = p.resolve(fgg.genes.iterator().next().getId());
-							try {
-								Writer w = Files.newBufferedWriter(np);
-								fgg.getFasta(w, false);
-								w.close();
-							} catch (IOException e1) {
-								e1.printStackTrace();
-							}
-						}
-
-						Path clustersPath = root.resolve("simpleclusters.txt");
-						BufferedWriter fos = Files.newBufferedWriter(clustersPath, StandardOpenOption.TRUNCATE_EXISTING);
-						geneset.writeClusters(fos, geneset.allgenegroups.stream().map(ggg -> ggg.genes.stream().map(g -> g.getId()).collect(Collectors.toSet())));
-						fos.close();
-						break;
-					}
-					geneset.zipfilesystem.close();
-				} catch( Exception ex ) {
-					ex.printStackTrace();
-				}
+				saveGeneGroups(gg, c);
 			});
 		});
 		popup.getItems().add( splitaction );
 		MenuItem joinaction = new MenuItem("Join");
-		
+		joinaction.setOnAction(event -> {
+			final ObservableList<GeneGroup> ogg = table.getSelectionModel().getSelectedItems();
+			var firstGG = ogg.get(0);
+			for (int i = 1; i < ogg.size(); i++) {
+				var ngg = ogg.get(i);
+				firstGG.addGenes(ngg.genes);
+				geneset.allgenegroups.remove(ngg);
+			}
+			saveSimpleClusters();
+		});
 		popup.getItems().add( joinaction );
+
+		MenuItem mergejoinaction = new MenuItem("Merge join");
+		mergejoinaction.setOnAction(event -> {
+			final ObservableList<GeneGroup> ogg = table.getSelectionModel().getSelectedItems();
+			var firstGG = ogg.get(0);
+			for (int i = 1; i < ogg.size(); i++) {
+				var ngg = ogg.get(i);
+				firstGG.mergeAnnotations(ngg.genes);
+				geneset.allgenegroups.remove(ngg);
+			}
+			saveSimpleClusters();
+		});
+		popup.getItems().add( mergejoinaction );
+
 		popup.getItems().add( new SeparatorMenuItem() );
 		MenuItem showkegg = new MenuItem("Show KEGG pathway");
 		showkegg.setOnAction( e -> {
