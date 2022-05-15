@@ -575,7 +575,7 @@ public class GeneSetHead {
 			//ftable.setItems( geneset.f);
 			
 			for( String spec : geneset.specList ) {
-				TableColumn<GeneGroup, Teginfo> speccol = new TableColumn(spec);
+				TableColumn<GeneGroup, Teginfo> speccol = new TableColumn<>(spec);
 				//speccol.getStyleClass().add("tabstyle");
 				speccol.setCellFactory( cell -> {
 					final TableCell<GeneGroup,Teginfo> tc = new TableCell<>() {
@@ -6094,9 +6094,16 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				gg.setSelected(true);
 			}
 		});
+		MenuItem hiselAction = new MenuItem("Hilight selected");
+		hiselAction.setOnAction( actionEvent -> {
+			for (GeneGroup gg : geneset.allgenegroups) {
+				if(gg.isSelected()) table.getSelectionModel().select(gg);
+			}
+		});
 		select.getItems().add( breakpointselAction );
 		select.getItems().add( saveselAction );
 		select.getItems().add( selhiAction );
+		select.getItems().add( hiselAction );
 		select.getItems().add( new SeparatorMenuItem() );
 		
 		MenuItem showall = new MenuItem("Show all");
@@ -6164,7 +6171,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			newsel.removeAll( selitems );
 
 			table.getSelectionModel().clearSelection();
-			newsel.stream().forEach( gg -> table.getSelectionModel().select(gg) );
+			newsel.forEach(gg -> table.getSelectionModel().select(gg) );
 
 				// genefilterset.clear();
 				//int[] rr = table.getSelectedRows();

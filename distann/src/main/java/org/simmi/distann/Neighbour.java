@@ -557,6 +557,7 @@ public class Neighbour {
 							if( gg != null ) genename = gg.getName();
 						}
 						if( genename != null ) genename = genename.contains("hypothetical") ? "hth-p" : genename;*/
+
 						String genename = gene != null ? geneset.getGeneName(showNames, gene) : next.type;
 						var id = next.getId();
 						if (genename==null) genename = "unknown";
@@ -651,7 +652,9 @@ public class Neighbour {
 										if( ratio == -1 ) {
 											ratio = GeneCompare.invertedGradientPlasmidRatio(spec1, contigs, -1.0, gg);
 											rc = GeneCompare.gradientGrayscaleColor( ratio );
-										} else rc = GeneCompare.gradientColor( ratio );
+										} else {
+											rc = GeneCompare.gradientColor( ratio );
+										}
 									} else {
 										rc = Color.white;
 									}
@@ -1172,7 +1175,14 @@ public class Neighbour {
 					}
 				}
 			}*/
-			
+
+			Annotation firstSomething = null;
+			int firstx = 0;
+			Annotation lastSomething = null;
+			int lastx = 0;
+			int mm = 0;
+			int jj0 = 0;
+
 			List<Annotation>	hteglocal = new ArrayList<>(hteg);
 			int xoff =  XOFF_START;
 			while( xoff < END_X ) {
@@ -1335,7 +1345,49 @@ public class Neighbour {
 									}*/
 								}
 
-								if (vertNames.isSelected()) g.translate(0,500);
+								if (vertNames.isSelected()) {
+									g.translate(0, 500);
+
+									if (i == 0) {
+										if (next.designation != null && next.designation.length() > 0) {
+											var set = new HashSet<>(Arrays.asList(next.designation.split(";")));
+											var od = set.stream().filter(p -> !p.contains("express-")).findAny();
+											if (od.isPresent()) {
+												var currentD = od.get();
+												if (firstSomething == null) {
+													firstSomething = next;
+													lastSomething = next;
+													firstx = xoff;
+													lastx = xoff;
+												} else {
+													var nset = new HashSet<>(Arrays.asList(firstSomething.designation.split(";")));
+													var firstD = nset.stream().filter(p -> !p.contains("express-")).findAny().get();
+													if (firstD.equals(currentD)) {
+														lastSomething = next;
+														lastx = xoff;
+													} else {
+														var c = g.getColor();
+														g.setColor(Color.black);
+														var sw = g.getFontMetrics().stringWidth(firstD);
+														var sxoff = 13 * (mm % 2);
+														g.drawLine(firstx, 116 + sxoff, lastx + 10, 116 + sxoff);
+														g.drawString(firstD, (lastx + firstx - sw) / 2, 126 + sxoff);
+														g.setColor(c);
+														mm++;
+														firstSomething = next;
+														firstx = xoff;
+														lastx = xoff;
+														lastSomething = next;
+													}
+												}
+
+												lastSomething = next;
+											}
+										}
+									}
+								}
+
+
 								var prevColor = g.getColor();
 								boolean revis = (next.ori == -1) ^ next.getContig().isReverse();
 								int addon = revis ? -5 : 5;
@@ -1378,10 +1430,11 @@ public class Neighbour {
 										var oldfont = g2.getFont();
 										if (db) {
 											g2.setFont(oldfont.deriveFont(Font.BOLD | Font.ITALIC));
-											g2.drawString(ogenename + " (" + id + ")", 20, -10);
+											g2.drawString("*", 13, -7);
+											g2.drawString(ogenename + " (" + id + ") - " + Arrays.stream(d.split(";")).filter(p -> p.startsWith("express-")).map(p -> p.replace("express-","")).collect(Collectors.joining(";")), 20, -10);
 											g2.setFont(oldfont);
 										} else {
-											g2.drawString(ogenename + " (" + id + ")", 20, -10);
+											g2.drawString(ogenename + " (" + id + ")" /*+ (d!=null && d.length()>0 ? " - " + d : "")*/, 20, -10);
 										}
 										g2.rotate(Math.PI/4);
 										g2.translate(-xx, -yy);
@@ -1468,6 +1521,10 @@ public class Neighbour {
 									g2.rotate(-theta);
 
 									if(y==0&&!ogenename.contains("hth")&&!ogenename.startsWith("Hypoth")&&!ogenename.startsWith("hypoth")&&!ogenename.startsWith("Phage ")&&!ogenename.contains("contig")) {
+										g2.rotate((theta + ltheta) / 2);
+										g2.drawLine(width, 0, width+8, 0);
+										g2.rotate(-(theta + ltheta) / 2);
+
 										g2.setColor(Color.darkGray);
 										var middle = -(theta + ltheta) / 2.0;
 										//g2.rotate(-middle);
@@ -1483,8 +1540,15 @@ public class Neighbour {
 										var sin8 = sin4*sin4;
 										var sin16 = sin8*sin8;
 										var sin32 = sin16*sin16;
-										if (xx>=0) g2.drawString(ogenename, xx, yy + (int)(50*sin8));
-										else g2.drawString(ogenename, xx-nstrlen,yy + (int)(50*sin8));
+										var off = (int)(80*sin8);
+										int xstart;
+										if (xx>=0) {
+											xstart = xx;
+										} else {
+											xstart = xx - nstrlen;
+										}
+										g2.drawString(ogenename, xstart,yy + off);
+										if (off > 14) g2.drawLine(xx, yy, xx, yy-12+off);
 										g2.setFont( g.getFont().deriveFont((float)fsize) );
 										//g2.rotate(middle);
 									}
@@ -1528,6 +1592,23 @@ public class Neighbour {
 						}
 						g.setColor( Color.black );
 						g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheight-5 );*/
+						}
+
+						if (vertNames.isSelected() && i==0) {
+							g.translate(0,500);
+							var c = g.getColor();
+							g.setColor(Color.black);
+							if (next.getId() != null && next.getId().endsWith("_001")) {
+								jj0 = 0;
+							}
+							if (jj0==0) {
+								g.setColor(Color.white);
+								g.fillRect(xoff,105, 10, 10);
+								g.setColor(Color.black);
+							}
+							if (jj0<=140) g.drawString(Integer.toString(++jj0), xoff, 105+8*(jj0%2));
+							g.setColor(c);
+							g.translate(0,-500);
 						}
 					}
 					//y++;
@@ -1671,12 +1752,19 @@ public class Neighbour {
 									GeneGroup gg = prev.getGene().getGeneGroup();
 									List<Annotation> ltv = gg.getTegevals( spec1 );
 									if( ltv != null && ltv.size() > 0 ) {
+										if (gg.size()==3) {
+											if(gg.genes.stream().anyMatch(gggu -> gggu.start == 67712)) {
+												System.err.println();
+											}
+										}
 										final Collection<Sequence> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
 										double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg, prev);
 										if( ratio == -1 ) {
 											ratio = GeneCompare.invertedGradientPlasmidRatio(spec1, contigs, -1.0, gg);
 											rc = GeneCompare.gradientGrayscaleColor( ratio );
-										} else rc = GeneCompare.gradientColor( ratio );
+										} else {
+											rc = GeneCompare.gradientColor( ratio );
+										}
 									} else {
 										rc = Color.lightGray;
 									}
@@ -1781,10 +1869,11 @@ public class Neighbour {
 									var oldfont = g2.getFont();
 									if (db) {
 										g2.setFont(oldfont.deriveFont(Font.BOLD | Font.ITALIC));
-										g2.drawString(ogenename + " (" + id + ")", 20, -10);
+										g2.drawString("*", 13, -7);
+										g2.drawString(ogenename + " (" + id + ") - " + d.replace("express-",""), 20, -10);
 										g2.setFont(oldfont);
 									} else {
-										g2.drawString(ogenename + " (" + id + ")", 20, -10);
+										g2.drawString(ogenename + " (" + id + ") - " + (d!=null && d.length()>0 ? " - " + d : ""), 20, -10);
 									}
 									g2.rotate(Math.PI/4);
 									g2.translate(-xx, -yy);
@@ -1875,6 +1964,10 @@ public class Neighbour {
 								g2.rotate(-theta);
 
 								if (y==0&&!ogenename.contains("hth")&&!ogenename.contains("hypoth")&&!ogenename.contains("Hypoth")&&!ogenename.contains("Phage ")&&!ogenename.contains("contig")) {
+									g2.rotate((theta + ltheta) / 2);
+									g2.drawLine(width, 0, width+8, 0);
+									g2.rotate(-(theta + ltheta) / 2);
+
 									g2.setColor(Color.darkGray);
 									var middle = -(theta + ltheta) / 2.0;
 									//g2.rotate(-middle);
@@ -1890,8 +1983,16 @@ public class Neighbour {
 									var sin8 = sin4*sin4;
 									var sin16 = sin8*sin8;
 									var sin32 = sin16*sin16;
-									if (xx>=0) g2.drawString(ogenename, xx, yy - (int)(50*sin32));
-									else g2.drawString(ogenename, xx-nstrlen,yy - (int)(50*sin32));
+									var sin64 = sin32*sin32;
+									var off = (int)(80*sin8);
+									int xstart;
+									if (xx>=0) {
+										xstart = xx;
+									} else {
+										xstart = xx - nstrlen;
+									}
+									g2.drawString(ogenename, xstart,yy - off);
+									if (off > 4) g2.drawLine(xx, yy, xx, yy+2-off);
 									g2.setFont( g.getFont().deriveFont((float)fsize) );
 									//g2.rotate(middle);
 								}
@@ -1960,6 +2061,7 @@ public class Neighbour {
 			for(int i = 0; i < rowheader.getRowCount(); i++) {
 				var row = rowheader.convertRowIndexToModel( i );
 				var spec = (String)rowheader.getValueAt(row,0);
+				spec = spec.replace("merge", "");
 				if(!spec.contains("Thermus")) spec = "Thermus phage "+spec;
 				spec = spec.replace('_',' ');
 				var strlen = g2.getFontMetrics().stringWidth(spec);

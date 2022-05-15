@@ -3925,7 +3925,7 @@ public class GeneSet implements GenomeSet {
 	public Map<String,String> loadExpress( InputStreamReader id, Map<String,String> deset ) throws IOException {
 		Map<String,String>	ret = new TreeMap<>();
 
-		var seqlist = speccontigMap.get("15-6");
+		var seqlist = speccontigMap.get("15-6_merge");
 		if(seqlist!=null) {
 			BufferedReader br = new BufferedReader(id);
 			String line = br.readLine();
@@ -3968,7 +3968,16 @@ public class GeneSet implements GenomeSet {
 										if (a.designation != null && a.designation.length() > 0)
 											expr += ";" + a.designation;
 										a.designation = expr;
-										if (a.getId() != null) designations.put(a.getId(), expr);
+										if (a.getId() != null) {
+											if (designations.containsKey(a.getId())) {
+												var aexpr = designations.get(a.getId());
+												var eset = new HashSet<>(Arrays.asList(aexpr.split(";")));
+												eset.addAll(Arrays.asList(expr.split(";")));
+												designations.put(a.getId(), String.join(";", eset));
+											} else {
+												designations.put(a.getId(), expr);
+											}
+										}
 									//}
 								}
 							}
