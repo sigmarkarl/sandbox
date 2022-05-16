@@ -603,7 +603,7 @@ public class Neighbour {
 									else if (d.contains("Lysis module")) g.setColor(new Color(0.2f,0.7f,0.7f));
 									else if (d.contains("DNA packaging")) g.setColor(new Color(0.7f,0.2f,0.7f));
 									else if (d.contains("Head and tail morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
-									else g.setColor(new Color(0.7f,0.2f,0.2f));
+									else g.setColor( Color.lightGray );//g.setColor(new Color(0.7f,0.2f,0.2f));
 								} else {
 									g.setColor( Color.lightGray );
 								}
@@ -965,7 +965,7 @@ public class Neighbour {
 									else if (d.contains("Lysis module")) g.setColor(new Color(0.2f,0.7f,0.7f));
 									else if (d.contains("DNA packaging")) g.setColor(new Color(0.7f,0.2f,0.7f));
 									else if (d.contains("Head and tail morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
-									else g.setColor(new Color(0.7f,0.2f,0.2f));
+									else g.setColor( Color.lightGray );//g.setColor(new Color(0.7f,0.2f,0.2f));
 								} else {
 									g.setColor( Color.lightGray );
 								}
@@ -1193,7 +1193,8 @@ public class Neighbour {
 					if( tes != null ) val = (int)(tes.getProteinLength()*neighbourscale);
 					if( val > max ) max = val;
 				}
-				
+
+				boolean vertDone = false;
 				for( int i = Math.max(0, clip.y/rowheight); i < Math.min( (clip.y+clip.height)/rowheight+1, rowcount ); i++ ) {
 					int r = rowheader.getRowCount() == 0 ? i : rowheader.convertRowIndexToModel( i );
 					Annotation te = hteglocal.get(r);
@@ -1264,7 +1265,7 @@ public class Neighbour {
 										else if (d.contains("Lysis module")) g.setColor(new Color(0.2f,0.7f,0.7f));
 										else if (d.contains("DNA packaging")) g.setColor(new Color(0.7f,0.2f,0.7f));
 										else if (d.contains("Head and tail morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
-										else g.setColor(new Color(0.7f,0.2f,0.2f));
+										else g.setColor( Color.lightGray );//g.setColor(new Color(0.7f,0.2f,0.2f));
 									} else {
 										g.setColor( Color.lightGray );
 									}
@@ -1420,17 +1421,19 @@ public class Neighbour {
 										if (relcol.isSelected()) g.setColor(Color.white);
 										else g.setColor(Color.black);
 										g2.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
-									} else if (i == 0 && ((!ogenename.contains("hth") && !ogenename.contains("Hypoth") && !ogenename.contains("hypoth") && !ogenename.contains("contig")) || (d!=null&&d.length()>0))) {
+									} else if (!vertDone && ((!ogenename.contains("hth") && !ogenename.contains("Hypoth") && !ogenename.contains("hypoth") && !ogenename.contains("contig")) || (d!=null&&d.length()>0))) {
+										vertDone = true;
 										boolean db = d != null && d.contains("express");
 										int xx = 5 + xoff + (int) (len - strlen) / 2;
-										int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
+										int yy =  rowheight - (int) (rowheight * 0.3);
 										g2.translate(xx, yy);
 										g2.rotate(-Math.PI/4);
 										if (ogenename.contains("contig")) ogenename = "Unknown";
 										var oldfont = g2.getFont();
 										if (db) {
+											g2.setFont(oldfont.deriveFont(15.0f));
+											g2.drawString("*", 9, -2);
 											g2.setFont(oldfont.deriveFont(Font.BOLD | Font.ITALIC));
-											g2.drawString("*", 13, -7);
 											g2.drawString(ogenename + " (" + id + ") - " + Arrays.stream(d.split(";")).filter(p -> p.startsWith("express-")).map(p -> p.replace("express-","")).collect(Collectors.joining(";")), 20, -10);
 											g2.setFont(oldfont);
 										} else {
@@ -1681,7 +1684,8 @@ public class Neighbour {
 					if( te != null ) val = (int)(te.getProteinLength()*neighbourscale);
 					if( val > max ) max = val;
 				}
-				
+
+				boolean vertDone = false;
 				xoff -= max+10;
 				for( int i = Math.max(0, clip.y/rowheight); i < Math.min( (clip.y+clip.height)/rowheight+1, rowcount ); i++ ) {
 					int r = rowheader.getRowCount() == 0 ? i : rowheader.convertRowIndexToModel( i );
@@ -1859,17 +1863,19 @@ public class Neighbour {
 									if (relcol.isSelected()) g.setColor(Color.white);
 									g2.setColor(Color.black);
 									g2.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
-								} else if (i == 0 && ((!ogenename.contains("hth") && !ogenename.contains("hypoth") && !ogenename.contains("Hypoth") && !ogenename.contains("contig")) || (d!=null&&d.length()>0))) {
+								} else if (!vertDone && ((!ogenename.contains("hth") && !ogenename.contains("hypoth") && !ogenename.contains("Hypoth") && !ogenename.contains("contig")) || (d!=null&&d.length()>0))) {
+									vertDone = true;
 									boolean db = d != null && d.contains("express");
 									int xx = 5 + xoff + (int) (len - strlen) / 2;
-									int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
+									int yy = rowheight - (int) (rowheight * 0.3);
 									g2.translate(xx, yy);
 									g2.rotate(-Math.PI/4);
 									if (ogenename.contains("contig")) ogenename = "Unknown";
 									var oldfont = g2.getFont();
 									if (db) {
+										g2.setFont(oldfont.deriveFont(15.0f));
+										g2.drawString("*", 9, -2);
 										g2.setFont(oldfont.deriveFont(Font.BOLD | Font.ITALIC));
-										g2.drawString("*", 13, -7);
 										g2.drawString(ogenename + " (" + id + ") - " + d.replace("express-",""), 20, -10);
 										g2.setFont(oldfont);
 									} else {

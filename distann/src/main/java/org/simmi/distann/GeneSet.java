@@ -35,7 +35,6 @@ import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
 import org.simmi.javafasta.shared.*;
-import org.simmi.javafasta.unsigned.ANIResult;
 import org.simmi.serifier.SerifyApplet;
 import org.simmi.treedraw.shared.*;
 import org.simmi.javafasta.unsigned.JavaFasta;

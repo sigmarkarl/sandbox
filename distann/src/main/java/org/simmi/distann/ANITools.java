@@ -6,7 +6,6 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
 import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.simmi.javafasta.shared.*;
-import org.simmi.javafasta.unsigned.ANIResult;
 import org.simmi.javafasta.unsigned.JavaFasta;
 
 import javax.imageio.ImageIO;
