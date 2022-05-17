@@ -596,14 +596,21 @@ public class Neighbour {
 									if (rc != null) g.setColor(rc);
 								}
 							} else if( designcol.isSelected() ) {
-								if( next != null && next.designation != null && next.designation.length() > 0 ) {
-									var d = next.designation;
-									if (d.contains("DNA replication")) g.setColor(new Color(0.2f,0.7f,0.2f));
-									else if (d.contains("DNA metabolism")) g.setColor(new Color(0.2f,0.2f,0.7f));
-									else if (d.contains("Lysis module")) g.setColor(new Color(0.2f,0.7f,0.7f));
-									else if (d.contains("DNA packaging")) g.setColor(new Color(0.7f,0.2f,0.7f));
-									else if (d.contains("Head and tail morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
-									else g.setColor( Color.lightGray );//g.setColor(new Color(0.7f,0.2f,0.2f));
+								if( next != null && next.getGeneGroup() != null) {
+									var design = next.getGeneGroup().getDesignation();
+									if (design != null && design.length() > 0) {
+										if (design.contains("DNA replication")) g.setColor(new Color(0.2f, 0.7f, 0.2f));
+										else if (design.contains("DNA metabolism")) g.setColor(new Color(0.2f, 0.2f, 0.7f));
+										else if (design.contains("Lysis module")) g.setColor(new Color(0.2f, 0.7f, 0.7f));
+										else if (design.contains("DNA packaging")) g.setColor(new Color(0.7f, 0.2f, 0.7f));
+										else if (design.contains("Head morphogenesis"))
+											g.setColor(new Color(0.7f, 0.7f, 0.2f));
+										else if (design.contains("Tail morphogenesis"))
+											g.setColor(new Color(0.7f, 0.2f, 0.2f));
+										else g.setColor(Color.lightGray); //g.setColor(new Color(0.7f,0.2f,0.2f));
+									} else {
+										g.setColor( Color.lightGray );
+									}
 								} else {
 									g.setColor( Color.lightGray );
 								}
@@ -964,7 +971,8 @@ public class Neighbour {
 									else if (d.contains("DNA metabolism")) g.setColor(new Color(0.2f,0.2f,0.7f));
 									else if (d.contains("Lysis module")) g.setColor(new Color(0.2f,0.7f,0.7f));
 									else if (d.contains("DNA packaging")) g.setColor(new Color(0.7f,0.2f,0.7f));
-									else if (d.contains("Head and tail morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
+									else if (d.contains("Head morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
+									else if (d.contains("Tail morphogenesis")) g.setColor(new Color(0.7f,0.2f,0.2f));
 									else g.setColor( Color.lightGray );//g.setColor(new Color(0.7f,0.2f,0.2f));
 								} else {
 									g.setColor( Color.lightGray );
@@ -1259,13 +1267,21 @@ public class Neighbour {
 									}
 									if (rc != null) g.setColor(rc);
 								} else if( designcol.isSelected() ) {
-									if( next != null && next.designation != null && next.designation.length() > 0 ) {
-										if (d.contains("DNA replication")) g.setColor(new Color(0.2f,0.7f,0.2f));
-										else if (d.contains("DNA metabolism")) g.setColor(new Color(0.2f,0.2f,0.7f));
-										else if (d.contains("Lysis module")) g.setColor(new Color(0.2f,0.7f,0.7f));
-										else if (d.contains("DNA packaging")) g.setColor(new Color(0.7f,0.2f,0.7f));
-										else if (d.contains("Head and tail morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
-										else g.setColor( Color.lightGray );//g.setColor(new Color(0.7f,0.2f,0.2f));
+									if( next != null && next.getGeneGroup() != null) {
+										var design = next.getGeneGroup().getDesignation();
+										if (design != null && design.length() > 0) {
+											if (design.contains("DNA replication")) g.setColor(new Color(0.2f, 0.7f, 0.2f));
+											else if (design.contains("DNA metabolism")) g.setColor(new Color(0.2f, 0.2f, 0.7f));
+											else if (design.contains("Lysis module")) g.setColor(new Color(0.2f, 0.7f, 0.7f));
+											else if (design.contains("DNA packaging")) g.setColor(new Color(0.7f, 0.2f, 0.7f));
+											else if (design.contains("Head morphogenesis"))
+												g.setColor(new Color(0.7f, 0.7f, 0.2f));
+											else if (design.contains("Tail morphogenesis"))
+												g.setColor(new Color(0.7f, 0.2f, 0.2f));
+											else g.setColor(Color.lightGray); //g.setColor(new Color(0.7f,0.2f,0.2f));
+										} else {
+											g.setColor( Color.lightGray );
+										}
 									} else {
 										g.setColor( Color.lightGray );
 									}
@@ -1358,6 +1374,7 @@ public class Neighbour {
 												if (firstSomething == null) {
 													firstSomething = next;
 													lastSomething = next;
+													System.err.println("hey " + firstSomething.designation);
 													firstx = xoff;
 													lastx = xoff;
 												} else {
@@ -1369,13 +1386,15 @@ public class Neighbour {
 													} else {
 														var c = g.getColor();
 														g.setColor(Color.black);
-														var sw = g.getFontMetrics().stringWidth(firstD);
+														var firstD2 = firstD.replace("metabolism","metabolism/modification");
+														var sw = g.getFontMetrics().stringWidth(firstD2);
 														var sxoff = 13 * (mm % 2);
 														g.drawLine(firstx, 116 + sxoff, lastx + 10, 116 + sxoff);
-														g.drawString(firstD, (lastx + firstx - sw) / 2, 126 + sxoff);
+														g.drawString(firstD2, (lastx + firstx - sw) / 2, 126 + sxoff);
 														g.setColor(c);
 														mm++;
 														firstSomething = next;
+														System.err.println("hio " + firstSomething.designation);
 														firstx = xoff;
 														lastx = xoff;
 														lastSomething = next;
@@ -1601,8 +1620,8 @@ public class Neighbour {
 							g.translate(0,500);
 							var c = g.getColor();
 							g.setColor(Color.black);
-							if (next.getId() != null && next.getId().endsWith("_001")) {
-								jj0 = 0;
+							if (next.getId() != null && next.getId().endsWith("_008")) {
+								jj0 = 9;
 							}
 							if (jj0==0) {
 								g.setColor(Color.white);
@@ -1739,13 +1758,21 @@ public class Neighbour {
 								Color rc = new Color(0.0f + abu, 1.0f, 0.0f + abu);
 								g.setColor(rc);
 							} else if( designcol.isSelected() ) {
-								if( prev != null && prev.designation != null && prev.designation.length() > 0 ) {
-									if (d.contains("DNA replication")) g.setColor(new Color(0.2f,0.7f,0.2f));
-									else if (d.contains("DNA metabolism")) g.setColor(new Color(0.2f,0.2f,0.7f));
-									else if (d.contains("Lysis module")) g.setColor(new Color(0.2f,0.7f,0.7f));
-									else if (d.contains("DNA packaging")) g.setColor(new Color(0.7f,0.2f,0.7f));
-									else if (d.contains("Head and tail morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
-									else g.setColor(new Color(0.7f,0.2f,0.2f));
+								if( prev != null && prev.getGeneGroup() != null) {
+									var design = prev.getGeneGroup().getDesignation();
+									if (design != null && design.length() > 0) {
+										if (design.contains("DNA replication")) g.setColor(new Color(0.2f, 0.7f, 0.2f));
+										else if (design.contains("DNA metabolism")) g.setColor(new Color(0.2f, 0.2f, 0.7f));
+										else if (design.contains("Lysis module")) g.setColor(new Color(0.2f, 0.7f, 0.7f));
+										else if (design.contains("DNA packaging")) g.setColor(new Color(0.7f, 0.2f, 0.7f));
+										else if (design.contains("Head morphogenesis"))
+											g.setColor(new Color(0.7f, 0.7f, 0.2f));
+										else if (design.contains("Tail morphogenesis"))
+											g.setColor(new Color(0.7f, 0.2f, 0.2f));
+										else g.setColor(Color.lightGray); //g.setColor(new Color(0.7f,0.2f,0.2f));
+									} else {
+										g.setColor( Color.lightGray );
+									}
 								} else {
 									g.setColor( Color.lightGray );
 								}
