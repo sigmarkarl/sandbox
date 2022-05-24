@@ -244,8 +244,8 @@ public class GeneSetHead {
 					g2.setColor( Color.darkGray );
 				}
 
-				Annotation tegeval = gn.getTegeval();
-				if( tegeval.type != null && tegeval.type.length() > 0 ) {
+				Annotation tegeval = gn != null ? gn.getTegeval() : null;
+				if( tegeval != null && tegeval.type != null && tegeval.type.length() > 0 ) {
 					int x = (int)(middle+(skewrad+120.0)*Math.cos( hornid ));
 					int y = (int)(middle+(skewrad+120.0)*Math.sin( hornid ));
 					g2.translate(x, y);

@@ -1188,8 +1188,15 @@ public class Neighbour {
 			int firstx = 0;
 			Annotation lastSomething = null;
 			int lastx = 0;
+
+			Annotation firstPrev = null;
+			int firstPrevX = 0;
+			int lastPrevX = 0;
+
 			int mm = 0;
+			int mm2 = 0;
 			int jj0 = 0;
+			int jj1 = 0;
 
 			List<Annotation>	hteglocal = new ArrayList<>(hteg);
 			int xoff =  XOFF_START;
@@ -1374,7 +1381,6 @@ public class Neighbour {
 												if (firstSomething == null) {
 													firstSomething = next;
 													lastSomething = next;
-													System.err.println("hey " + firstSomething.designation);
 													firstx = xoff;
 													lastx = xoff;
 												} else {
@@ -1389,12 +1395,12 @@ public class Neighbour {
 														var firstD2 = firstD.replace("metabolism","metabolism/modification");
 														var sw = g.getFontMetrics().stringWidth(firstD2);
 														var sxoff = 13 * (mm % 2);
-														g.drawLine(firstx, 116 + sxoff, lastx + 10, 116 + sxoff);
-														g.drawString(firstD2, (lastx + firstx - sw) / 2, 126 + sxoff);
+														var boff = rowcount*rowheight+20;
+														g.drawLine(firstx, boff + sxoff, lastx + 10, boff + sxoff);
+														g.drawString(firstD2, (lastx + firstx - sw) / 2, boff+10 + sxoff);
 														g.setColor(c);
 														mm++;
 														firstSomething = next;
-														System.err.println("hio " + firstSomething.designation);
 														firstx = xoff;
 														lastx = xoff;
 														lastSomething = next;
@@ -1620,15 +1626,18 @@ public class Neighbour {
 							g.translate(0,500);
 							var c = g.getColor();
 							g.setColor(Color.black);
+							//jj0 = 0;
 							if (next.getId() != null && next.getId().endsWith("_008")) {
-								jj0 = 9;
+								jj0 = 8;
 							}
+							var boff = rowcount * rowheight + 9;
 							if (jj0==0) {
 								g.setColor(Color.white);
-								g.fillRect(xoff,105, 10, 10);
+								g.fillRect(xoff,boff, 10, 10);
 								g.setColor(Color.black);
 							}
-							if (jj0<=140) g.drawString(Integer.toString(++jj0), xoff, 105+8*(jj0%2));
+							jj0 = (jj0+1)%144;
+							g.drawString(Integer.toString(jj0+1), xoff, boff+8*(jj0%2));
 							g.setColor(c);
 							g.translate(0,-500);
 						}
@@ -1858,7 +1867,44 @@ public class Neighbour {
 								}*/
 							}
 
-							if (vertNames.isSelected()) g.translate(0,500);
+							if (vertNames.isSelected()) {
+								g.translate(0, 500);
+
+								if (i == 0) {
+									if (prev.designation != null && prev.designation.length() > 0) {
+										var set = new HashSet<>(Arrays.asList(prev.designation.split(";")));
+										var od = set.stream().filter(p -> !p.contains("express-")).findAny();
+										if (od.isPresent()) {
+											var currentD = od.get();
+											if (firstPrev == null) {
+												firstPrev = prev;
+												firstPrevX = xoff;
+												lastPrevX = xoff;
+											} else {
+												var nset = new HashSet<>(Arrays.asList(firstPrev.designation.split(";")));
+												var firstD = nset.stream().filter(p -> !p.contains("express-")).findAny().get();
+												if (firstD.equals(currentD)) {
+													lastPrevX = xoff;
+												} else {
+													var c = g.getColor();
+													g.setColor(Color.black);
+													var firstD2 = firstD.replace("metabolism", "metabolism/modification");
+													var sw = g.getFontMetrics().stringWidth(firstD2);
+													var sxoff = 13 * (mm2 % 2);
+													var boff = rowcount * rowheight + 20;
+													g.drawLine(firstPrevX, boff + sxoff, lastPrevX + 10, boff + sxoff);
+													g.drawString(firstD2, (lastPrevX + firstPrevX - sw) / 2, boff + 10 + sxoff);
+													g.setColor(c);
+													mm2++;
+													firstPrev = prev;
+													firstPrevX = xoff;
+													lastPrevX = xoff;
+												}
+											}
+										}
+									}
+								}
+							}
 							var prevColor = g.getColor();
 							boolean revis = (prev.ori == -1) ^ prev.getContig().isReverse();
 							int addon = revis ? -5 : 5;
@@ -2039,6 +2085,25 @@ public class Neighbour {
 
 								g.translate(-5000, -600);
 							}
+						}
+
+						if (vertNames.isSelected() && i==0) {
+							g.translate(0,500);
+							var c = g.getColor();
+							g.setColor(Color.black);
+							if (prev.getId() != null && prev.getId().endsWith("_007")) {
+								jj1 = 10;
+							}
+							var boff = rowcount * rowheight + 9;
+							if (jj1==0) {
+								g.setColor(Color.white);
+								g.fillRect(xoff,boff, 10, 10);
+								g.setColor(Color.black);
+							}
+							jj1 = Math.floorMod(jj1-1,144);
+							g.drawString(Integer.toString(jj1), xoff, boff+8-8*(jj1%2));
+							g.setColor(c);
+							g.translate(0,-500);
 						}
 					}
 				}
