@@ -102,7 +102,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -3554,8 +3553,25 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					String makeblastdb = "/home/sks17/ncbi-blast-2.10.1+/bin/makeblastdb";
 					String envMap = "LD_LIBRARY_PATH=/home/sks17/glibc-2.14/lib/:/home/sks17/zlib-1.2.11/";*/
 
-								var allSeqList = gtable.getSelectionModel().getSelectedItems().stream().map(g -> (FastaSequence)g.getTegeval().getProteinSequence()).collect(Collectors.toList());
-								var allds = spark.createDataset(allSeqList, seqenc);
+								var allSeqList = gtable.getSelectionModel().getSelectedItems().stream().map(g -> {
+									var tvs = g.getGeneGroup().getTegevals();
+									var sw = new StringWriter();
+									sw.append(g.id);
+									sw.append('\n');
+									try {
+										if (tvs.size() > 1) {
+											for (var tv : tvs) {
+												tv.getAlignedSequence().writeIdSequence(sw);
+											}
+										} else {
+											tvs.get(0).getProteinSequence().writeIdSequence(sw);
+										}
+									} catch(Exception e) {
+										e.printStackTrace();
+									}
+									return sw.toString();
+								}).collect(Collectors.toList());
+								var allds = spark.createDataset(allSeqList, Encoders.STRING());
 								var res = allds.map(new SparkHHBlits(), Encoders.STRING()).collectAsList();
 								res.forEach(s -> {
 									try {

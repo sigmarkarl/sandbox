@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class SparkHHBlits implements MapFunction<FastaSequence, String> {
+public class SparkHHBlits implements MapFunction<String, String> {
     String root;
     String tmp;
     List<String> blastp;
@@ -42,16 +42,18 @@ public class SparkHHBlits implements MapFunction<FastaSequence, String> {
     }*/
 
     public SparkHHBlits() {
-        root = "/Users/sigmarkarl/tmp";
+        root = "/Users/sigmarkarl/tmp2";
     }
 
     @Override
-    public String call(FastaSequence input) throws IOException, ExecutionException, InterruptedException {
+    public String call(String input) throws IOException, ExecutionException, InterruptedException {
         var rootpath = Paths.get(root);
-        var name = input.getId();
+        var i = input.indexOf('\n');
+        var name = input.substring(0,i);
+        var fasta = input.substring(i+1);
         var inputfasta = rootpath.resolve(name+".fasta");
         try(var writer = Files.newBufferedWriter(inputfasta)) {
-            input.writeIdSequence(writer);
+            writer.write(fasta);
         }
 
         var es = Executors.newFixedThreadPool(3);
@@ -60,7 +62,7 @@ public class SparkHHBlits implements MapFunction<FastaSequence, String> {
         var output = rootpath.resolve(outputstr);
 
         //int procs = Runtime.getRuntime().availableProcessors();
-        var cmd = new String[] {"docker","run","--rm","-v","/Users/sigmarkarl:/Users/sigmarkarl","-v","/Volumes/Untitled:/Volumes/Untitled","-w","/Users/sigmarkarl/tmp","soedinglab/hh-suite","hhblits","-i",inputfasta.toString(),"-o",outputstr,"-d",dbpath};
+        var cmd = new String[] {"docker","run","--rm","-v","/Users/sigmarkarl:/Users/sigmarkarl","-v","/Volumes/Untitled:/Volumes/Untitled","-w","/Users/sigmarkarl/tmp2","soedinglab/hh-suite","hhblits","-i",inputfasta.toString(),"-o",outputstr,"-d",dbpath};
         var pargs = Arrays.asList(cmd);
         var pb = new ProcessBuilder(pargs);
         //pb.directory(rootpath.toFile());
