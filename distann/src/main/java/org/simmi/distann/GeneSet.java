@@ -1493,13 +1493,8 @@ public class GeneSet implements GenomeSet {
 		
 		Set<String>	d1 = new HashSet<>();
 		Set<String>	d2 = new HashSet<>();
-		
-		double[] matrix = new double[ specset.size()*specset.size() ];
-		int[] cmatrix = new int[ specset.size()*specset.size() ];
-		ANITools.ANIResult aniResult = new ANITools.ANIResult();
-		aniResult.corrarr = matrix;
-		aniResult.countarr = cmatrix;
 
+		ANIResult aniResult = new ANIResult(specset.size());
 		Map<String, Integer> blosumap = JavaFasta.getBlosumMap();
 		int where = 0;
 		for (String spec1 : specset) {
@@ -1610,8 +1605,8 @@ public class GeneSet implements GenomeSet {
 						}
 					}
 					double ani = (double)totalscore/(double)totaltscore;
-					matrix[ where*specset.size()+wherex ] = 1.0-ani;
-					cmatrix[ where*specset.size()+wherex ] = count;
+					aniResult.corrarr[ where*specset.size()+wherex ] = 1.0-ani;
+					aniResult.countarr[ where*specset.size()+wherex ] = count;
 				}
 				wherex++;
 			}
@@ -1623,7 +1618,7 @@ public class GeneSet implements GenomeSet {
 		for( String spec : specset ) {
 			corrInd.add( nameFix( spec ) );
 		}
-		Node n = tu.neighborJoin(matrix, corrInd, null, false, false);
+		Node n = tu.neighborJoin(aniResult.corrarr, corrInd, null, false, false);
 		
 		Comparator<Node>	comp = (o1, o2) -> {
 			int c1 = o1.countLeaves();
@@ -1640,7 +1635,7 @@ public class GeneSet implements GenomeSet {
 		System.err.println( "ordind " + ordInd );
 		System.err.println( "tree " + n );
 	
-		BufferedImage bi = showRelation( ordInd, aniResult, true );
+		BufferedImage bi = JavaFasta.showRelation( ordInd, aniResult, true );
 		
 		System.err.println( d1.size() + "  " + d2.size() );
 		if( d1.size() > d2.size() ) {
@@ -1650,72 +1645,7 @@ public class GeneSet implements GenomeSet {
 			d2.removeAll( d1 );
 			System.err.println( d2.size() );
 		}
-		
-		return bi;
-	}
-	
-	public BufferedImage showRelation(Collection<String> specset, ANITools.ANIResult aniResult, boolean inverted ) {
-		BufferedImage bi = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
-		Graphics2D g2 = (Graphics2D) bi.getGraphics();
-		int mstrw = 0;
-		for (String spec : specset) {
-			String spc = spec;//nameFix( spec );
-			int tstrw = g2.getFontMetrics().stringWidth(spc);
-			if (tstrw > mstrw)
-				mstrw = tstrw;
-		}
-		
-		int sss = mstrw + 72 * specset.size() + 10 + 72;
-		bi = new BufferedImage(sss, sss, BufferedImage.TYPE_INT_RGB);
-		g2 = (Graphics2D) bi.getGraphics();
-		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-		g2.setColor(Color.white);
-		g2.fillRect(0, 0, sss, sss);
 
-		double[] matrix = aniResult.corrarr;
-		int[] cmatrix = aniResult.countarr;
-		
-		int where = 0;
-		for (String spec1 : specset) {
-			int wherex = 0;
-			int w = corrInd.indexOf( spec1 );
-			//String spc1 = nameFix( spec1 );
-			int strw = g2.getFontMetrics().stringWidth(spec1);
-			
-			g2.setColor(Color.black);
-			g2.drawString(spec1, mstrw - strw, mstrw + 47 + where * 72);
-			g2.rotate(Math.PI / 2.0, mstrw + 47 + where * 72, mstrw - strw);
-			g2.drawString(spec1, mstrw + 47 + where * 72, mstrw - strw);
-			g2.rotate(-Math.PI / 2.0, mstrw + 47 + where * 72, mstrw - strw);
-			//String spc1 = nameFix( spec1 );
-			for (String spec2 : specset) {
-				if( where != wherex ) {
-					int wx = corrInd.indexOf( spec2 );
-					double ani = inverted ? 1.0-matrix[ w*specset.size()+wx ] : matrix[ w*specset.size()+wx ];
-					int count = cmatrix[ w*specset.size()+wx ];
-					
-					//float cval = Math.min( 0.9f, Math.max( 0.0f,4.2f - (float)(4.2*ani) ) );
-					float cval = Math.min( 0.9f, Math.max( 0.0f, 1.2f - (float)(1.2*ani) ) );
-					System.err.println( cval + "  " + ani );
-					Color color = new Color( cval, cval, cval );
-					g2.setColor( color );
-					g2.fillRoundRect(mstrw + 10 + wherex * 72, mstrw + 10 + where * 72, 64, 64, 16, 16);
-					
-					g2.setColor( Color.white );
-					String str = String.format("%.1f%s", (float) (ani * 100.0), "%");
-					int nstrw = g2.getFontMetrics().stringWidth(str);
-					g2.drawString(str, mstrw + 42 + wherex * 72 - nstrw / 2, mstrw + 47 + where * 72 + 15);
-
-					str = String.format("%d", count);
-					nstrw = g2.getFontMetrics().stringWidth(str);
-					g2.drawString(str, mstrw + 42 + wherex * 72 - nstrw / 2, mstrw + 47 + where * 72 + 2);
-				}
-				wherex++;
-			}
-			where++;
-		}
-		
 		return bi;
 	}
 
@@ -1726,7 +1656,7 @@ public class GeneSet implements GenomeSet {
 		
 		Collection<String> specset = species1;
 		if( designation.length() > 0 ) {
-			specset = new TreeSet<String>();
+			specset = new TreeSet<>();
 			for( Gene g : genelist ) {
 				if( g.getTegeval().designation != null && g.getTegeval().designation.equals( designation ) ) {
 					specset.add( g.getSpecies() );
@@ -3995,7 +3925,7 @@ public class GeneSet implements GenomeSet {
 	public Map<String,String> loadExpress( InputStreamReader id, Map<String,String> deset ) throws IOException {
 		Map<String,String>	ret = new TreeMap<>();
 
-		var seqlist = speccontigMap.get("15-6");
+		var seqlist = speccontigMap.get("15-6_merge");
 		if(seqlist!=null) {
 			BufferedReader br = new BufferedReader(id);
 			String line = br.readLine();
@@ -4038,7 +3968,16 @@ public class GeneSet implements GenomeSet {
 										if (a.designation != null && a.designation.length() > 0)
 											expr += ";" + a.designation;
 										a.designation = expr;
-										if (a.getId() != null) designations.put(a.getId(), expr);
+										if (a.getId() != null) {
+											if (designations.containsKey(a.getId())) {
+												var aexpr = designations.get(a.getId());
+												var eset = new HashSet<>(Arrays.asList(aexpr.split(";")));
+												eset.addAll(Arrays.asList(expr.split(";")));
+												designations.put(a.getId(), String.join(";", eset));
+											} else {
+												designations.put(a.getId(), expr);
+											}
+										}
 									//}
 								}
 							}
@@ -5983,8 +5922,9 @@ public class GeneSet implements GenomeSet {
 		nf = zipfilesystem.getPath("/hhblits");
 		if( Files.exists( nf ) ) loadhhblitsmap( hhblitsmap, Files.newBufferedReader(nf) );
 		else {
-			hhblitsmap = loadhhblits();
-			try(var lines = Files.lines(Path.of("/Users/sigmarkarl/tmp/mapping.txt"))) {
+			//hhblitsmap = loadhhblits();
+			nf = zipfilesystem.getPath("/mapping.txt");
+			if (Files.exists(nf)) try(var lines = Files.lines(nf)) {
 				lines.map(s -> s.split("\t")).forEach(s -> hhblitsmap.put(s[0],s[1]));
 			}
 		}
@@ -6215,10 +6155,11 @@ public class GeneSet implements GenomeSet {
 
 		genelist.forEach(g -> {
 			var tag = g.getTegeval().getTag();
-			if (tag!=null) {
-				if (hhblitsmap.containsKey(tag)) {
-					g.hhblits = hhblitsmap.get(tag);
-				}
+			var id = g.getTegeval().getId();
+			if (tag != null && hhblitsmap.containsKey(tag)) {
+				g.hhblits = hhblitsmap.get(tag);
+			} else if(id != null && hhblitsmap.containsKey(id)) {
+				g.hhblits = hhblitsmap.get(id);
 			}
 		});
 

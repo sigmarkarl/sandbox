@@ -48,7 +48,7 @@ public class AlignClusterAction implements EventHandler<ActionEvent> {
             for( GeneGroup gg : ogg ) {
                 //GeneGroup gg = geneset.allgenegroups.get(table.convertRowIndexToModel(r));
                 //gg.getCommonTag()
-                if( gg != null && gg.getCommonTag() == null && gg.size() > 1 ) ggset.add( gg );
+                if( gg != null /*&& gg.getCommonTag() == null*/ && gg.size() > 1 ) ggset.add( gg );
             }
         }
 

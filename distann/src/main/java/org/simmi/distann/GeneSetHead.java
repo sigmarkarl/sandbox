@@ -23,6 +23,7 @@ import javafx.collections.transformation.SortedList;
 import javafx.embed.swing.JFXPanel;
 import javafx.event.Event;
 import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -69,10 +70,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.simmi.javafasta.DataTable;
 import org.simmi.javafasta.shared.*;
-import org.simmi.javafasta.unsigned.FlxReader;
-import org.simmi.javafasta.unsigned.JavaFasta;
-import org.simmi.javafasta.unsigned.NativeRun;
-import org.simmi.javafasta.unsigned.SmithWater;
+import org.simmi.javafasta.unsigned.*;
 import org.simmi.serifier.SerifyApplet;
 import org.simmi.treedraw.shared.TreeUtil.Node;
 import org.simmi.treedraw.shared.TreeUtil.NodeSet;
@@ -573,7 +571,7 @@ public class GeneSetHead {
 			//ftable.setItems( geneset.f);
 			
 			for( String spec : geneset.specList ) {
-				TableColumn<GeneGroup, Teginfo> speccol = new TableColumn(spec);
+				TableColumn<GeneGroup, Teginfo> speccol = new TableColumn<>(spec);
 				//speccol.getStyleClass().add("tabstyle");
 				speccol.setCellFactory( cell -> {
 					final TableCell<GeneGroup,Teginfo> tc = new TableCell<>() {
@@ -5252,8 +5250,8 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				Set<String> species = getSelspec(GeneSetHead.this, geneset.specList, true, all);
 				List<String> speclist = new ArrayList<>(species);
 
-				ANITools.ANIResult aniResult = ANITools.corr(speclist, lagg, false, all.isSelected());
-				ANITools.showAniMatrix(geneset, speclist, aniResult);
+				var aniResult = JavaFasta.corr(speclist, lagg, false, all.isSelected());
+				JavaFasta.showAniMatrix(speclist, aniResult);
 			});
 			/*SwingUtilities.invokeLater(() -> {
 				ANITools.aaiAction(GeneSetHead.this,agg);
@@ -5267,7 +5265,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				List<String> speclist = new ArrayList<>(species);
 				List<GeneGroup> agg = table.getSelectionModel().getSelectedItems();
 
-				ANITools.ANIResult aniResult = ANITools.corr(speclist, agg, true, false);
+				ANIResult aniResult = JavaFasta.corr(speclist, agg, true, false);
 				org.simmi.treedraw.shared.TreeUtil tu = new org.simmi.treedraw.shared.TreeUtil();
 				geneset.corrInd.clear();
 				for (String spec : speclist) {
@@ -6109,9 +6107,16 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				gg.setSelected(true);
 			}
 		});
+		MenuItem hiselAction = new MenuItem("Hilight selected");
+		hiselAction.setOnAction( actionEvent -> {
+			for (GeneGroup gg : geneset.allgenegroups) {
+				if(gg.isSelected()) table.getSelectionModel().select(gg);
+			}
+		});
 		select.getItems().add( breakpointselAction );
 		select.getItems().add( saveselAction );
 		select.getItems().add( selhiAction );
+		select.getItems().add( hiselAction );
 		select.getItems().add( new SeparatorMenuItem() );
 		
 		MenuItem showall = new MenuItem("Show all");
@@ -6131,8 +6136,37 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			}
 		});
 		select.getItems().add( croptosel );
+		MenuItem cropToHilighted = new MenuItem("Crop to hilighted");
+		cropToHilighted.setOnAction( actionEvent -> {
+			if( isGeneview() ) {
+				Set<Gene> selitems = new HashSet<>( gtable.getSelectionModel().getSelectedItems() );
+				geneFilteredList.setPredicate(selitems::contains);
+			} else {
+				Set<GeneGroup> selitems = new HashSet<>( table.getSelectionModel().getSelectedItems() );
+				filteredData.setPredicate(selitems::contains);
+			}
+		});
+		select.getItems().add( cropToHilighted );
 		MenuItem croptoinvsel = new MenuItem("Crop to inverted selection");
 		croptoinvsel.setOnAction( actionEvent -> {
+			if( isGeneview() ) {
+				Set<Gene> selitems = new HashSet<>( gtable.getSelectionModel().getSelectedItems() );
+				geneFilteredList.setPredicate( p -> !selitems.contains(p) );
+			} else {
+				Set<GeneGroup> selitems = geneset.allgenegroups.stream().filter(GeneGroup::isSelected).collect(Collectors.toSet());;
+				filteredData.setPredicate( p -> !selitems.contains(p) );
+			}
+				/*genefilterset.clear();
+				for (int i = 0; i < table.getItems().size(); i++) {
+					if( !table.getSelectionModel().isSelected(i) ) {
+						genefilterset.add(i);
+					}
+				}
+				updateFilter(table, label);*/
+		});
+		select.getItems().add( croptoinvsel );
+		MenuItem croptoinvhil = new MenuItem("Crop to inverted hilighted");
+		croptoinvhil.setOnAction( actionEvent -> {
 			if( isGeneview() ) {
 				Set<Gene> selitems = new HashSet<>( gtable.getSelectionModel().getSelectedItems() );
 				geneFilteredList.setPredicate( p -> !selitems.contains(p) );
@@ -6148,7 +6182,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				}
 				updateFilter(table, label);*/
 		});
-		select.getItems().add( croptoinvsel );
+		select.getItems().add( croptoinvhil );
 		MenuItem removesel = new MenuItem("Remove selection");
 		removesel.setOnAction( actionEvent -> {
 			geneset.allgenegroups.forEach(p -> p.setSelected(false));
@@ -6168,21 +6202,30 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					genefilterset.remove(r);
 				}
 			}*/
+		});
+		select.getItems().add( removesel );
+		MenuItem removehilight = new MenuItem("Remove hilight");
+		removehilight.setOnAction( actionEvent -> {
 			table.getSelectionModel().clearSelection();
 			updateFilter(table, label);
 		});
-		select.getItems().add( removesel );
+		select.getItems().add( removehilight );
 		MenuItem invsel = new MenuItem("Invert selection");
 		invsel.setOnAction( actionEvent -> {
+			geneset.allgenegroups.forEach(p -> p.setSelected(!p.isSelected()));
+		});
+		select.getItems().add( invsel );
+		MenuItem invhil = new MenuItem("Invert hilight");
+		invhil.setOnAction( actionEvent -> {
 			ObservableList<GeneGroup> selitems = table.getSelectionModel().getSelectedItems();
 			List<GeneGroup> newsel = new ArrayList<>(filteredData);
 			newsel.removeAll( selitems );
 
 			table.getSelectionModel().clearSelection();
-			newsel.stream().forEach( gg -> table.getSelectionModel().select(gg) );
+			newsel.forEach(gg -> table.getSelectionModel().select(gg) );
 
-				// genefilterset.clear();
-				//int[] rr = table.getSelectedRows();
+			// genefilterset.clear();
+			//int[] rr = table.getSelectedRows();
 				/*Set<Integer> iset = new HashSet<>();
 				for( int r : table.getSelectionModel().getSelectedIndices() ) {
 					iset.add( r );
@@ -6196,7 +6239,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 						table.addRowSelectionInterval(r, r);
 				}*/
 		});
-		select.getItems().add( invsel );
+		select.getItems().add( invhil );
 		//select.addSeparator();
 		select.getItems().add( new SeparatorMenuItem() );
 		MenuItem selsinglemult = new MenuItem("Select single copy genes found in multiple strains");
@@ -7145,6 +7188,79 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		return Files.newBufferedReader(Paths.get("distann/src/main/java/"+res ));
 	}
 
+	public void saveGeneGroups(List<GeneGroup> gg, List<GeneGroup> c) {
+		Map<String,String> env = new HashMap<>();
+		env.put("create", "true");
+		try(var zfsystem = FileSystems.newFileSystem( geneset.zipuri, env )) {
+			//geneset.zipfilesystem = zfsystem;
+			for( Path root : zfsystem.getRootDirectories() ) {
+				try(var fstream = Files.walk(root)) {
+					fstream.filter(f -> f.toString().startsWith("/aligned"))
+							//.filter( f -> f.toString().endsWith(".aa") )
+							.filter(f -> {
+								String filename = f.getFileName().toString();
+								return gg.stream().flatMap(ggg -> ggg.genes.stream()).anyMatch(g -> g.getId().equals(filename));
+							}).forEach(p -> {
+								try {
+									Files.deleteIfExists(p);
+								} catch (IOException e1) {
+									e1.printStackTrace();
+								}
+							});
+				}
+						/*for( Gene g : gg.genes ) {
+							if( g.keggpathway != null ) {
+								String sub = g.keggpathway.substring(0,3);
+								Path subf = root.resolve(sub);
+								if( Files.exists(subf) ) {
+									String[] split = g.keggpathway.split(" ");
+									for( String s : split ) {
+										Path pimg = subf.resolve(s+".png");
+										if( Files.exists(pimg) ) {
+											showKeggPathway( sub, pimg );
+										}
+									}
+								}
+							}
+						}*/
+				final Path p = root.resolve("/aligned");
+				for (GeneGroup fgg : c) {
+					Path np = p.resolve(fgg.genes.iterator().next().getId());
+					try (Writer w = Files.newBufferedWriter(np)) {
+						fgg.getFasta(w, false);
+					}
+				}
+
+				var clustersPath = root.resolve("simpleclusters.txt");
+				try(var fos = Files.newBufferedWriter(clustersPath, StandardOpenOption.TRUNCATE_EXISTING)) {
+					var gset = geneset.allgenegroups.stream().map(ggg -> ggg.genes.stream().map(Annotation::getId).collect(Collectors.toSet()));
+					geneset.writeClusters(fos, gset);
+				}
+				break;
+			}
+		} catch( Exception ex ) {
+			ex.printStackTrace();
+		}
+	}
+
+	public void saveSimpleClusters() {
+		Map<String,String> env = new HashMap<>();
+		env.put("create", "true");
+		try(var zfsystem = FileSystems.newFileSystem( geneset.zipuri, env )) {
+			//geneset.zipfilesystem = zfsystem;
+			for( Path root : zfsystem.getRootDirectories() ) {
+				var clustersPath = root.resolve("simpleclusters.txt");
+				try(var fos = Files.newBufferedWriter(clustersPath, StandardOpenOption.TRUNCATE_EXISTING)) {
+					var gset = geneset.allgenegroups.stream().map(ggg -> ggg.genes.stream().map(Annotation::getId).collect(Collectors.toSet()));
+					geneset.writeClusters(fos, gset);
+				}
+				break;
+			}
+		} catch( Exception ex ) {
+			ex.printStackTrace();
+		}
+	}
+
 	Set<GeneGroup> updateSplit(GeneGroup gg, double d, double l) {
 		Set<GeneGroup> ggmap = new HashSet<>();
 		Map<String,Integer> blosumMap = JavaFasta.getBlosumMap( true );
@@ -7327,9 +7443,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 
 					try {
 						obj = support.getTransferable().getTransferData(DataFlavor.imageFlavor);
-					} catch (UnsupportedFlavorException e) {
-						e.printStackTrace();
-					} catch (IOException e) {
+					} catch (UnsupportedFlavorException | IOException e) {
 						e.printStackTrace();
 					}
 
@@ -8776,67 +8890,36 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				geneset.allgenegroups.removeAll(gg);
 				geneset.allgenegroups.addAll( c );
 
-				Map<String,String> env = new HashMap<>();
-				env.put("create", "true");
-				try {
-					geneset.zipfilesystem = FileSystems.newFileSystem( geneset.zipuri, env );
-					for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
-						Files.walk(root)
-								.filter( f -> f.toString().startsWith("/aligned"))
-								//.filter( f -> f.toString().endsWith(".aa") )
-								.filter( f -> {
-								String filename = f.getFileName().toString();
-								return gg.stream().flatMap(ggg -> ggg.genes.stream()).anyMatch( g -> g.getId().equals(filename));
-						}).forEach(p -> {
-							try {
-								Files.deleteIfExists(p);
-							} catch (IOException e1) {
-								e1.printStackTrace();
-							}
-						});
-						/*for( Gene g : gg.genes ) {
-							if( g.keggpathway != null ) {
-								String sub = g.keggpathway.substring(0,3);
-								Path subf = root.resolve(sub);
-								if( Files.exists(subf) ) {
-									String[] split = g.keggpathway.split(" ");
-									for( String s : split ) {
-										Path pimg = subf.resolve(s+".png");
-										if( Files.exists(pimg) ) {
-											showKeggPathway( sub, pimg );
-										}
-									}
-								}
-							}
-						}*/
-						final Path p = root.resolve("/aligned");
-						for (GeneGroup fgg : c) {
-							Path np = p.resolve(fgg.genes.iterator().next().getId());
-							try {
-								Writer w = Files.newBufferedWriter(np);
-								fgg.getFasta(w, false);
-								w.close();
-							} catch (IOException e1) {
-								e1.printStackTrace();
-							}
-						}
-
-						Path clustersPath = root.resolve("simpleclusters.txt");
-						BufferedWriter fos = Files.newBufferedWriter(clustersPath, StandardOpenOption.TRUNCATE_EXISTING);
-						geneset.writeClusters(fos, geneset.allgenegroups.stream().map(ggg -> ggg.genes.stream().map(g -> g.getId()).collect(Collectors.toSet())));
-						fos.close();
-						break;
-					}
-					geneset.zipfilesystem.close();
-				} catch( Exception ex ) {
-					ex.printStackTrace();
-				}
+				saveGeneGroups(gg, c);
 			});
 		});
 		popup.getItems().add( splitaction );
 		MenuItem joinaction = new MenuItem("Join");
-		
+		joinaction.setOnAction(event -> {
+			final ObservableList<GeneGroup> ogg = table.getSelectionModel().getSelectedItems();
+			var firstGG = ogg.get(0);
+			for (int i = 1; i < ogg.size(); i++) {
+				var ngg = ogg.get(i);
+				firstGG.addGenes(ngg.genes);
+				geneset.allgenegroups.remove(ngg);
+			}
+			saveSimpleClusters();
+		});
 		popup.getItems().add( joinaction );
+
+		MenuItem mergejoinaction = new MenuItem("Merge join");
+		mergejoinaction.setOnAction(event -> {
+			final ObservableList<GeneGroup> ogg = table.getSelectionModel().getSelectedItems();
+			var firstGG = ogg.get(0);
+			for (int i = 1; i < ogg.size(); i++) {
+				var ngg = ogg.get(i);
+				firstGG.mergeAnnotations(ngg.genes);
+				geneset.allgenegroups.remove(ngg);
+			}
+			saveSimpleClusters();
+		});
+		popup.getItems().add( mergejoinaction );
+
 		popup.getItems().add( new SeparatorMenuItem() );
 		MenuItem showkegg = new MenuItem("Show KEGG pathway");
 		showkegg.setOnAction( e -> {

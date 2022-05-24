@@ -21,6 +21,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
@@ -555,6 +557,7 @@ public class Neighbour {
 							if( gg != null ) genename = gg.getName();
 						}
 						if( genename != null ) genename = genename.contains("hypothetical") ? "hth-p" : genename;*/
+
 						String genename = gene != null ? geneset.getGeneName(showNames, gene) : next.type;
 						var id = next.getId();
 						if (genename==null) genename = "unknown";
@@ -593,14 +596,21 @@ public class Neighbour {
 									if (rc != null) g.setColor(rc);
 								}
 							} else if( designcol.isSelected() ) {
-								if( next != null && next.designation != null && next.designation.length() > 0 ) {
-									var d = next.designation;
-									if (d.equals("DNA replication")) g.setColor(new Color(0.2f,0.7f,0.2f));
-									else if (d.equals("DNA metabolism")) g.setColor(new Color(0.2f,0.2f,0.7f));
-									else if (d.equals("Lysis module")) g.setColor(new Color(0.2f,0.7f,0.7f));
-									else if (d.equals("DNA packaging")) g.setColor(new Color(0.7f,0.2f,0.7f));
-									else if (d.equals("Head and tail morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
-									else g.setColor(new Color(0.7f,0.2f,0.2f));
+								if( next != null && next.getGeneGroup() != null) {
+									var design = next.getGeneGroup().getDesignation();
+									if (design != null && design.length() > 0) {
+										if (design.contains("DNA replication")) g.setColor(new Color(0.2f, 0.7f, 0.2f));
+										else if (design.contains("DNA metabolism")) g.setColor(new Color(0.2f, 0.2f, 0.7f));
+										else if (design.contains("Lysis module")) g.setColor(new Color(0.2f, 0.7f, 0.7f));
+										else if (design.contains("DNA packaging")) g.setColor(new Color(0.7f, 0.2f, 0.7f));
+										else if (design.contains("Head morphogenesis"))
+											g.setColor(new Color(0.7f, 0.7f, 0.2f));
+										else if (design.contains("Tail morphogenesis"))
+											g.setColor(new Color(0.7f, 0.2f, 0.2f));
+										else g.setColor(Color.lightGray); //g.setColor(new Color(0.7f,0.2f,0.2f));
+									} else {
+										g.setColor( Color.lightGray );
+									}
 								} else {
 									g.setColor( Color.lightGray );
 								}
@@ -649,7 +659,9 @@ public class Neighbour {
 										if( ratio == -1 ) {
 											ratio = GeneCompare.invertedGradientPlasmidRatio(spec1, contigs, -1.0, gg);
 											rc = GeneCompare.gradientGrayscaleColor( ratio );
-										} else rc = GeneCompare.gradientColor( ratio );
+										} else {
+											rc = GeneCompare.gradientColor( ratio );
+										}
 									} else {
 										rc = Color.white;
 									}
@@ -781,7 +793,7 @@ public class Neighbour {
 									if (relcol.isSelected()) g.setColor(Color.white);
 									else g.setColor(Color.black);
 									g.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
-								} else if (i == 0 && !genename.contains("hypoth")) {
+								} else if (i == 0 && !genename.contains("hypoth") && !genename.contains("Hypoth") && !genename.startsWith("Phage ")) {
 									int xx = 5 + xoff + (int) (len - strlen) / 2;
 									int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
 									g2.translate(xx, yy);
@@ -955,12 +967,13 @@ public class Neighbour {
 							} else if( designcol.isSelected() ) {
 								if( prev != null && prev.designation != null && prev.designation.length() > 0 ) {
 									var d = prev.designation;
-									if (d.equals("DNA replication")) g.setColor(new Color(0.2f,0.7f,0.2f));
-									else if (d.equals("DNA metabolism")) g.setColor(new Color(0.2f,0.2f,0.7f));
-									else if (d.equals("Lysis module")) g.setColor(new Color(0.2f,0.7f,0.7f));
-									else if (d.equals("DNA packaging")) g.setColor(new Color(0.7f,0.2f,0.7f));
-									else if (d.equals("Head and tail morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
-									else g.setColor(new Color(0.7f,0.2f,0.2f));
+									if (d.contains("DNA replication")) g.setColor(new Color(0.2f,0.7f,0.2f));
+									else if (d.contains("DNA metabolism")) g.setColor(new Color(0.2f,0.2f,0.7f));
+									else if (d.contains("Lysis module")) g.setColor(new Color(0.2f,0.7f,0.7f));
+									else if (d.contains("DNA packaging")) g.setColor(new Color(0.7f,0.2f,0.7f));
+									else if (d.contains("Head morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
+									else if (d.contains("Tail morphogenesis")) g.setColor(new Color(0.7f,0.2f,0.2f));
+									else g.setColor( Color.lightGray );//g.setColor(new Color(0.7f,0.2f,0.2f));
 								} else {
 									g.setColor( Color.lightGray );
 								}
@@ -1111,7 +1124,7 @@ public class Neighbour {
 									if (relcol.isSelected()) g.setColor(Color.white);
 									else g.setColor(Color.black);
 									g.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
-								} else if (i == 0 && !genename.contains("hypoth")) {
+								} else if (i == 0 && !genename.contains("hypoth") && !genename.contains("Hypoth") && !genename.startsWith("Phage ")) {
 									int xx = 5 + xoff + (int) (len - strlen) / 2;
 									int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
 									g2.translate(xx, yy);
@@ -1170,7 +1183,14 @@ public class Neighbour {
 					}
 				}
 			}*/
-			
+
+			Annotation firstSomething = null;
+			int firstx = 0;
+			Annotation lastSomething = null;
+			int lastx = 0;
+			int mm = 0;
+			int jj0 = 0;
+
 			List<Annotation>	hteglocal = new ArrayList<>(hteg);
 			int xoff =  XOFF_START;
 			while( xoff < END_X ) {
@@ -1181,7 +1201,8 @@ public class Neighbour {
 					if( tes != null ) val = (int)(tes.getProteinLength()*neighbourscale);
 					if( val > max ) max = val;
 				}
-				
+
+				boolean vertDone = false;
 				for( int i = Math.max(0, clip.y/rowheight); i < Math.min( (clip.y+clip.height)/rowheight+1, rowcount ); i++ ) {
 					int r = rowheader.getRowCount() == 0 ? i : rowheader.convertRowIndexToModel( i );
 					Annotation te = hteglocal.get(r);
@@ -1246,13 +1267,21 @@ public class Neighbour {
 									}
 									if (rc != null) g.setColor(rc);
 								} else if( designcol.isSelected() ) {
-									if( next != null && next.designation != null && next.designation.length() > 0 ) {
-										if (d.equals("DNA replication")) g.setColor(new Color(0.2f,0.7f,0.2f));
-										else if (d.equals("DNA metabolism")) g.setColor(new Color(0.2f,0.2f,0.7f));
-										else if (d.equals("Lysis module")) g.setColor(new Color(0.2f,0.7f,0.7f));
-										else if (d.equals("DNA packaging")) g.setColor(new Color(0.7f,0.2f,0.7f));
-										else if (d.equals("Head and tail morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
-										else g.setColor(new Color(0.7f,0.2f,0.2f));
+									if( next != null && next.getGeneGroup() != null) {
+										var design = next.getGeneGroup().getDesignation();
+										if (design != null && design.length() > 0) {
+											if (design.contains("DNA replication")) g.setColor(new Color(0.2f, 0.7f, 0.2f));
+											else if (design.contains("DNA metabolism")) g.setColor(new Color(0.2f, 0.2f, 0.7f));
+											else if (design.contains("Lysis module")) g.setColor(new Color(0.2f, 0.7f, 0.7f));
+											else if (design.contains("DNA packaging")) g.setColor(new Color(0.7f, 0.2f, 0.7f));
+											else if (design.contains("Head morphogenesis"))
+												g.setColor(new Color(0.7f, 0.7f, 0.2f));
+											else if (design.contains("Tail morphogenesis"))
+												g.setColor(new Color(0.7f, 0.2f, 0.2f));
+											else g.setColor(Color.lightGray); //g.setColor(new Color(0.7f,0.2f,0.2f));
+										} else {
+											g.setColor( Color.lightGray );
+										}
 									} else {
 										g.setColor( Color.lightGray );
 									}
@@ -1333,7 +1362,51 @@ public class Neighbour {
 									}*/
 								}
 
-								g.translate(0,500);
+								if (vertNames.isSelected()) {
+									g.translate(0, 500);
+
+									if (i == 0) {
+										if (next.designation != null && next.designation.length() > 0) {
+											var set = new HashSet<>(Arrays.asList(next.designation.split(";")));
+											var od = set.stream().filter(p -> !p.contains("express-")).findAny();
+											if (od.isPresent()) {
+												var currentD = od.get();
+												if (firstSomething == null) {
+													firstSomething = next;
+													lastSomething = next;
+													System.err.println("hey " + firstSomething.designation);
+													firstx = xoff;
+													lastx = xoff;
+												} else {
+													var nset = new HashSet<>(Arrays.asList(firstSomething.designation.split(";")));
+													var firstD = nset.stream().filter(p -> !p.contains("express-")).findAny().get();
+													if (firstD.equals(currentD)) {
+														lastSomething = next;
+														lastx = xoff;
+													} else {
+														var c = g.getColor();
+														g.setColor(Color.black);
+														var firstD2 = firstD.replace("metabolism","metabolism/modification");
+														var sw = g.getFontMetrics().stringWidth(firstD2);
+														var sxoff = 13 * (mm % 2);
+														g.drawLine(firstx, 116 + sxoff, lastx + 10, 116 + sxoff);
+														g.drawString(firstD2, (lastx + firstx - sw) / 2, 126 + sxoff);
+														g.setColor(c);
+														mm++;
+														firstSomething = next;
+														System.err.println("hio " + firstSomething.designation);
+														firstx = xoff;
+														lastx = xoff;
+														lastSomething = next;
+													}
+												}
+
+												lastSomething = next;
+											}
+										}
+									}
+								}
+
 
 								var prevColor = g.getColor();
 								boolean revis = (next.ori == -1) ^ next.getContig().isReverse();
@@ -1367,17 +1440,29 @@ public class Neighbour {
 										if (relcol.isSelected()) g.setColor(Color.white);
 										else g.setColor(Color.black);
 										g2.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
-									} else if (i == 0 && ((!ogenename.contains("hth") && !ogenename.contains("contig")) || (d!=null&&d.length()>0))) {
+									} else if (!vertDone && ((!ogenename.contains("hth") && !ogenename.contains("Hypoth") && !ogenename.contains("hypoth") && !ogenename.contains("contig")) || (d!=null&&d.length()>0))) {
+										vertDone = true;
+										boolean db = d != null && d.contains("express");
 										int xx = 5 + xoff + (int) (len - strlen) / 2;
-										int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
+										int yy =  rowheight - (int) (rowheight * 0.3);
 										g2.translate(xx, yy);
 										g2.rotate(-Math.PI/4);
 										if (ogenename.contains("contig")) ogenename = "Unknown";
-										g2.drawString(ogenename + " (" + id + ")", 20, -10);
+										var oldfont = g2.getFont();
+										if (db) {
+											g2.setFont(oldfont.deriveFont(15.0f));
+											g2.drawString("*", 9, -2);
+											g2.setFont(oldfont.deriveFont(Font.BOLD | Font.ITALIC));
+											g2.drawString(ogenename + " (" + id + ") - " + Arrays.stream(d.split(";")).filter(p -> p.startsWith("express-")).map(p -> p.replace("express-","")).collect(Collectors.joining(";")), 20, -10);
+											g2.setFont(oldfont);
+										} else {
+											g2.drawString(ogenename + " (" + id + ")" /*+ (d!=null && d.length()>0 ? " - " + d : "")*/, 20, -10);
+										}
 										g2.rotate(Math.PI/4);
 										g2.translate(-xx, -yy);
 									}
 								}
+								if (vertNames.isSelected()) g.translate(0,-500);
 
 								if(circleView.isSelected()) {
 									g.setColor(prevColor);
@@ -1387,7 +1472,7 @@ public class Neighbour {
 									double ltheta = 2 * (xoff + offset + len - 5000) * Math.PI / div;
 									double theta3 = (xoff + offset - 5000) * 360.0 / div;
 
-									g.translate(5000, 560);
+									g.translate(5000, 600);
 									//g.fillArc(-width+y*rowheight,-width+y*rowheight,width*2-y*rowheight*2,width*2-y*rowheight*2,(int)((xoff+offset-5000)/div), (int)((len)/div));
 
 									int orowheight = rowheight-2;
@@ -1457,17 +1542,35 @@ public class Neighbour {
 									}
 									g2.rotate(-theta);
 
-									if(y==0&&!ogenename.contains("hth")&&!ogenename.contains("contig")) {
+									if(y==0&&!ogenename.contains("hth")&&!ogenename.startsWith("Hypoth")&&!ogenename.startsWith("hypoth")&&!ogenename.startsWith("Phage ")&&!ogenename.contains("contig")) {
+										g2.rotate((theta + ltheta) / 2);
+										g2.drawLine(width, 0, width+8, 0);
+										g2.rotate(-(theta + ltheta) / 2);
+
 										g2.setColor(Color.darkGray);
 										var middle = -(theta + ltheta) / 2.0;
 										//g2.rotate(-middle);
 										int woff = width+10;
-										int xx = (int) (woff * Math.cos(middle));
-										int yy = -(int) (woff * Math.sin(middle));
+										var cos = Math.cos(middle);
+										var sin = Math.sin(middle);
+										int xx = (int) (woff * cos);
+										int yy = -(int) (woff * sin);
 										g2.setFont( g.getFont().deriveFont((float)14.0) );
 										int nstrlen = g.getFontMetrics().stringWidth( ogenename );
-										if (xx>=0) g2.drawString(ogenename, xx, yy);
-										else g2.drawString(ogenename, xx-nstrlen,yy);
+										var sin2 = sin*sin;
+										var sin4 = sin2*sin2;
+										var sin8 = sin4*sin4;
+										var sin16 = sin8*sin8;
+										var sin32 = sin16*sin16;
+										var off = (int)(80*sin8);
+										int xstart;
+										if (xx>=0) {
+											xstart = xx;
+										} else {
+											xstart = xx - nstrlen;
+										}
+										g2.drawString(ogenename, xstart,yy + off);
+										if (off > 14) g2.drawLine(xx, yy, xx, yy-12+off);
 										g2.setFont( g.getFont().deriveFont((float)fsize) );
 										//g2.rotate(middle);
 									}
@@ -1478,9 +1581,8 @@ public class Neighbour {
 									arc = new Arc2D.Double(-width + m * rowheight, -width + m * rowheight, width * 2 - m * rowheight * 2, width * 2 - m * rowheight * 2, -theta3, -(len * 360.0) / div, Arc2D.PIE);
 									g2.fill(arc);
 									//g.fillArc(-width+m*rowheight,-width+m*rowheight,width*2-m*rowheight*2,width*2-m*rowheight*2,(int)((xoff+offset-5000)/div), (int)((len)/div));
-									g.translate(-5000, -560);
+									g.translate(-5000, -600);
 								}
-								g.translate(0,-500);
 							}
 						/*g.setColor( Color.green );
 						Set<Function> funcset = te.getGene().getGeneGroup().getFunctions();
@@ -1512,6 +1614,23 @@ public class Neighbour {
 						}
 						g.setColor( Color.black );
 						g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheight-5 );*/
+						}
+
+						if (vertNames.isSelected() && i==0) {
+							g.translate(0,500);
+							var c = g.getColor();
+							g.setColor(Color.black);
+							if (next.getId() != null && next.getId().endsWith("_008")) {
+								jj0 = 9;
+							}
+							if (jj0==0) {
+								g.setColor(Color.white);
+								g.fillRect(xoff,105, 10, 10);
+								g.setColor(Color.black);
+							}
+							if (jj0<=140) g.drawString(Integer.toString(++jj0), xoff, 105+8*(jj0%2));
+							g.setColor(c);
+							g.translate(0,-500);
 						}
 					}
 					//y++;
@@ -1584,7 +1703,8 @@ public class Neighbour {
 					if( te != null ) val = (int)(te.getProteinLength()*neighbourscale);
 					if( val > max ) max = val;
 				}
-				
+
+				boolean vertDone = false;
 				xoff -= max+10;
 				for( int i = Math.max(0, clip.y/rowheight); i < Math.min( (clip.y+clip.height)/rowheight+1, rowcount ); i++ ) {
 					int r = rowheader.getRowCount() == 0 ? i : rowheader.convertRowIndexToModel( i );
@@ -1638,13 +1758,21 @@ public class Neighbour {
 								Color rc = new Color(0.0f + abu, 1.0f, 0.0f + abu);
 								g.setColor(rc);
 							} else if( designcol.isSelected() ) {
-								if( prev != null && prev.designation != null && prev.designation.length() > 0 ) {
-									if (d.equals("DNA replication")) g.setColor(new Color(0.2f,0.7f,0.2f));
-									else if (d.equals("DNA metabolism")) g.setColor(new Color(0.2f,0.2f,0.7f));
-									else if (d.equals("Lysis module")) g.setColor(new Color(0.2f,0.7f,0.7f));
-									else if (d.equals("DNA packaging")) g.setColor(new Color(0.7f,0.2f,0.7f));
-									else if (d.equals("Head and tail morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
-									else g.setColor(new Color(0.7f,0.2f,0.2f));
+								if( prev != null && prev.getGeneGroup() != null) {
+									var design = prev.getGeneGroup().getDesignation();
+									if (design != null && design.length() > 0) {
+										if (design.contains("DNA replication")) g.setColor(new Color(0.2f, 0.7f, 0.2f));
+										else if (design.contains("DNA metabolism")) g.setColor(new Color(0.2f, 0.2f, 0.7f));
+										else if (design.contains("Lysis module")) g.setColor(new Color(0.2f, 0.7f, 0.7f));
+										else if (design.contains("DNA packaging")) g.setColor(new Color(0.7f, 0.2f, 0.7f));
+										else if (design.contains("Head morphogenesis"))
+											g.setColor(new Color(0.7f, 0.7f, 0.2f));
+										else if (design.contains("Tail morphogenesis"))
+											g.setColor(new Color(0.7f, 0.2f, 0.2f));
+										else g.setColor(Color.lightGray); //g.setColor(new Color(0.7f,0.2f,0.2f));
+									} else {
+										g.setColor( Color.lightGray );
+									}
 								} else {
 									g.setColor( Color.lightGray );
 								}
@@ -1655,12 +1783,19 @@ public class Neighbour {
 									GeneGroup gg = prev.getGene().getGeneGroup();
 									List<Annotation> ltv = gg.getTegevals( spec1 );
 									if( ltv != null && ltv.size() > 0 ) {
+										if (gg.size()==3) {
+											if(gg.genes.stream().anyMatch(gggu -> gggu.start == 67712)) {
+												System.err.println();
+											}
+										}
 										final Collection<Sequence> contigs = /*spec1.equals(spec2) ? contigs :*/geneset.speccontigMap.get( spec1 );
 										double ratio = GeneCompare.invertedGradientRatio(spec1, contigs, -1.0, gg, prev);
 										if( ratio == -1 ) {
 											ratio = GeneCompare.invertedGradientPlasmidRatio(spec1, contigs, -1.0, gg);
 											rc = GeneCompare.gradientGrayscaleColor( ratio );
-										} else rc = GeneCompare.gradientColor( ratio );
+										} else {
+											rc = GeneCompare.gradientColor( ratio );
+										}
 									} else {
 										rc = Color.lightGray;
 									}
@@ -1723,8 +1858,7 @@ public class Neighbour {
 								}*/
 							}
 
-							g.translate(0,500);
-
+							if (vertNames.isSelected()) g.translate(0,500);
 							var prevColor = g.getColor();
 							boolean revis = (prev.ori == -1) ^ prev.getContig().isReverse();
 							int addon = revis ? -5 : 5;
@@ -1756,21 +1890,29 @@ public class Neighbour {
 									if (relcol.isSelected()) g.setColor(Color.white);
 									g2.setColor(Color.black);
 									g2.drawString(genename, 5 + xoff + (int) (len - strlen) / 2, (y + 1) * rowheight - (int) (rowheight * 0.3));
-								} else if (i == 0 && ((!ogenename.contains("hth") && !ogenename.contains("contig")) || (d!=null&&d.length()>0))) {
+								} else if (!vertDone && ((!ogenename.contains("hth") && !ogenename.contains("hypoth") && !ogenename.contains("Hypoth") && !ogenename.contains("contig")) || (d!=null&&d.length()>0))) {
+									vertDone = true;
+									boolean db = d != null && d.contains("express");
 									int xx = 5 + xoff + (int) (len - strlen) / 2;
-									int yy = (y + 1) * rowheight - (int) (rowheight * 0.3);
+									int yy = rowheight - (int) (rowheight * 0.3);
 									g2.translate(xx, yy);
 									g2.rotate(-Math.PI/4);
 									if (ogenename.contains("contig")) ogenename = "Unknown";
-									g2.drawString(ogenename + " (" + id + ")", 20, -10);
+									var oldfont = g2.getFont();
+									if (db) {
+										g2.setFont(oldfont.deriveFont(15.0f));
+										g2.drawString("*", 9, -2);
+										g2.setFont(oldfont.deriveFont(Font.BOLD | Font.ITALIC));
+										g2.drawString(ogenename + " (" + id + ") - " + d.replace("express-",""), 20, -10);
+										g2.setFont(oldfont);
+									} else {
+										g2.drawString(ogenename + " (" + id + ") - " + (d!=null && d.length()>0 ? " - " + d : ""), 20, -10);
+									}
 									g2.rotate(Math.PI/4);
 									g2.translate(-xx, -yy);
 								}
 							}
-
-							if (vertNames.isSelected()) {
-
-							}
+							if (vertNames.isSelected()) g.translate(0,-500);
 
 							if (circleView.isSelected()) {
 								g.setColor(prevColor);
@@ -1784,7 +1926,7 @@ public class Neighbour {
 								//g.fillArc(-width+y*rowheight,-width+y*rowheight,width*2-y*rowheight*2,width*2-y*rowheight*2,(int)((xoff+offset-5000)*360/div), (int)((len*360)/div));
 								//g2.fill(arc);
 
-								g.translate(5000, 560);
+								g.translate(5000, 600);
 
 								//g2.setStroke(STROKE);
 								var arc = new Arc2D.Double(-width + y * rowheight +2, -width + y * rowheight +2, width * 2 - y * rowheight * 2 -4, width * 2 - y * rowheight * 2 -4, -theta3, -(len * 360.0 / div), Arc2D.PIE);
@@ -1854,17 +1996,36 @@ public class Neighbour {
 								}
 								g2.rotate(-theta);
 
-								if (y==0&&!ogenename.contains("hth")&&!ogenename.contains("contig")) {
+								if (y==0&&!ogenename.contains("hth")&&!ogenename.contains("hypoth")&&!ogenename.contains("Hypoth")&&!ogenename.contains("Phage ")&&!ogenename.contains("contig")) {
+									g2.rotate((theta + ltheta) / 2);
+									g2.drawLine(width, 0, width+8, 0);
+									g2.rotate(-(theta + ltheta) / 2);
+
 									g2.setColor(Color.darkGray);
 									var middle = -(theta + ltheta) / 2.0;
 									//g2.rotate(-middle);
 									int woff = width + 10;
-									int xx = (int) (woff * Math.cos(middle));
-									int yy = -(int) (woff * Math.sin(middle));
+									var cos = Math.cos(middle);
+									var sin = Math.sin(middle);
+									int xx = (int) (woff * cos);
+									int yy = -(int) (woff * sin);
 									g2.setFont( g.getFont().deriveFont((float)14.0) );
 									int nstrlen = g.getFontMetrics().stringWidth( ogenename );
-									if (xx>=0) g2.drawString(ogenename, xx, yy);
-									else g2.drawString(ogenename, xx-nstrlen,yy);
+									var sin2 = sin*sin;
+									var sin4 = sin2*sin2;
+									var sin8 = sin4*sin4;
+									var sin16 = sin8*sin8;
+									var sin32 = sin16*sin16;
+									var sin64 = sin32*sin32;
+									var off = (int)(80*sin8);
+									int xstart;
+									if (xx>=0) {
+										xstart = xx;
+									} else {
+										xstart = xx - nstrlen;
+									}
+									g2.drawString(ogenename, xstart,yy - off);
+									if (off > 4) g2.drawLine(xx, yy, xx, yy+2-off);
 									g2.setFont( g.getFont().deriveFont((float)fsize) );
 									//g2.rotate(middle);
 								}
@@ -1876,9 +2037,8 @@ public class Neighbour {
 								g2.fill(arc);
 								//g.fillArc(-width+m*rowheight,-width+m*rowheight,width*2-m*rowheight*2,width*2-m*rowheight*2, (xoff+offset-5000)*360/div, (len*360)/div);
 
-								g.translate(-5000, -560);
+								g.translate(-5000, -600);
 							}
-							g.translate(0,-500);
 						}
 					}
 				}
@@ -1920,7 +2080,7 @@ public class Neighbour {
 
 		if(circleView.isSelected()) {
 			Graphics2D g2 = (Graphics2D) g;
-			g.translate(5000, 560);
+			g.translate(5000, 600);
 
 			g2.setColor(Color.white);
 			int y = 6;
@@ -1934,6 +2094,7 @@ public class Neighbour {
 			for(int i = 0; i < rowheader.getRowCount(); i++) {
 				var row = rowheader.convertRowIndexToModel( i );
 				var spec = (String)rowheader.getValueAt(row,0);
+				spec = spec.replace("merge", "");
 				if(!spec.contains("Thermus")) spec = "Thermus phage "+spec;
 				spec = spec.replace('_',' ');
 				var strlen = g2.getFontMetrics().stringWidth(spec);
@@ -1941,7 +2102,7 @@ public class Neighbour {
 			}
 			g2.setFont(g.getFont().deriveFont((float)fsize));
 
-			g.translate(-5000,-560);
+			g.translate(-5000,-600);
 		}
 	}
 	
@@ -2314,6 +2475,74 @@ public class Neighbour {
 							//ct.annset.
 						}
 					}
+				}
+			});
+			mvmnu.addSeparator();
+			mvmnu.add( new AbstractAction("Align from center") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					List<Annotation> prev = new ArrayList<>();
+					for (var i : rowheader.getSelectedRows()) {
+						var ann = hteg.get(rowheader.convertRowIndexToModel(i));
+						prev.add(ann.getNext());
+					}
+
+					var k = 0;
+					var ret = AlignUtils.align(prev);
+					while (k++ < 200) {
+						var r1 = ret;
+						var p1 = prev;
+						if (IntStream.range(0,ret.size()).allMatch(i -> r1.get(i).equals(p1.get(i)))) {
+							var lann = new ArrayList<Annotation>();
+							for (var ann : ret) {
+								var nextann = ann.getNext();
+								lann.add(nextann);
+							}
+							ret = lann;
+						}
+						prev = ret;
+						ret = AlignUtils.align(prev);
+					}
+					c.repaint();
+					//AlignUtils.align(lann);
+
+					System.err.println(k);
+
+					/*int i = 0;
+					while (i < 10) {
+						for (int k = 0; k < contiglist.size(); k++) {
+							var ctg = contiglist.get(k);
+							var idx = startIndex.get(k);
+							if (idx+1 < ctg.annset.size()) {
+								var ann = ctg.annset.get(idx+1);
+								for (int k0 = 0; k0 < contiglist.size(); k0++) {
+									if (k!=k0) {
+										var ctg0 = contiglist.get(k0);
+										ctg0.indexOf(ann.getGeneGroup().)
+									}
+								}
+							}
+						}
+						i++;
+					}
+
+					/*for( GeneGroup gg : selectedGenesGroups ) {
+						for( String sp : gg.species.keySet() ) {
+							Teginfo ti = gg.species.get( sp );
+
+							Sequence ct = ti.best.getContig();
+							ctind.put( sp, ct );
+							spind.put( sp, ct.annset.indexOf( ti.best ) );
+						}
+					}
+
+					for( int i = 1; i < 20; i++ ) {
+						for( String spec : ctind.keySet() ) {
+							Sequence ct = ctind.get( spec );
+							//ct.annset.
+						}
+					}*/
+					System.err.println();
 				}
 			});
 			
@@ -2820,7 +3049,7 @@ public class Neighbour {
 										}
 										name = symb != null ? symb : tv.getGene() == null ? tv.getName() : tv.getGene().getGeneGroup().getName();
 									}
-									if( name != null && name.contains("hypo") ) name = "hyp";
+									if( name != null && name.contains("hypo") ) name = "hth";
 									//name += tv.ori == 1 ? "->" : "<-";
 									
 									Annotation newann = new Annotation(seq, -upph+offset, -upph+offset+tv.stop-tv.start, 1, name);
@@ -2856,7 +3085,7 @@ public class Neighbour {
 											}
 											name = symb != null ? symb : ntev.getGene() == null ? ntev.getName() : ntev.getGene().getGeneGroup().getName();
 										}
-										if( name != null && name.contains("hypo") ) name = "hyp";
+										if( name != null && name.contains("hypo") ) name = "hth";
 										
 										if( tv.ori == -1 ) {
 											//int bil = ntev.stop-tv.start;

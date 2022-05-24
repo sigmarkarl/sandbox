@@ -2722,7 +2722,7 @@ public class GeneSetHead extends JApplet {
 					List commandsList = new ArrayList();
 					for( GeneGroup gg : ggset ) {
 						String fasta = gg.getFasta( true );
-						String[] cmds = new String[] { OS.indexOf("mac") >= 0 ? "/usr/local/bin/mafft" : "/usr/bin/mafft", "-"};
+						String[] cmds = new String[] { OS.indexOf("mac") >= 0 ? "/opt/homebrew/bin/mafft" : "/usr/bin/mafft", "-"};
 						Object[] paths = new Object[] {fasta.getBytes(), aligneddir.resolve(gg.getCommonId()+".aa"), null};
 						commandsList.add( paths );
 						commandsList.add( Arrays.asList(cmds) );
