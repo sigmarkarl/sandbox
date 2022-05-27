@@ -2553,7 +2553,7 @@ public class Neighbour {
 					}
 
 					var k = 0;
-					var ret = AlignUtils.align(prev);
+					var ret = AlignUtils.align(prev,30);
 					while (k++ < 200) {
 						var r1 = ret;
 						var p1 = prev;
@@ -2566,7 +2566,7 @@ public class Neighbour {
 							ret = lann;
 						}
 						prev = ret;
-						ret = AlignUtils.align(prev);
+						ret = AlignUtils.align(prev, 30);
 					}
 					c.repaint();
 					//AlignUtils.align(lann);
@@ -2608,6 +2608,35 @@ public class Neighbour {
 						}
 					}*/
 					System.err.println();
+				}
+			});
+
+			mvmnu.add( new AbstractAction("Align from center with offset") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					List<Annotation> prev = new ArrayList<>();
+					for (var i : rowheader.getSelectedRows()) {
+						var ann = hteg.get(rowheader.convertRowIndexToModel(i));
+						prev.add(ann.getNext());
+					}
+
+					var k = 0;
+					var ret = AlignUtils.alignOffset(prev,25);
+					while (k++ < 500) {
+						var r1 = ret;
+						var p1 = prev;
+						if (IntStream.range(0,ret.size()).allMatch(i -> r1.get(i).equals(p1.get(i)))) {
+							var lann = new ArrayList<Annotation>();
+							for (var ann : ret) {
+								var nextann = ann.getNext();
+								lann.add(nextann);
+							}
+							ret = lann;
+						}
+						prev = ret;
+						ret = AlignUtils.alignOffset(prev, 25);
+					}
+					c.repaint();
 				}
 			});
 			

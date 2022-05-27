@@ -303,7 +303,7 @@ public class GeneSet implements GenomeSet {
 	}
 
 	public Map<String,String> loadhhblits() throws IOException {
-		try(var flist = Files.list(Path.of("/Users/sigmarkarl/tmp"))) {
+		try(var flist = Files.list(Path.of("/Users/sigmarkarl/tmp3"))) {
 			var resmap = new HashMap<String,String>();
 			flist.filter(f -> f.toString().endsWith(".hhr")).forEach(f -> {
 				var fstr = f.getFileName().toString();
@@ -5925,7 +5925,7 @@ public class GeneSet implements GenomeSet {
 			//hhblitsmap = loadhhblits();
 			nf = zipfilesystem.getPath("/mapping.txt");
 			if (Files.exists(nf)) try(var lines = Files.lines(nf)) {
-				lines.map(s -> s.split("\t")).forEach(s -> hhblitsmap.put(s[0],s[1]));
+				lines.map(s -> s.split("\t")).forEach(s -> hhblitsmap.put(s[0],s[1]+"\t"+s[2]));
 			}
 		}
 
