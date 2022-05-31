@@ -14,6 +14,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.geom.Arc2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.FileSystems;
@@ -486,6 +487,7 @@ public class Neighbour {
 	}
 	
 	public void makeStuff( Graphics g, Rectangle clip, GeneSet geneset, int rowheight, int rowcount, String showNames, boolean seqView ) {
+		Graphics2D g2 = (Graphics2D) g;
 		Map<String,Integer>	offsetMap = new HashMap<>();
 		for( GeneGroup gg : selectedGenesGroups ) {
 			for( String spec2 : gg.getSpecies() ) {
@@ -732,13 +734,33 @@ public class Neighbour {
 								g.setColor( next.isSelected() ? Color.black : Color.gray );
 								g.drawRect(xoff+offset, y*rowheight+2, (int)len, rowheight-4);
 							} else {
+								var paint = g2.getPaint();
+								var img = new BufferedImage(30,30, BufferedImage.TYPE_INT_ARGB);
+								var img2 = img.createGraphics();
+								img2.setColor(Color.white);
+								img2.fillRect(0,0,30,30);
+								img2.setColor(Color.red);
+								xPoints[0] = 0; yPoints[0] = 10;
+								xPoints[1] = 10; yPoints[1] = 0;
+								xPoints[2] = 20; yPoints[2] = 0;
+								xPoints[3] = 0; yPoints[3] = 20;
+								img2.fillPolygon(xPoints, yPoints, 4);
+								xPoints[0] = 10; yPoints[0] = 30;
+								xPoints[1] = 30; yPoints[1] = 10;
+								xPoints[2] = 30; yPoints[2] = 20;
+								xPoints[3] = 20; yPoints[3] = 30;
+								img2.fillPolygon(xPoints, yPoints, 4);
+								img2.dispose();
 								xPoints[0] = xoff+offset; yPoints[0] = y * rowheight+2;
 								xPoints[1] = xoff+offset+(int)len; yPoints[1] = y * rowheight+2;
 								xPoints[2] = xoff+offset+(int)len+addon; yPoints[2] = y * rowheight+2+(rowheight-4)/2;
 								xPoints[3] = xoff+offset+(int)len; yPoints[3] = y * rowheight+2+rowheight-4;
 								xPoints[4] = xoff+offset; yPoints[4] = y * rowheight+2+rowheight-4;
 								xPoints[5] = xoff+offset+addon; yPoints[5] = y * rowheight+2+(rowheight-4)/2;
+								var tpaint = new TexturePaint(img, new Rectangle2D.Double(0,0,30,30));
+								g2.setPaint(tpaint);
 								g.fillPolygon(xPoints, yPoints, nPoints);
+								g2.setPaint(paint);
 								g.setColor( next.isSelected() ? Color.black : Color.gray );
 								g.drawPolygon(xPoints, yPoints, nPoints);
 							}
@@ -787,7 +809,6 @@ public class Neighbour {
 								strlen = g.getFontMetrics().stringWidth( genename );
 							}
 
-							Graphics2D g2 = (Graphics2D) g;
 							if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
 								if (!vertNames.isSelected()) {
 									if (relcol.isSelected()) g.setColor(Color.white);
@@ -1102,7 +1123,7 @@ public class Neighbour {
 							Color bc = prev.getBackFlankingGapColor();
 							if( bc != Color.lightGray ) {
 								g.setColor( bc );
-								int val = (int)(rowheight-4)/2;
+								int val = (rowheight-4) /2;
 								if( revis ) {
 									g.fillRect(xPoints[2]+1, yPoints[2]-2, val, val);
 								} else {
@@ -1118,7 +1139,6 @@ public class Neighbour {
 								strlen = g.getFontMetrics().stringWidth( genename );
 							}
 
-							Graphics2D g2 = (Graphics2D) g;
 							if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
 								if (!vertNames.isSelected()) {
 									if (relcol.isSelected()) g.setColor(Color.white);
@@ -1420,13 +1440,35 @@ public class Neighbour {
 								int offset = revis ? 5 : 0;
 								//g.fillRect(xoff, y * rowheight+2, (int)len, rowheight - 4);
 								int y = i;
+
+								var paint = g2.getPaint();
+								var img = new BufferedImage(20,20, BufferedImage.TYPE_INT_ARGB);
+								var img2 = img.createGraphics();
+								img2.setColor(Color.lightGray);
+								img2.fillRect(0,0,20,20);
+								img2.setColor(g2.getColor());
+								xPoints[0] = 0; yPoints[0] = 5;
+								xPoints[1] = 5; yPoints[1] = 0;
+								xPoints[2] = 15; yPoints[2] = 0;
+								xPoints[3] = 0; yPoints[3] = 15;
+								img2.fillPolygon(xPoints, yPoints, 4);
+								xPoints[0] = 5; yPoints[0] = 20;
+								xPoints[1] = 20; yPoints[1] = 5;
+								xPoints[2] = 20; yPoints[2] = 15;
+								xPoints[3] = 15; yPoints[3] = 20;
+								img2.fillPolygon(xPoints, yPoints, 4);
+								img2.dispose();
+
 								xPoints[0] = xoff+offset; yPoints[0] = y * rowheight+2;
 								xPoints[1] = xoff+offset+(int)len; yPoints[1] = y * rowheight+2;
 								xPoints[2] = xoff+offset+(int)len+addon; yPoints[2] = y * rowheight+2+(rowheight-4)/2;
 								xPoints[3] = xoff+offset+(int)len; yPoints[3] = y * rowheight+2+rowheight-4;
 								xPoints[4] = xoff+offset; yPoints[4] = y * rowheight+2+rowheight-4;
 								xPoints[5] = xoff+offset+addon; yPoints[5] = y * rowheight+2+(rowheight-4)/2;
+								var tpaint = new TexturePaint(img, new Rectangle2D.Double(0,0,20,20));
+								g2.setPaint(tpaint);
 								g.fillPolygon(xPoints, yPoints, nPoints);
+								g2.setPaint(paint);
 
 								g.setColor( next.isSelected() ? Color.black : Color.gray );
 								g.drawPolygon(xPoints, yPoints, nPoints);
@@ -1440,7 +1482,6 @@ public class Neighbour {
 									strlen = g.getFontMetrics().stringWidth( genename );
 								}
 
-								Graphics2D g2 = (Graphics2D) g;
 								if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
 									if (!vertNames.isSelected()) {
 										if (relcol.isSelected()) g.setColor(Color.white);
@@ -1930,7 +1971,6 @@ public class Neighbour {
 								strlen = g.getFontMetrics().stringWidth( genename );
 							}
 
-							Graphics2D g2 = (Graphics2D) g;
 							if( showNames.length() > 0 /*names.getSelectedIndex() != 0*/ ) {
 								if (!vertNames.isSelected()) {
 									if (relcol.isSelected()) g.setColor(Color.white);
@@ -2144,7 +2184,6 @@ public class Neighbour {
 		}
 
 		if(circleView.isSelected()) {
-			Graphics2D g2 = (Graphics2D) g;
 			g.translate(5000, 600);
 
 			g2.setColor(Color.white);
