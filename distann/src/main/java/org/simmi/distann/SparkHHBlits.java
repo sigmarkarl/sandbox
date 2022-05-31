@@ -18,6 +18,7 @@ import java.util.stream.StreamSupport;
 
 public class SparkHHBlits implements MapFunction<String, String> {
     String root;
+    String dbpath;
     String tmp;
     List<String> blastp;
     String envMap;
@@ -41,8 +42,9 @@ public class SparkHHBlits implements MapFunction<String, String> {
         this.extrapar = extrapar;
     }*/
 
-    public SparkHHBlits() {
-        root = "/Users/sigmarkarl/tmp3";
+    public SparkHHBlits(String resdir, String db) {
+        root = resdir;
+        dbpath = db;
     }
 
     @Override
@@ -57,12 +59,12 @@ public class SparkHHBlits implements MapFunction<String, String> {
         }
 
         var es = Executors.newFixedThreadPool(3);
-        var dbpath = "/Volumes/Untitled/pdb70/pdb70";//"/Volumes/Untitled/UniRef30_2020_06";
+        //var dbpath = "/Volumes/Untitled/pdb70/pdb70";//"/Volumes/Untitled/UniRef30_2020_06";
         var outputstr = name+".hhr";
         var output = rootpath.resolve(outputstr);
 
         //int procs = Runtime.getRuntime().availableProcessors();
-        var cmd = new String[] {"docker","run","--rm","-v","/Users/sigmarkarl:/Users/sigmarkarl","-v","/Volumes/Untitled:/Volumes/Untitled","-w","/Users/sigmarkarl/tmp3","soedinglab/hh-suite","hhblits","-i",inputfasta.toString(),"-o",outputstr,"-d",dbpath};
+        var cmd = new String[] {"docker","run","--rm","-v","/Users/sigmarkarl:/Users/sigmarkarl","-v","/Volumes/Untitled:/Volumes/Untitled","-w",root,"soedinglab/hh-suite","hhblits","-i",inputfasta.toString(),"-o",outputstr,"-d",dbpath};
         var pargs = Arrays.asList(cmd);
         var pb = new ProcessBuilder(pargs);
         //pb.directory(rootpath.toFile());
@@ -100,7 +102,11 @@ public class SparkHHBlits implements MapFunction<String, String> {
         es.shutdown();
         if (Files.exists(output)) {
             var probe = Files.lines(output).takeWhile(l -> !l.equals("No 2")).filter(l -> l.startsWith("Proba")).map(l -> l.substring(0,l.indexOf("Score=")).trim()).findFirst().get();
-            var ret = name+"\t"+Files.lines(output).takeWhile(l -> !l.equals("No 2")).filter(l -> l.startsWith(">")).map(l -> l.substring(1,l.indexOf(";"))).findFirst().get()+"\t"+probe;
+            var ret = name+"\t"+Files.lines(output).takeWhile(l -> !l.equals("No 2")).filter(l -> l.startsWith(">")).map(l -> {
+                var idx = l.indexOf(";");
+                if (idx==-1) idx = l.length();
+                return l.substring(1,idx);
+            }).findFirst().get()+"\t"+probe;
             return ret;
         } else {
             return "";
