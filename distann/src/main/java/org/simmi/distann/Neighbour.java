@@ -1262,6 +1262,7 @@ public class Neighbour {
 							double len = te.getProteinLength()*neighbourscale;
 							
 							if( clip.x+clip.width+9500 > xoff ) {
+								boolean b = false;
 								if( funcol.isSelected() ) {
 									g.setColor( Color.green );
 									Gene gene = next.getGene();
@@ -1297,17 +1298,46 @@ public class Neighbour {
 									if( next != null && next.getGeneGroup() != null) {
 										var design = next.getGeneGroup().getDesignation();
 										if (design != null && design.length() > 0) {
-											if (design.contains("DNA replication")) g.setColor(new Color(0.2f, 0.7f, 0.2f));
-											else if (design.contains("DNA metabolism")) g.setColor(new Color(0.2f, 0.2f, 0.7f));
-											else if (design.contains("Lysis module")) g.setColor(new Color(0.2f, 0.7f, 0.7f));
-											else if (design.contains("DNA packaging")) g.setColor(new Color(0.7f, 0.2f, 0.7f));
+											if (design.contains("DNA replication"))
+												g.setColor(new Color(0.2f, 0.7f, 0.2f));
+											else if (design.contains("DNA metabolism"))
+												g.setColor(new Color(0.2f, 0.2f, 0.7f));
+											else if (design.contains("Lysis module"))
+												g.setColor(new Color(0.2f, 0.7f, 0.7f));
+											else if (design.contains("DNA packaging"))
+												g.setColor(new Color(0.7f, 0.2f, 0.7f));
 											else if (design.contains("Head morphogenesis"))
 												g.setColor(new Color(0.7f, 0.7f, 0.2f));
 											else if (design.contains("Tail morphogenesis"))
 												g.setColor(new Color(0.7f, 0.2f, 0.2f));
 											else g.setColor(Color.lightGray); //g.setColor(new Color(0.7f,0.2f,0.2f));
 										} else {
-											g.setColor( Color.lightGray );
+											b = hteglocal.stream().anyMatch(te2 -> {
+												var gg =  te2.getGeneGroup();
+												if (gg != null) {
+													if (!gg.genes.contains(te)) {
+														var des2 = gg.getDesignation();
+														if (des2.contains("DNA replication"))
+															g.setColor(new Color(0.2f, 0.7f, 0.2f));
+														else if (des2.contains("DNA metabolism"))
+															g.setColor(new Color(0.2f, 0.2f, 0.7f));
+														else if (des2.contains("Lysis module"))
+															g.setColor(new Color(0.2f, 0.7f, 0.7f));
+														else if (des2.contains("DNA packaging"))
+															g.setColor(new Color(0.7f, 0.2f, 0.7f));
+														else if (des2.contains("Head morphogenesis"))
+															g.setColor(new Color(0.7f, 0.7f, 0.2f));
+														else if (des2.contains("Tail morphogenesis"))
+															g.setColor(new Color(0.7f, 0.2f, 0.2f));
+														else g.setColor(Color.lightGray);
+														return true;
+													}
+												}
+												return false;
+											});
+											if (!b) {
+												g.setColor(Color.lightGray);
+											}
 										}
 									} else {
 										g.setColor( Color.lightGray );
@@ -1442,22 +1472,42 @@ public class Neighbour {
 								int y = i;
 
 								var paint = g2.getPaint();
-								var img = new BufferedImage(20,20, BufferedImage.TYPE_INT_ARGB);
-								var img2 = img.createGraphics();
-								img2.setColor(Color.lightGray);
-								img2.fillRect(0,0,20,20);
-								img2.setColor(g2.getColor());
-								xPoints[0] = 0; yPoints[0] = 5;
-								xPoints[1] = 5; yPoints[1] = 0;
-								xPoints[2] = 15; yPoints[2] = 0;
-								xPoints[3] = 0; yPoints[3] = 15;
-								img2.fillPolygon(xPoints, yPoints, 4);
-								xPoints[0] = 5; yPoints[0] = 20;
-								xPoints[1] = 20; yPoints[1] = 5;
-								xPoints[2] = 20; yPoints[2] = 15;
-								xPoints[3] = 15; yPoints[3] = 20;
-								img2.fillPolygon(xPoints, yPoints, 4);
-								img2.dispose();
+
+								/*var b = hteglocal.stream().anyMatch(te2 -> {
+									var gg =  te2.getGeneGroup();
+									if (gg != null) {
+										return !gg.genes.contains(te);
+									}
+									return false;
+								});*/
+								if (b) {
+									var img = new BufferedImage(20, 20, BufferedImage.TYPE_INT_ARGB);
+									var img2 = img.createGraphics();
+									img2.setColor(Color.lightGray);
+									img2.fillRect(0, 0, 20, 20);
+									img2.setColor(g2.getColor());
+									xPoints[0] = 0;
+									yPoints[0] = 5;
+									xPoints[1] = 5;
+									yPoints[1] = 0;
+									xPoints[2] = 15;
+									yPoints[2] = 0;
+									xPoints[3] = 0;
+									yPoints[3] = 15;
+									img2.fillPolygon(xPoints, yPoints, 4);
+									xPoints[0] = 5;
+									yPoints[0] = 20;
+									xPoints[1] = 20;
+									yPoints[1] = 5;
+									xPoints[2] = 20;
+									yPoints[2] = 15;
+									xPoints[3] = 15;
+									yPoints[3] = 20;
+									img2.fillPolygon(xPoints, yPoints, 4);
+									img2.dispose();
+									var tpaint = new TexturePaint(img, new Rectangle2D.Double(0, 0, 20, 20));
+									g2.setPaint(tpaint);
+								}
 
 								xPoints[0] = xoff+offset; yPoints[0] = y * rowheight+2;
 								xPoints[1] = xoff+offset+(int)len; yPoints[1] = y * rowheight+2;
@@ -1465,10 +1515,9 @@ public class Neighbour {
 								xPoints[3] = xoff+offset+(int)len; yPoints[3] = y * rowheight+2+rowheight-4;
 								xPoints[4] = xoff+offset; yPoints[4] = y * rowheight+2+rowheight-4;
 								xPoints[5] = xoff+offset+addon; yPoints[5] = y * rowheight+2+(rowheight-4)/2;
-								var tpaint = new TexturePaint(img, new Rectangle2D.Double(0,0,20,20));
-								g2.setPaint(tpaint);
 								g.fillPolygon(xPoints, yPoints, nPoints);
-								g2.setPaint(paint);
+
+								if (b) g2.setPaint(paint);
 
 								g.setColor( next.isSelected() ? Color.black : Color.gray );
 								g.drawPolygon(xPoints, yPoints, nPoints);
@@ -1768,6 +1817,7 @@ public class Neighbour {
 							String genename = geneset.getGeneName( showNames, prev.getGene() );
 							var id = prev.getId();
 							var d = prev.designation;
+							var b = false;
 							/*String genename = prev.getGene().getName();
 							if( commonname.isSelected() && genename.contains("_") ) genename = prev.getGene().getGeneGroup().getName();
 							genename = genename.contains("hypothetical") ? "hth-p" : genename;*/
@@ -1821,7 +1871,32 @@ public class Neighbour {
 											g.setColor(new Color(0.7f, 0.2f, 0.2f));
 										else g.setColor(Color.lightGray); //g.setColor(new Color(0.7f,0.2f,0.2f));
 									} else {
-										g.setColor( Color.lightGray );
+										b = hteglocal.stream().anyMatch(te2 -> {
+											var gg =  te2.getGeneGroup();
+											if (gg != null) {
+												if (!gg.genes.contains(te)) {
+													var des2 = gg.getDesignation();
+													if (des2.contains("DNA replication"))
+														g.setColor(new Color(0.2f, 0.7f, 0.2f));
+													else if (des2.contains("DNA metabolism"))
+														g.setColor(new Color(0.2f, 0.2f, 0.7f));
+													else if (des2.contains("Lysis module"))
+														g.setColor(new Color(0.2f, 0.7f, 0.7f));
+													else if (des2.contains("DNA packaging"))
+														g.setColor(new Color(0.7f, 0.2f, 0.7f));
+													else if (des2.contains("Head morphogenesis"))
+														g.setColor(new Color(0.7f, 0.7f, 0.2f));
+													else if (des2.contains("Tail morphogenesis"))
+														g.setColor(new Color(0.7f, 0.2f, 0.2f));
+													else g.setColor(Color.lightGray);
+													return true;
+												}
+											}
+											return false;
+										});
+										if (!b) {
+											g.setColor(Color.lightGray);
+										}
 									}
 								} else {
 									g.setColor( Color.lightGray );
@@ -1950,6 +2025,36 @@ public class Neighbour {
 							boolean revis = (prev.ori == -1) ^ prev.getContig().isReverse();
 							int addon = revis ? -5 : 5;
 							int offset = revis ? 5 : 0;
+
+							var paint = g2.getPaint();
+							if (b) {
+								var img = new BufferedImage(20, 20, BufferedImage.TYPE_INT_ARGB);
+								var img2 = img.createGraphics();
+								img2.setColor(Color.lightGray);
+								img2.fillRect(0, 0, 20, 20);
+								img2.setColor(g2.getColor());
+								xPoints[0] = 0;
+								yPoints[0] = 5;
+								xPoints[1] = 5;
+								yPoints[1] = 0;
+								xPoints[2] = 15;
+								yPoints[2] = 0;
+								xPoints[3] = 0;
+								yPoints[3] = 15;
+								img2.fillPolygon(xPoints, yPoints, 4);
+								xPoints[0] = 5;
+								yPoints[0] = 20;
+								xPoints[1] = 20;
+								yPoints[1] = 5;
+								xPoints[2] = 20;
+								yPoints[2] = 15;
+								xPoints[3] = 15;
+								yPoints[3] = 20;
+								img2.fillPolygon(xPoints, yPoints, 4);
+								img2.dispose();
+								var tpaint = new TexturePaint(img, new Rectangle2D.Double(0, 0, 20, 20));
+								g2.setPaint(tpaint);
+							}
 							//g.fillRect(xoff, y * rowheight+2, (int)len, rowheight - 4);
 							xPoints[0] = xoff+offset; yPoints[0] = y * rowheight+2;
 							xPoints[1] = xoff+offset+(int)len; yPoints[1] = y * rowheight+2;
@@ -1958,6 +2063,8 @@ public class Neighbour {
 							xPoints[4] = xoff+offset; yPoints[4] = y * rowheight+2+rowheight-4;
 							xPoints[5] = xoff+offset+addon; yPoints[5] = y * rowheight+2+(rowheight-4)/2;
 							g.fillPolygon(xPoints, yPoints, nPoints);
+
+							if (b) g2.setPaint(paint);
 
 							g.setColor( prev.isSelected() ? Color.black : Color.gray );
 							g.drawPolygon(xPoints, yPoints, nPoints);
