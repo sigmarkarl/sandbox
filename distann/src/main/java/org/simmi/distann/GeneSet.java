@@ -34,6 +34,7 @@ import org.apache.spark.api.java.function.MapPartitionsFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
+import org.simmi.ann.ANIResult;
 import org.simmi.javafasta.shared.*;
 import org.simmi.serifier.SerifyApplet;
 import org.simmi.treedraw.shared.*;

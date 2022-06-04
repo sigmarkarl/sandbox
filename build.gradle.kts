@@ -18,7 +18,7 @@ plugins {
     id("java")
     id("application")
     id("com.palantir.graal") version "0.9.0"
-    id("org.openjfx.javafxplugin") version "0.0.12"
+    id("org.openjfx.javafxplugin") version "0.0.13"
     id("com.github.johnrengelman.shadow") version "7.1.1"
 }
 
@@ -27,7 +27,7 @@ plugins {
 }*/
 
 application {
-    mainClassName = "org.simmi.distann.DistAnn"
+    mainClass.set("org.simmi.distann.DistAnn")
 }
 
 /*allprojects {

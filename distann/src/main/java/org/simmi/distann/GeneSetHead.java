@@ -68,6 +68,7 @@ import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.simmi.ann.ANIResult;
 import org.simmi.javafasta.DataTable;
 import org.simmi.javafasta.shared.*;
 import org.simmi.javafasta.unsigned.*;
