@@ -513,7 +513,8 @@ public class Neighbour {
 			}
 			break;
 		}
-		
+
+		int baseCirc = 239;
 		String spec1 = null;
 		int 		rs = rowheader.getSelectedRow();
 		if( rs >= 0 && rs < rowheader.getRowCount() ) spec1 = (String)rowheader.getValueAt(rs, 0);
@@ -1112,7 +1113,7 @@ public class Neighbour {
 							Color fc = prev.getFrontFlankingGapColor();
 							if( fc != Color.lightGray ) {
 								g.setColor( fc );
-								int val = (int)(rowheight-4)/2;
+								int val = (rowheight-4) /2;
 								if( revis ) {
 									g.fillRect(xPoints[0]+1, yPoints[2]-2, val, val);
 								} else {
@@ -1229,6 +1230,7 @@ public class Neighbour {
 					if( val > max ) max = val;
 				}
 
+				var jstr = "";
 				boolean vertDone = false;
 				for( int i = Math.max(0, clip.y/rowheight); i < Math.min( (clip.y+clip.height)/rowheight+1, rowcount ); i++ ) {
 					int r = rowheader.getRowCount() == 0 ? i : rowheader.convertRowIndexToModel( i );
@@ -1241,8 +1243,33 @@ public class Neighbour {
 					
 					if( te != null ) {
 						Annotation next = te;
+
+						if (vertNames.isSelected() && i==0) {
+							g.translate(0,500);
+							var c = g.getColor();
+							g.setColor(Color.black);
+							//jj0 = 0;
+							var start = 11;
+							if (next.getId() != null && next.getId().endsWith("_008")) {
+								jj0 = start;
+							}
+							var boff = rowcount * rowheight + 9;
+							if (jj0==0) {
+								g.setColor(Color.white);
+								g.fillRect(xoff,boff, 10, 10);
+								g.setColor(Color.black);
+							}
+							jj0 = (jj0+1)%baseCirc;
+							jstr = Integer.toString(jj0+1);
+							g.drawString(jstr, xoff, boff+10*(jj0%2));
+							g.setColor(c);
+							g.translate(0,-500);
+						}
+
 						if( te.getGene() != null ) {
-							String genename = geneset.getGeneName(showNames, next.getGene());
+							String genename;
+							if (geneset.panmap.containsKey(jstr)) genename = geneset.panmap.get(jstr);
+							else genename = geneset.getGeneName(showNames, next.getGene());
 							var id = next.getId();
 							var d = next.designation;
 							/*if( names.getSelectedItem().equals("Default names") ) {
@@ -1443,11 +1470,14 @@ public class Neighbour {
 														var c = g.getColor();
 														g.setColor(Color.black);
 														var firstD2 = firstD.replace("metabolism","metabolism/modification");
-														var sw = g.getFontMetrics().stringWidth(firstD2);
 														var sxoff = 13 * (mm % 2);
 														var boff = rowcount*rowheight+20;
 														g.drawLine(firstx, boff + sxoff, lastx + 10, boff + sxoff);
-														g.drawString(firstD2, (lastx + firstx - sw) / 2, boff+10 + sxoff);
+														var oldfont = g2.getFont();
+														g2.setFont(oldfont.deriveFont(14.0f));
+														var sw = g.getFontMetrics().stringWidth(firstD2);
+														g.drawString(firstD2, (lastx + firstx - sw) / 2, boff+14 + sxoff);
+														g2.setFont(oldfont);
 														g.setColor(c);
 														mm++;
 														firstSomething = next;
@@ -1710,26 +1740,6 @@ public class Neighbour {
 						}
 						g.setColor( Color.black );
 						g.drawString( genename, 5+xoff+(int)(len-strlen)/2, (y+1)*rowheight-5 );*/
-						}
-
-						if (vertNames.isSelected() && i==0) {
-							g.translate(0,500);
-							var c = g.getColor();
-							g.setColor(Color.black);
-							//jj0 = 0;
-							if (next.getId() != null && next.getId().endsWith("_008")) {
-								jj0 = 8;
-							}
-							var boff = rowcount * rowheight + 9;
-							if (jj0==0) {
-								g.setColor(Color.white);
-								g.fillRect(xoff,boff, 10, 10);
-								g.setColor(Color.black);
-							}
-							jj0 = (jj0+1)%144;
-							g.drawString(Integer.toString(jj0+1), xoff, boff+8*(jj0%2));
-							g.setColor(c);
-							g.translate(0,-500);
 						}
 					}
 					//y++;
@@ -2005,11 +2015,14 @@ public class Neighbour {
 													var c = g.getColor();
 													g.setColor(Color.black);
 													var firstD2 = firstD.replace("metabolism", "metabolism/modification");
-													var sw = g.getFontMetrics().stringWidth(firstD2);
-													var sxoff = 13 * (mm2 % 2);
+													var sxoff = 13 * ((mm2+1) % 2);
 													var boff = rowcount * rowheight + 20;
 													g.drawLine(firstPrevX, boff + sxoff, lastPrevX + 10, boff + sxoff);
-													g.drawString(firstD2, (lastPrevX + firstPrevX - sw) / 2, boff + 10 + sxoff);
+													var oldfont = g2.getFont();
+													g2.setFont(oldfont.deriveFont(14.0f));
+													var sw = g.getFontMetrics().stringWidth(firstD2);
+													g.drawString(firstD2, (lastPrevX + firstPrevX - sw) / 2, boff + 14 + sxoff);
+													g2.setFont(oldfont);
 													g.setColor(c);
 													mm2++;
 													firstPrev = prev;
@@ -2239,7 +2252,7 @@ public class Neighbour {
 							var c = g.getColor();
 							g.setColor(Color.black);
 							if (prev.getId() != null && prev.getId().endsWith("_007")) {
-								jj1 = 10;
+								jj1 = 12;
 							}
 							var boff = rowcount * rowheight + 9;
 							if (jj1==0) {
@@ -2247,8 +2260,8 @@ public class Neighbour {
 								g.fillRect(xoff,boff, 10, 10);
 								g.setColor(Color.black);
 							}
-							jj1 = Math.floorMod(jj1-1,144);
-							g.drawString(Integer.toString(jj1), xoff, boff+8-8*(jj1%2));
+							jj1 = Math.floorMod(jj1-1,baseCirc);
+							g.drawString(Integer.toString(jj1+1), xoff, boff+10*(jj1%2));
 							g.setColor(c);
 							g.translate(0,-500);
 						}

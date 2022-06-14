@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-public class SparkHHBlits implements MapFunction<String, String> {
+public class SparkHHBlits implements MapFunction<String, String>, Function<String,String> {
     String root;
     String dbpath;
     String tmp;
@@ -58,7 +58,7 @@ public class SparkHHBlits implements MapFunction<String, String> {
             writer.write(fasta);
         }
 
-        var es = Executors.newFixedThreadPool(3);
+        /*var es = Executors.newFixedThreadPool(3);
         //var dbpath = "/Volumes/Untitled/pdb70/pdb70";//"/Volumes/Untitled/UniRef30_2020_06";
         var outputstr = name+".hhr";
         var output = rootpath.resolve(outputstr);
@@ -74,7 +74,7 @@ public class SparkHHBlits implements MapFunction<String, String> {
                 try(InputStream is = pc.getInputStream()) {
                     return is.transferTo(System.out);
                 }
-            });*/
+            });*
         String hostname = InetAddress.getLocalHost().getHostName();
         Future<Long> ferr = es.submit(() -> {
             Path berr = rootpath.resolve("hhblist"+name+".err");
@@ -91,7 +91,7 @@ public class SparkHHBlits implements MapFunction<String, String> {
                 fos.write('\n');
                 return is.transferTo(fos);
             }
-        });*/
+        });*
         InputStreamReader isr = new InputStreamReader(pc.getInputStream());
         BufferedReader br = new BufferedReader(isr);
         var line = br.readLine();
@@ -110,7 +110,8 @@ public class SparkHHBlits implements MapFunction<String, String> {
             return ret;
         } else {
             return "";
-        }
+        }*/
+        return "";
     }
 
     public Iterator<List<Set<String>>> iterator(Iterator<FastaSequence> input) throws IOException, ExecutionException, InterruptedException {
@@ -280,5 +281,14 @@ public class SparkHHBlits implements MapFunction<String, String> {
             //return Files.lines(resPath).iterator();*/
         }
         return Collections.emptyIterator();
+    }
+
+    @Override
+    public String apply(String s) {
+        try {
+            return call(s);
+        } catch (IOException | InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

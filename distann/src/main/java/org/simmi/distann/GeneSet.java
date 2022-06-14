@@ -304,11 +304,11 @@ public class GeneSet implements GenomeSet {
 	}
 
 	public Map<String,String> loadhhblits() throws IOException {
-		try(var flist = Files.list(Path.of("/Users/sigmarkarl/tmp3"))) {
+		try(var flist = Files.list(Path.of("/Users/sigmar/tmp3"))) {
 			var resmap = new HashMap<String,String>();
 			flist.filter(f -> f.toString().endsWith(".hhr")).forEach(f -> {
 				var fstr = f.getFileName().toString();
-				var gid = fstr.substring(0,fstr.length()-4);
+				var gid = fstr.substring(0,fstr.length()-10);
 				try (var lines = Files.lines(f)) {
 					lines.filter(s -> {
 						if (s.startsWith(">") && !s.contains("Uncharac") && !s.contains("uncharac") && !s.contains("hypot")) {
@@ -334,6 +334,16 @@ public class GeneSet implements GenomeSet {
 				}
 			});
 			return resmap;
+		}
+	}
+
+	public void loadpanmap(Map<String,String> panmap, BufferedReader rd) throws IOException {
+		var line = rd.readLine();
+		while(line != null && line.length() > 0) {
+			var idx = line.indexOf('\t');
+			//var split = line.split("\t");
+			panmap.put(line.substring(0,idx), line.substring(idx+1));
+			line = rd.readLine();
 		}
 	}
 
@@ -5685,7 +5695,9 @@ public class GeneSet implements GenomeSet {
 	Map<String,String>						unresolvedmap = new HashMap<>();
 	Map<String,String>						namemap = new HashMap<>();
 	Map<String,String>						phastermap = new HashMap<>();
+	Map<String,String>						panmap = new HashMap<>();
 	Map<String,String>						hhblitsmap = new HashMap<>();
+	Map<String,String>						hhblitsunimap = new HashMap<>();
 	Map<String,String>						cazymap = new HashMap<>();
 	Map<String,String>						cazyaamap = new HashMap<>();
 	Map<String,String>						cazycemap = new HashMap<>();
@@ -5919,11 +5931,17 @@ public class GeneSet implements GenomeSet {
 		if( Files.exists( nf ) ) loadcazymap( cazymap, Files.newBufferedReader(nf) );
 		nf = zipfilesystem.getPath("/phaster");
 		if( Files.exists( nf ) ) loadphastermap( phastermap, Files.newBufferedReader(nf) );
+		nf = zipfilesystem.getPath("/pan.txt");
+		if( Files.exists( nf ) ) {
+			try(var br = Files.newBufferedReader(nf)) {
+				loadpanmap(panmap, br);
+			}
+		}
 
 		nf = zipfilesystem.getPath("/hhblits");
 		if( Files.exists( nf ) ) loadhhblitsmap( hhblitsmap, Files.newBufferedReader(nf) );
 		else {
-			//hhblitsmap = loadhhblits();
+			hhblitsunimap = loadhhblits();
 			nf = zipfilesystem.getPath("/mapping.txt");
 			if (Files.exists(nf)) try(var lines = Files.lines(nf)) {
 				lines.map(s -> s.split("\t")).forEach(s -> hhblitsmap.put(s[0],s[1]+"\t"+s[2]));
@@ -6161,6 +6179,12 @@ public class GeneSet implements GenomeSet {
 				g.hhblits = hhblitsmap.get(tag);
 			} else if(id != null && hhblitsmap.containsKey(id)) {
 				g.hhblits = hhblitsmap.get(id);
+			}
+
+			if (tag != null && hhblitsunimap.containsKey(tag)) {
+				g.hhblitsuni = hhblitsunimap.get(tag);
+			} else if(id != null && hhblitsunimap.containsKey(id)) {
+				g.hhblitsuni = hhblitsunimap.get(id);
 			}
 		});
 

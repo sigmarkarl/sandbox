@@ -2760,12 +2760,17 @@ public class GeneSetHead {
 		file.getItems().add( new SeparatorMenuItem() );
 
 		MenuItem excelitem = new MenuItem("Open selection in Excel");
-		excelitem.setOnAction(actionEvent -> excelExport( geneset.projectname, false ));
+		excelitem.setOnAction(actionEvent -> ExcelUtils.excelExport( GeneSetHead.this, geneset.projectname, false ));
 		file.getItems().add( excelitem );
 
 		MenuItem exseqitem = new MenuItem("Open sequences in Excel");
-		exseqitem.setOnAction(actionEvent -> excelExport( geneset.projectname, true ));
+		exseqitem.setOnAction(actionEvent -> ExcelUtils.excelExport( GeneSetHead.this, geneset.projectname, true ));
 		file.getItems().add( exseqitem );
+
+		MenuItem excentitem = new MenuItem("Open center in Excel");
+		excentitem.setOnAction(actionEvent -> ExcelUtils.excelCenterExport( GeneSetHead.this, geneset.projectname, true ));
+		file.getItems().add( excentitem );
+
 		file.getItems().add( new SeparatorMenuItem() );
 		
 		MenuItem importitem = new MenuItem("Import genomes");
@@ -3503,12 +3508,12 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		MenuItem	hhblitsaction = new MenuItem("hhblits pdb70");
 		hhblitsaction.setOnAction(  actionEvent -> SwingUtilities.invokeLater(() -> {
 			//Set<String> species = getSelspec(null, geneset.getSpecies(), false, null);
-			Platform.runLater(() -> HHBlitsTools.runHHBlits(GeneSetHead.this, "/Users/sigmarkarl/tmp3", "/Volumes/Untitled/pdb70/pdb70"));
+			Platform.runLater(() -> HHBlitsTools.runHHBlits(GeneSetHead.this, "/Users/sigmar/tmp3", "/Volumes/Untitled/pdb70/pdb70", false));
 		}));
 		MenuItem	hhblitsuniaction = new MenuItem("hhblits uniref");
 		hhblitsuniaction.setOnAction(  actionEvent -> SwingUtilities.invokeLater(() -> {
 			//Set<String> species = getSelspec(null, geneset.getSpecies(), false, null);
-			Platform.runLater(() -> HHBlitsTools.runHHBlits(GeneSetHead.this, "/Users/sigmarkarl/tmp3", "/Volumes/Untitled/UniRef30_2020_06"));
+			Platform.runLater(() -> HHBlitsTools.runHHBlits(GeneSetHead.this, "/Users/sigmar/tmp3", "/Volumes/Untitled/UniRef30_2020_06", false));
 		}));
 		MenuItem	registerlocusidaction = new MenuItem("Register locus id");
 		registerlocusidaction.setOnAction( actionEvent -> {
@@ -3528,7 +3533,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 				locusCol.setCellValueFactory(new PropertyValueFactory<>("locus"));
 
 				ObservableList<Locus> o = FXCollections.observableArrayList();
-				geneset.locusidmap.entrySet().stream().forEach(s -> o.add(new Locus(s.getKey(), s.getValue())));
+				geneset.locusidmap.entrySet().forEach(s -> o.add(new Locus(s.getKey(), s.getValue())));
 				geneset.getSpecies().stream().filter(s -> !geneset.locusidmap.containsKey(s)).forEach(s -> o.add(new Locus(s, "")));
 				tv.setItems(o);
 
@@ -3583,10 +3588,8 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 						Map<String,List<String[]>> group = new BufferedReader(new InputStreamReader(p)).lines().map(l -> l.split("\t")).filter(s -> geneidset.contains(s[1])).collect( Collectors.groupingBy(s->s[1]) );
 						Set<String> bsids = group.entrySet().stream().flatMap( e -> e.getValue().stream() ).map( s -> s[0] ).collect(Collectors.toSet());
 						Map<String,String> bsid2name = new BufferedReader(new InputStreamReader(b)).lines().map( s -> s.split("\t") ).filter( s -> bsids.contains(s[0]) ).collect( Collectors.toMap(s->s[0],s->s[2]+":"+s[3]) );
-						result = group.entrySet().stream().collect( Collectors.toMap(s->s.getKey(),s->s.getValue().stream().map(sub-> bsid2name.get(sub[0]) ).collect(Collectors.toSet())) );
-					} catch (IOException e) {
-						e.printStackTrace();
-					} catch (URISyntaxException e) {
+						result = group.entrySet().stream().collect( Collectors.toMap(Map.Entry::getKey, s->s.getValue().stream().map(sub-> bsid2name.get(sub[0]) ).collect(Collectors.toSet())) );
+					} catch (IOException | URISyntaxException e) {
 						e.printStackTrace();
 					}
 					//Path p = Paths.get(gene.getText());
@@ -6820,150 +6823,6 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		File f = fc.showSaveDialog(primaryStage);
 		if( f != null ) geneset.zippath = f.toPath();
 	}
-
-	public void excelExport( String sheetname, boolean sequences ) {
-		SwingUtilities.invokeLater(() -> {
-			var ss = new Set[1];
-			ss[0] = getSelspec(GeneSetHead.this, GeneSetHead.this.geneset.getSpecies());
-			Platform.runLater(() -> {
-				var selspec = ss[0];
-				Workbook workbook = new XSSFWorkbook();
-				Sheet sheet = workbook.createSheet(sheetname);
-				Row header = sheet.createRow(0);
-				if( isGeneview() ) {
-					int cn = 0;
-					for( TableColumn tc : gtable.getColumns() ) {
-						org.apache.poi.ss.usermodel.Cell cell = header.createCell(cn++);
-						cell.setCellValue( tc.getText() );
-					}
-					org.apache.poi.ss.usermodel.Cell cell = header.createCell(cn++);
-					cell.setCellValue( "start" );
-					cell = header.createCell(cn++);
-					cell.setCellValue( "stop" );
-
-					int rc = 1;
-					Row row = sheet.createRow(rc++);
-					XSSFCellStyle cellstyle = (XSSFCellStyle) workbook.createCellStyle();
-					cellstyle.setFillBackgroundColor( new XSSFColor(new Color(0,128,0)) );
-					for( int r : gtable.getSelectionModel().getSelectedIndices() ) {
-						cn = 0;
-						for( TableColumn tc : gtable.getColumns() ) {
-							Object o = tc.getCellData(r);
-							if( o != null ) {
-								cell = row.createCell(cn);
-								cell.setCellValue( o.toString() );
-								//XSSFCellStyle cellstyle = (XSSFCellStyle) workbook.createCellStyle();
-								//cellstyle.setFillBackgroundColor( new XSSFColor(new Color(0,128,0)) );
-							}
-							cn++;
-						}
-						if (sequences) {
-							cell = row.createCell(cn);
-							Gene g = gtable.getItems().get(r);
-							cell.setCellValue(g.getTegeval().start);
-							cell.setCellStyle(cellstyle);
-							cn++;
-							cell = row.createCell(cn);
-							cell.setCellValue(g.getTegeval().stop);
-							cell.setCellStyle(cellstyle);
-							cn++;
-
-							for (TableColumn tc : gresults.getColumns().filtered(p -> selspec.contains(p.getText()))) {
-								Object o = tc.getCellData(r);
-								if (o != null) {
-									cell = row.createCell(cn);
-									String seqstr;
-									if (o instanceof Tegeval) {
-										var te = (Tegeval) o;
-										seqstr = te.getProteinSequence().getSequenceString();
-									} else {
-										var ti = (Teginfo) o;
-										seqstr = ti.tset.stream().map(Annotation::getProteinSequence).map(Sequence::getSequence).map(StringBuilder::toString).collect(Collectors.joining(","));
-									}
-									cell.setCellValue(seqstr);
-									cell.setCellStyle(cellstyle);
-								}
-								cn++;
-							}
-						} else {
-							for (TableColumn tc : gresults.getColumns()) {
-								Object o = tc.getCellData(r);
-								if (o != null) {
-									cell = row.createCell(cn);
-									cell.setCellValue(o.toString());
-									cell.setCellStyle(cellstyle);
-								}
-								cn++;
-							}
-						}
-						row = sheet.createRow(rc++);
-					}
-				} else {
-					int cn = 0;
-					for( TableColumn tc : table.getColumns() ) {
-						org.apache.poi.ss.usermodel.Cell cell = header.createCell(cn++);
-						cell.setCellValue( tc.getText() );
-					}
-					for( TableColumn tc : results.getColumns() ) {
-						org.apache.poi.ss.usermodel.Cell cell = header.createCell(cn++);
-						cell.setCellValue( tc.getText() );
-					}
-
-					int rc = 1;
-					Row row = sheet.createRow(rc++);
-					XSSFCellStyle cellstyle = (XSSFCellStyle) workbook.createCellStyle();
-					cellstyle.setFillBackgroundColor( new XSSFColor(new Color(0,128,0)) );
-					for( int r : table.getSelectionModel().getSelectedIndices() ) {
-						cn = 0;
-						for( TableColumn tc : table.getColumns() ) {
-							Object o = tc.getCellData(r);
-							if( o != null ) {
-								org.apache.poi.ss.usermodel.Cell cell = row.createCell(cn);
-								cell.setCellValue( o.toString() );
-								//XSSFCellStyle cellstyle = (XSSFCellStyle) workbook.createCellStyle();
-								//cellstyle.setFillBackgroundColor( new XSSFColor(new Color(0,128,0)) );
-							}
-							cn++;
-						}
-						if (sequences) {
-							for (TableColumn tc : results.getColumns()) {
-								Teginfo o = (Teginfo)tc.getCellData(r);
-								if (o != null) {
-									org.apache.poi.ss.usermodel.Cell cell = row.createCell(cn);
-									var seqstr = o.tset.stream().map(Annotation::getProteinSequence).map(Sequence::getSequence).map(StringBuilder::toString).collect(Collectors.joining(","));
-									cell.setCellValue(seqstr);
-									cell.setCellStyle(cellstyle);
-								}
-								cn++;
-							}
-						} else {
-							for (TableColumn tc : results.getColumns()) {
-								Object o = tc.getCellData(r);
-								if (o != null) {
-									org.apache.poi.ss.usermodel.Cell cell = row.createCell(cn);
-									cell.setCellValue(o.toString());
-									cell.setCellStyle(cellstyle);
-								}
-								cn++;
-							}
-						}
-						row = sheet.createRow(rc++);
-					}
-				}
-
-				try {
-					Path tempfile = Files.createTempFile("geneset",".xlsx");
-					OutputStream os = Files.newOutputStream( tempfile );
-					workbook.write( os );
-					os.close();
-
-					Desktop.getDesktop().open( tempfile.toFile() );
-				} catch (IOException e1) {
-					e1.printStackTrace();
-				}
-			});
-		});
-	}
 	
 	public void fetchGenomes() {
 		if( geneset.zippath == null ) {
@@ -7840,6 +7699,10 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		hhpred.setCellValueFactory( new PropertyValueFactory<>("hhblits"));
 		table.getColumns().add( hhpred );
 
+		TableColumn<GeneGroup, String> hhpreduni = new TableColumn("HHPredUni");
+		hhpreduni.setCellValueFactory( new PropertyValueFactory<>("hhblitsuni"));
+		table.getColumns().add( hhpreduni );
+
 		TableColumn<GeneGroup, String> symbcol = new TableColumn("Symbol");
 		symbcol.setCellValueFactory( new PropertyValueFactory<>("symbol"));
 		table.getColumns().add( symbcol );
@@ -7966,6 +7829,9 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		TableColumn<Gene, String> hhpredcol = new TableColumn("Hhpred");
 		hhpredcol.setCellValueFactory( new PropertyValueFactory<>("hhpred"));
 		gtable.getColumns().add( hhpredcol );
+		TableColumn<Gene, String> hhpredunicol = new TableColumn("HhpredUni");
+		hhpredunicol.setCellValueFactory( new PropertyValueFactory<>("hhpreduni"));
+		gtable.getColumns().add( hhpredunicol );
 		TableColumn<Gene, String> gpbidcol = new TableColumn("Pbid");
 		gpbidcol.setCellValueFactory( new PropertyValueFactory<>("pbid"));
 		gtable.getColumns().add( gpbidcol );
