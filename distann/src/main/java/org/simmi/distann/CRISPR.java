@@ -18,6 +18,9 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;*/
+import io.grpc.ManagedChannelBuilder;
+import org.simmi.GreeterGrpc;
+import org.simmi.HelloRequest;
 import org.simmi.javafasta.shared.GeneGroup;
 
 import javafx.collections.ObservableList;
@@ -470,5 +473,13 @@ public class CRISPR {
                 }*/
             });
 		}
+	}
+
+	public static void main(String[] args) {
+		var channel = ManagedChannelBuilder.forAddress("localhost", 50051).usePlaintext().build();
+		var blockingStub = GreeterGrpc.newBlockingStub(channel);
+		var asyncStub = GreeterGrpc.newStub(channel);
+		var reply = blockingStub.sayHello(HelloRequest.newBuilder().build());
+		System.err.println(reply.getMessage());
 	}
 }

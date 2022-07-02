@@ -1,7 +1,9 @@
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.function.Predicate
 import java.util.spi.ToolProvider
+
+//import com.google.protobuf.gradle.*
+import org.gradle.kotlin.dsl.provider.gradleKotlinDslOf
 
 /*buildscript {
     repositories {
@@ -14,6 +16,15 @@ import java.util.spi.ToolProvider
     }
 }*/
 
+buildscript {
+    repositories {
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath("gradle.plugin.com.google.protobuf:protobuf-gradle-plugin:0.8.18")
+    }
+}
+
 plugins {
     id("java")
     id("application")
@@ -21,6 +32,12 @@ plugins {
     id("org.openjfx.javafxplugin") version "0.0.13"
     id("com.github.johnrengelman.shadow") version "7.1.1"
 }
+
+/*protobuf {
+    protoc { artifact = "com.google.protobuf:protoc:3.21.1" }
+    plugins { grpc { artifact = "io.grpc:protoc-gen-grpc-java:1.46.0" } }
+    generateProtoTasks { ofSourceSet("main")*.plugins { grpc {} } }
+}*/
 
 /*ext {
     javaMainClass = "org.simmi.distann.DistAnn"
@@ -61,7 +78,7 @@ fun resolveJpackage(): ToolProvider {
 fun runJpackage(ENDING: String, VERSION: String): String {
     println("Creating GeneSet package installer")
     val jpackage = resolveJpackage()
-    val exitval: Int = jpackage.run(System.out, System.err, "--type", ENDING, "-i", "$rootDir/distann/build/install/distann", "-n", "genset", "--app-version", VERSION, "--dest", "$rootDir","--main-jar", "lib/distann.jar", "--main-class", "org.simmi.distann.DistAnn", "--java-options", "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED", "--java-options", "--add-opens=java.base/java.nio=ALL-UNNAMED", "--verbose")
+    val exitval: Int = 0//jpackage.run(System.out, System.err, "--type", ENDING, "-i", "$rootDir/distann/build/install/distann", "-n", "genset", "--app-version", VERSION, "--dest", "$rootDir","--main-jar", "lib/distann.jar", "--main-class", "org.simmi.distann.DistAnn", "--java-options", "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED", "--java-options", "--add-opens=java.base/java.nio=ALL-UNNAMED", "--verbose")
     //"--mac-package-name", "Genset",
     System.err.println(exitval)
     return ""

@@ -4,15 +4,7 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
+import java.awt.event.*;
 import java.awt.geom.Arc2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -420,6 +412,23 @@ public class Neighbour {
 			c.repaint();
 		}
 	}
+
+	public int deleteAllForward( JComponent c ) {
+		int ret = 0;
+		if( currentTe != null ) {
+			if( currentTe.getContig().isReverse() ) {
+				/*Tegeval prevprev = currentTe.prev.prev;
+				currentTe.setPrevious( prevprev );*/
+				ret = currentTe.getContig().deleteAllBefore( currentTe );
+			} else {
+				/*Tegeval nextnext = currentTe.next.next;
+				nextnext.setPrevious( currentTe );*/
+				ret = currentTe.getContig().deleteAllAfter( currentTe );
+			}
+			c.repaint();
+		}
+		return ret;
+	}
 	
 	public void deleteBack( JComponent c ) {
 		if( currentTe != null ) {
@@ -434,6 +443,23 @@ public class Neighbour {
 			}
 			c.repaint();
 		}
+	}
+
+	public int deleteAllBack( JComponent c ) {
+		int ret = 0;
+		if( currentTe != null ) {
+			if( currentTe.getContig().isReverse() ) {
+				/*Tegeval nextnext = currentTe.getNext().getNext();
+				nextnext.setPrevious( currentTe );*/
+				ret = currentTe.getContig().deleteAllAfter( currentTe );
+			} else {
+				/*Tegeval prevprev = currentTe.getPrevious().getPrevious();
+				currentTe.setPrevious( prevprev );*/
+				ret = currentTe.getContig().deleteAllBefore( currentTe );
+			}
+			c.repaint();
+		}
+		return ret;
 	}
 	
 	double rowheight;
@@ -484,6 +510,16 @@ public class Neighbour {
 	
 	public void setZoomLevel( double level ) {
 		neighbourscale = level;
+	}
+
+	public Color designColor(String design) {
+		if (design.contains("DNA replication")) return new Color(0.2f, 0.7f, 0.2f);
+		else if (design.contains("DNA metabolism")) return new Color(0.2f, 0.2f, 0.7f);
+		else if (design.contains("Lysis module")) return new Color(0.2f, 0.7f, 0.7f);
+		else if (design.contains("DNA packaging")) return new Color(0.7f, 0.2f, 0.7f);
+		else if (design.contains("Head morphogenesis")) return new Color(0.7f, 0.7f, 0.2f);
+		else if (design.contains("Tail morphogenesis")) return new Color(0.7f, 0.2f, 0.2f);
+		else return Color.lightGray; //g.setColor(new Color(0.7f,0.2f,0.2f));
 	}
 	
 	public void makeStuff( Graphics g, Rectangle clip, GeneSet geneset, int rowheight, int rowcount, String showNames, boolean seqView ) {
@@ -602,15 +638,7 @@ public class Neighbour {
 								if( next != null && next.getGeneGroup() != null) {
 									var design = next.getGeneGroup().getDesignation();
 									if (design != null && design.length() > 0) {
-										if (design.contains("DNA replication")) g.setColor(new Color(0.2f, 0.7f, 0.2f));
-										else if (design.contains("DNA metabolism")) g.setColor(new Color(0.2f, 0.2f, 0.7f));
-										else if (design.contains("Lysis module")) g.setColor(new Color(0.2f, 0.7f, 0.7f));
-										else if (design.contains("DNA packaging")) g.setColor(new Color(0.7f, 0.2f, 0.7f));
-										else if (design.contains("Head morphogenesis"))
-											g.setColor(new Color(0.7f, 0.7f, 0.2f));
-										else if (design.contains("Tail morphogenesis"))
-											g.setColor(new Color(0.7f, 0.2f, 0.2f));
-										else g.setColor(Color.lightGray); //g.setColor(new Color(0.7f,0.2f,0.2f));
+										g.setColor(designColor(design));
 									} else {
 										g.setColor( Color.lightGray );
 									}
@@ -989,13 +1017,7 @@ public class Neighbour {
 							} else if( designcol.isSelected() ) {
 								if( prev != null && prev.designation != null && prev.designation.length() > 0 ) {
 									var d = prev.designation;
-									if (d.contains("DNA replication")) g.setColor(new Color(0.2f,0.7f,0.2f));
-									else if (d.contains("DNA metabolism")) g.setColor(new Color(0.2f,0.2f,0.7f));
-									else if (d.contains("Lysis module")) g.setColor(new Color(0.2f,0.7f,0.7f));
-									else if (d.contains("DNA packaging")) g.setColor(new Color(0.7f,0.2f,0.7f));
-									else if (d.contains("Head morphogenesis")) g.setColor(new Color(0.7f,0.7f,0.2f));
-									else if (d.contains("Tail morphogenesis")) g.setColor(new Color(0.7f,0.2f,0.2f));
-									else g.setColor( Color.lightGray );//g.setColor(new Color(0.7f,0.2f,0.2f));
+									g.setColor(designColor(d));
 								} else {
 									g.setColor( Color.lightGray );
 								}
@@ -1325,38 +1347,14 @@ public class Neighbour {
 									if( next != null && next.getGeneGroup() != null) {
 										var design = next.getGeneGroup().getDesignation();
 										if (design != null && design.length() > 0) {
-											if (design.contains("DNA replication"))
-												g.setColor(new Color(0.2f, 0.7f, 0.2f));
-											else if (design.contains("DNA metabolism"))
-												g.setColor(new Color(0.2f, 0.2f, 0.7f));
-											else if (design.contains("Lysis module"))
-												g.setColor(new Color(0.2f, 0.7f, 0.7f));
-											else if (design.contains("DNA packaging"))
-												g.setColor(new Color(0.7f, 0.2f, 0.7f));
-											else if (design.contains("Head morphogenesis"))
-												g.setColor(new Color(0.7f, 0.7f, 0.2f));
-											else if (design.contains("Tail morphogenesis"))
-												g.setColor(new Color(0.7f, 0.2f, 0.2f));
-											else g.setColor(Color.lightGray); //g.setColor(new Color(0.7f,0.2f,0.2f));
+											g.setColor(designColor(design));
 										} else {
 											b = hteglocal.stream().anyMatch(te2 -> {
 												var gg =  te2.getGeneGroup();
 												if (gg != null) {
 													if (!gg.genes.contains(te)) {
 														var des2 = gg.getDesignation();
-														if (des2.contains("DNA replication"))
-															g.setColor(new Color(0.2f, 0.7f, 0.2f));
-														else if (des2.contains("DNA metabolism"))
-															g.setColor(new Color(0.2f, 0.2f, 0.7f));
-														else if (des2.contains("Lysis module"))
-															g.setColor(new Color(0.2f, 0.7f, 0.7f));
-														else if (des2.contains("DNA packaging"))
-															g.setColor(new Color(0.7f, 0.2f, 0.7f));
-														else if (des2.contains("Head morphogenesis"))
-															g.setColor(new Color(0.7f, 0.7f, 0.2f));
-														else if (des2.contains("Tail morphogenesis"))
-															g.setColor(new Color(0.7f, 0.2f, 0.2f));
-														else g.setColor(Color.lightGray);
+														g.setColor(designColor(des2));
 														return true;
 													}
 												}
@@ -1871,34 +1869,14 @@ public class Neighbour {
 								if( prev != null && prev.getGeneGroup() != null) {
 									var design = prev.getGeneGroup().getDesignation();
 									if (design != null && design.length() > 0) {
-										if (design.contains("DNA replication")) g.setColor(new Color(0.2f, 0.7f, 0.2f));
-										else if (design.contains("DNA metabolism")) g.setColor(new Color(0.2f, 0.2f, 0.7f));
-										else if (design.contains("Lysis module")) g.setColor(new Color(0.2f, 0.7f, 0.7f));
-										else if (design.contains("DNA packaging")) g.setColor(new Color(0.7f, 0.2f, 0.7f));
-										else if (design.contains("Head morphogenesis"))
-											g.setColor(new Color(0.7f, 0.7f, 0.2f));
-										else if (design.contains("Tail morphogenesis"))
-											g.setColor(new Color(0.7f, 0.2f, 0.2f));
-										else g.setColor(Color.lightGray); //g.setColor(new Color(0.7f,0.2f,0.2f));
+										g.setColor(designColor(design));
 									} else {
 										b = hteglocal.stream().anyMatch(te2 -> {
 											var gg =  te2.getGeneGroup();
 											if (gg != null) {
 												if (!gg.genes.contains(te)) {
 													var des2 = gg.getDesignation();
-													if (des2.contains("DNA replication"))
-														g.setColor(new Color(0.2f, 0.7f, 0.2f));
-													else if (des2.contains("DNA metabolism"))
-														g.setColor(new Color(0.2f, 0.2f, 0.7f));
-													else if (des2.contains("Lysis module"))
-														g.setColor(new Color(0.2f, 0.7f, 0.7f));
-													else if (des2.contains("DNA packaging"))
-														g.setColor(new Color(0.7f, 0.2f, 0.7f));
-													else if (des2.contains("Head morphogenesis"))
-														g.setColor(new Color(0.7f, 0.7f, 0.2f));
-													else if (des2.contains("Tail morphogenesis"))
-														g.setColor(new Color(0.7f, 0.2f, 0.2f));
-													else g.setColor(Color.lightGray);
+													g.setColor(designColor(des2));
 													return true;
 												}
 											}
@@ -2549,7 +2527,11 @@ public class Neighbour {
 					} else if( e.getKeyCode() == KeyEvent.VK_TAB ) {
 						injectForward( c );
 					}  else if( e.getKeyCode() == KeyEvent.VK_BACK_SPACE ) {
-						deleteBack( c );
+						if (e.getModifiersEx() == InputEvent.SHIFT_DOWN_MASK) {
+							deleteAllBack(c);
+						} else {
+							deleteBack(c);
+						}
 					}  else if( e.getKeyCode() == KeyEvent.VK_DELETE ) {
 						deleteForward( c );
 					}
@@ -2785,12 +2767,33 @@ public class Neighbour {
 						var r1 = ret;
 						var p1 = prev;
 						if (IntStream.range(0,ret.size()).allMatch(i -> r1.get(i).equals(p1.get(i)))) {
-							var lann = new ArrayList<Annotation>();
-							for (var ann : ret) {
-								var nextann = ann.getNext();
-								lann.add(nextann);
+							var fix = false;
+							for (var a : ret) {
+								var i = a.clearPrefix(25, ret);
+								if (i>0) {
+									fix = true;
+									break;
+								}
 							}
-							ret = lann;
+
+							if (fix) {
+								ret = prev;
+							} else {
+								var lann = new ArrayList<Annotation>();
+								var allPseudo = true;
+								while (ret.size() > 0 && allPseudo) {
+									for (var ann : lann) {
+										ann.getContig().delete(ann);
+									}
+									lann.clear();
+									for (var ann : ret) {
+										var nextann = ann.getNext();
+										if (nextann.getGene() != null) allPseudo = false;
+										lann.add(nextann);
+									}
+								}
+								ret = lann;
+							}
 						}
 						prev = ret;
 						ret = AlignUtils.alignOffset(prev, 25);

@@ -1,7 +1,29 @@
+import com.google.protobuf.gradle.*
+import org.gradle.kotlin.dsl.provider.gradleKotlinDslOf
+
 plugins {
     id("java")
     id("application")
+    id("com.google.protobuf")
     id("org.openjfx.javafxplugin")
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.21.1"
+    }
+    plugins {
+        id("grpc") {
+            artifact = "io.grpc:protoc-gen-grpc-java:1.46.0"
+        }
+    }
+    generateProtoTasks {
+        ofSourceSet("main").forEach {
+            it.plugins {
+                id("grpc")
+            }
+        }
+    }
 }
 
 javafx {
@@ -14,6 +36,11 @@ dependencies {
     implementation(project(":serifier"))
     implementation(project(":spilling"))
     implementation(project(":TreeDraw"))
+
+    runtimeOnly("io.grpc:grpc-netty:1.47.0")
+    implementation("com.google.protobuf:protobuf-java:3.21.1")
+    implementation("io.grpc:grpc-stub:1.47.0")
+    implementation("io.grpc:grpc-protobuf:1.47.0")
 
     implementation("org.java-websocket:Java-WebSocket:1.5.2")
 

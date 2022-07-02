@@ -1,6 +1,12 @@
 package org.simmi.distann;
 
 import com.sun.javafx.application.PlatformImpl;
+import io.grpc.ServerBuilder;
+import io.grpc.stub.StreamObserver;
+import org.simmi.GreeterGrpc;
+import org.simmi.GreeterGrpc.GreeterImplBase;
+import org.simmi.HelloReply;
+import org.simmi.HelloRequest;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -409,10 +415,23 @@ public class DistAnn extends JPanel {
 
 	public static void main(String[] args) {
 		try {
-			SwingUtilities.invokeAndWait(() -> PlatformImpl.startup(() -> {}));
-			DistannFX.main(args);
-		} catch (InterruptedException | InvocationTargetException e) {
+			var server = ServerBuilder.forPort(50051).addService(new GreeterImplBase() {
+				@Override
+				public void sayHello(HelloRequest request, StreamObserver<HelloReply> responseObserver) {
+					//super.sayHello(request, responseObserver);
+					var name = request.getName();
+					responseObserver.onNext(HelloReply.newBuilder().setMessage("hoho").build());
+					responseObserver.onCompleted();
+				}
+			}).build();
+			server.start();
+			server.awaitTermination();
+			//SwingUtilities.invokeAndWait(() -> PlatformImpl.startup(() -> {}));
+			//DistannFX.main(args);
+		} catch (InterruptedException e) {
 			e.printStackTrace();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 }

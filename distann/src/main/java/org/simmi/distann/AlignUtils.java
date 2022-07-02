@@ -68,22 +68,27 @@ public class AlignUtils {
             var contig = a1.getContig();
             var gg = a1.getGeneGroup();
             if (gg != null) {
+                if (gg.getName().startsWith("UvrD")) {
+                    System.err.println();
+                }
+
                 var u = 0;
                 var nn = a1.getNext();
-                while (gg != nn.getGeneGroup() && u < window) {
+                while (!gg.equals(nn.getGeneGroup()) && u < window) {
                     u++;
                     nn = nn.getNext();
                 }
+
                 if (u==window) {
                     var max = 0;
                     for (var a2 : lann) {
-                        if (a2.getGene() != null && a1 != a2 /*&& gg!=a2.getGeneGroup()*/) {
+                        if (/*a2.getGene() != null &&*/ a1 != a2 /*&& gg!=a2.getGeneGroup()*/) {
                             var k = 0;
                             var ck = 0;
                             var an = a2.getNext();
                             while (an != null && k < window) {
                                 k++;
-                                if (gg == an.getGeneGroup()) {
+                                if (gg.equals(an.getGeneGroup())) {
                                     ck = k;
                                 }
                                 an = an.getNext();
@@ -108,7 +113,9 @@ public class AlignUtils {
                         boolean found = false;
                         for (var a2 : ret) {
                             if (a2.getGene() != null && a1 != a2) {
-                                if (a2.getGeneGroup() != a1.getGeneGroup()) {
+                                var a1gg = a1.getGeneGroup();
+                                var a2gg = a2.getGeneGroup();
+                                if (a2gg == null || !a2gg.equals(a1gg)) {
                                     var te = new Tegeval(null, 0.0, null, contig, 0, 0, 1, false);
                                     ret.add(te);
                                     if (contig.isReverse()) contig.injectAfter(a1, te);
