@@ -1,7 +1,7 @@
 package org.simmi.distann;
 
 import com.sun.javafx.application.PlatformImpl;
-import io.grpc.ServerBuilder;
+import io.grpc.*;
 import io.grpc.stub.StreamObserver;
 import org.simmi.GreeterGrpc;
 import org.simmi.GreeterGrpc.GreeterImplBase;
@@ -415,7 +415,29 @@ public class DistAnn extends JPanel {
 
 	public static void main(String[] args) {
 		try {
-			var server = ServerBuilder.forPort(50051).addService(new GreeterImplBase() {
+			var serverInterceptor = new ServerInterceptor() {
+
+				@Override
+				public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
+					var key = Metadata.Key.of("Access-Control-Allow-Origin", new Metadata.AsciiMarshaller() {
+						@Override
+						public String toAsciiString(Object value) {
+							return "Access-Control-Allow-Origin";
+						}
+
+						@Override
+						public Object parseAsciiString(String serialized) {
+							return "Access-Control-Allow-Origin";
+						}
+					});
+					headers.put(key,"*");
+					return next.startCall(call, headers);
+				}
+			};
+			var server = ServerBuilder
+					.forPort(3001)
+					//.intercept(serverInterceptor)
+					.addService(new GreeterImplBase() {
 				@Override
 				public void sayHello(HelloRequest request, StreamObserver<HelloReply> responseObserver) {
 					//super.sayHello(request, responseObserver);
