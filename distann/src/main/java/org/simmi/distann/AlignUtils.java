@@ -7,6 +7,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AlignUtils {
+
+    public static boolean checkForward(Annotation a1, List<Annotation> lann, int window, int prevmax) {
+        var gg = a1.getGeneGroup();
+        var max = 0;
+        for (var a2 : lann) {
+            if (a2.getGene() != null && a1 != a2 /*&& gg!=a2.getGeneGroup()*/) {
+                var k = 0;
+                var ck = 0;
+                var an = a2.getNext();
+                while (an != null && k < window) {
+                    k++;
+                    if (gg == an.getGeneGroup()) {
+                        ck = k;
+                    }
+                    an = an.getNext();
+                }
+                if (an == null) ck = -1;
+                max = Math.max(max, ck);
+            }
+        }
+        return max > 0 && max < prevmax;
+    }
+
     public static List<Annotation> align(List<Annotation> lann, int window) {
         var ret = new ArrayList<Annotation>();
         for(var a1 : lann) {
@@ -38,16 +61,36 @@ public class AlignUtils {
                         }
                     }
                     if (max > 0) {
-                        var done = false;
-                        while (max > 0) {
-                            var te = new Tegeval(null, 0.0, null, contig, 0, 0, 1, false);
-                            if (!done) {
-                                done = true;
-                                ret.add(te);
+                        boolean b = false;
+                        var an = a1.getNext();
+                        if (an != null && max > 1) {
+                            b = checkForward(an, lann, window, max-1);
+                            an = an.getNext();
+                            if (!b && an != null && max > 2) {
+                                b = checkForward(an, lann, window, max-2);
+                                an = an.getNext();
+                                if (!b && an != null && max > 3) {
+                                    b = checkForward(an, lann, window, max-3);
+                                    an = an.getNext();
+                                    if (!b && an != null && max > 4) {
+                                        b = checkForward(an, lann, window, max-4);
+                                    }
+                                }
                             }
-                            if (contig.isReverse()) contig.injectAfter(a1, te);
-                            else contig.injectBefore(a1, te);
-                            max--;
+                        }
+
+                        if(!b) {
+                            var done = false;
+                            while (max > 0) {
+                                var te = new Tegeval(null, 0.0, null, contig, 0, 0, 1, false);
+                                if (!done) {
+                                    done = true;
+                                    ret.add(te);
+                                }
+                                if (contig.isReverse()) contig.injectAfter(a1, te);
+                                else contig.injectBefore(a1, te);
+                                max--;
+                            }
                         }
                     } else {
                         ret.add(a1);

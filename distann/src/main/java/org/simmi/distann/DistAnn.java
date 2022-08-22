@@ -414,8 +414,8 @@ public class DistAnn extends JPanel {
 	}
 
 	public static void main(String[] args) {
-		try {
-			var serverInterceptor = new ServerInterceptor() {
+		//try {
+			/*var serverInterceptor = new ServerInterceptor() {
 
 				@Override
 				public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
@@ -447,13 +447,13 @@ public class DistAnn extends JPanel {
 				}
 			}).build();
 			server.start();
-			server.awaitTermination();
+			server.awaitTermination();*/
 			//SwingUtilities.invokeAndWait(() -> PlatformImpl.startup(() -> {}));
-			//DistannFX.main(args);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+			DistannFX.main(args);
+		//} catch (InterruptedException e) {
+		//	e.printStackTrace();
+		//} catch (IOException e) {
+		//	throw new RuntimeException(e);
+		//}
 	}
 }

@@ -3508,12 +3508,12 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		MenuItem	hhblitsaction = new MenuItem("hhblits pdb70");
 		hhblitsaction.setOnAction(  actionEvent -> SwingUtilities.invokeLater(() -> {
 			//Set<String> species = getSelspec(null, geneset.getSpecies(), false, null);
-			Platform.runLater(() -> HHBlitsTools.runHHBlits(GeneSetHead.this, "/Users/sigmar/tmp3", "/Volumes/Untitled/pdb70/pdb70", false));
+			Platform.runLater(() -> HHBlitsTools.runHHBlits(GeneSetHead.this, GeneSet.HHBLITS_PATH, "/Volumes/Untitled/pdb70/pdb70", false));
 		}));
 		MenuItem	hhblitsuniaction = new MenuItem("hhblits uniref");
 		hhblitsuniaction.setOnAction(  actionEvent -> SwingUtilities.invokeLater(() -> {
 			//Set<String> species = getSelspec(null, geneset.getSpecies(), false, null);
-			Platform.runLater(() -> HHBlitsTools.runHHBlits(GeneSetHead.this, "/Users/sigmar/tmp3", "/Volumes/Untitled/UniRef30_2020_06", false));
+			Platform.runLater(() -> HHBlitsTools.runHHBlits(GeneSetHead.this, GeneSet.HHBLITS_PATH, "/Volumes/Untitled/UniRef30_2020_06", false));
 		}));
 		MenuItem	registerlocusidaction = new MenuItem("Register locus id");
 		registerlocusidaction.setOnAction( actionEvent -> {

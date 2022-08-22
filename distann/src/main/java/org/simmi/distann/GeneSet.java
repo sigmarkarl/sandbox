@@ -83,6 +83,8 @@ public class GeneSet implements GenomeSet {
 	public String projectname = "geneset";
 	public boolean noseq = false;
 
+	public static final String HHBLITS_PATH = "/Users/sigmarkarl/tmp5";
+
 	public JFrame	fxframe = null;
 
 	/*private static StringBuilder dnaSearch(String query) {
@@ -304,7 +306,7 @@ public class GeneSet implements GenomeSet {
 	}
 
 	public Map<String,String> loadhhblits() throws IOException {
-		try(var flist = Files.list(Path.of("/Users/sigmar/tmp3"))) {
+		try(var flist = Files.list(Path.of(HHBLITS_PATH))) {
 			var resmap = new HashMap<String,String>();
 			flist.filter(f -> f.toString().endsWith(".hhr")).forEach(f -> {
 				var fstr = f.getFileName().toString();
