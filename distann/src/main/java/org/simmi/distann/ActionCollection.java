@@ -4442,32 +4442,29 @@ public class ActionCollection {
 		}));
 		
 		MenuItem showunresolved = new MenuItem("Show unresolved genes");
-		showunresolved.setOnAction( acionEvent -> SwingUtilities.invokeLater( new Runnable() {
-			@Override
-			public void run() {
-				JFrame frame = new JFrame();
-				frame.setSize(800, 600);
-				frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-				
-				Serifier serifier = new Serifier();
-				JavaFasta jf = new JavaFasta( null, serifier, cs );
-				jf.initGui(frame);
-				
-				for( GeneGroup gg : geneset.allgenegroups ) {
-					String commonName = gg.getName();
-					if( commonName != null && (commonName.contains("contig") || commonName.contains("scaffold")) ) {
-						Annotation tv = gg.getLongestSequence();
-						Sequence seq = tv.getAlignedSequence();
-						seq.setName( commonName );
-						seq.removeGaps();
-						if( seq.getSequence().indexOf("X") == -1 ) {
-							serifier.addSequence( seq );
-						}
+		showunresolved.setOnAction( acionEvent -> SwingUtilities.invokeLater(() -> {
+			JFrame frame = new JFrame();
+			frame.setSize(800, 600);
+			frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+			Serifier serifier = new Serifier();
+			JavaFasta jf = new JavaFasta( null, serifier, cs );
+			jf.initGui(frame);
+
+			for( GeneGroup gg : geneset.allgenegroups ) {
+				String commonName = gg.getName();
+				if( commonName != null && (commonName.contains("NODE") || commonName.contains("contig") || commonName.contains("scaffold")) ) {
+					Annotation tv = gg.getLongestSequence();
+					Sequence seq = tv.getAlignedSequence();
+					seq.setName( commonName );
+					seq.removeGaps();
+					if( seq.getSequence().indexOf("X") == -1 ) {
+						serifier.addSequence( seq );
 					}
 				}
-				jf.updateView();
-				frame.setVisible( true );
 			}
+			jf.updateView();
+			frame.setVisible( true );
 		}));
 		
 		//PrincipleComponentAnalysis pca = new PrincipleComponentAnalysis();

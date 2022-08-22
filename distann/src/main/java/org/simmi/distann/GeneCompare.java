@@ -1005,7 +1005,7 @@ public class GeneCompare {
 				int count2 = 0;
 				
 				if( ptotal2 > 0 ) {
-					hit = tv2.seq;
+					hit = tv2.getSeq();
 					/*for( Sequence ctg2 : contigs2 ) {
 						if( ctg2.annset != null ) {
 							int idx = ctg2.annset.indexOf( tv2 );
@@ -1020,7 +1020,7 @@ public class GeneCompare {
 						for( Sequence c2 : contigs2 ) {
 							if( c2.isPlasmid() && c2.annset != null ) {
 								//int idx = c2.annset.indexOf( tv2 );
-								if( c2 != tv2.seq ) {
+								if( c2 != tv2.getSeq() ) {
 									count2 += c2.getAnnotationCount();
 								} else {
 									int idx = tv2.indexOf(); //c2.annset.indexOf( tv2 );
@@ -1035,7 +1035,7 @@ public class GeneCompare {
 						for( Sequence c2 : contigs2 ) {
 							if( c2.annset != null ) {
 								//int idx = c2.annset.indexOf( tv2 );
-								if( c2 != tv2.seq ) {
+								if( c2 != tv2.getSeq() ) {
 									count2 += c2.getAnnotationCount();
 								} else {
 									int idx = tv2.indexOf(); //c2.annset.indexOf( tv2 );
@@ -1069,7 +1069,7 @@ public class GeneCompare {
 				} else {
 					for( Sequence ctg2 : contigs2 ) {
 						if( ctg2.annset != null ) {
-							if( ctg2 != tv2.seq ) {
+							if( ctg2 != tv2.getSeq() ) {
 								count2 += ctg2.getAnnotationCount();
 							} else {
 								int idx = tv2.indexOf();
@@ -1110,7 +1110,7 @@ public class GeneCompare {
 					int count2 = 0;
 					
 					if( ptotal2 > 0 ) {
-						hit = tv2.seq;
+						hit = tv2.getSeq();
 						/*for( Sequence ctg2 : contigs2 ) {
 							if( ctg2.annset != null ) {
 								int idx = ctg2.annset.indexOf( tv2 );
@@ -1125,7 +1125,7 @@ public class GeneCompare {
 							for( Sequence c2 : contigs2 ) {
 								if( c2.isPlasmid() && c2.annset != null ) {
 									//int idx = c2.annset.indexOf( tv2 );
-									if( c2 != tv2.seq ) {
+									if( c2 != tv2.getSeq() ) {
 										count2 += c2.getAnnotationCount();
 									} else {
 										int idx = tv2.indexOf(); //c2.annset.indexOf( tv2 );
@@ -1140,7 +1140,7 @@ public class GeneCompare {
 							for( Sequence c2 : contigs2 ) {
 								if( c2.annset != null ) {
 									//int idx = c2.annset.indexOf( tv2 );
-									if( c2 != tv2.seq ) {
+									if( c2 != tv2.getSeq() ) {
 										count2 += c2.getAnnotationCount();
 									} else {
 										int idx = tv2.indexOf(); //c2.annset.indexOf( tv2 );
@@ -1175,7 +1175,7 @@ public class GeneCompare {
 						for( Sequence ctg2 : contigs2 ) {
 							if( ctg2.annset != null ) {
 								//int idx = ctg2.annset.indexOf( tv2 );
-								if( ctg2 != tv2.seq ) {
+								if( ctg2 != tv2.getSeq() ) {
 									count2 += ctg2.getAnnotationCount();
 								} else {
 									int idx = tv2.indexOf(); //ctg2.annset.indexOf( tv2 );
@@ -1213,7 +1213,7 @@ public class GeneCompare {
 					int count2 = 0;
 					int simcount = 0;
 					if( ptotal2 > 0 ) {
-						hit = tv2.seq;
+						hit = tv2.getSeq();
 						/*for( Sequence ctg2 : contigs2 ) {
 							if( ctg2.annset != null ) {
 								int idx = ctg2.annset.indexOf( tv2 );
@@ -1228,7 +1228,7 @@ public class GeneCompare {
 							for( Sequence c2 : contigs2 ) {
 								if( c2.isPlasmid() && c2.annset != null ) {
 									//int idx = c2.annset.indexOf( tv2 );
-									if( c2 != tv2.seq ) {
+									if( c2 != tv2.getSeq() ) {
 										count2 += c2.getAnnotationCount();
 									} else {
 										int idx = tv2.indexOf();
@@ -1275,7 +1275,7 @@ public class GeneCompare {
 							for( Sequence c2 : contigs2 ) {
 								if( c2.annset != null ) {
 									//int idx = c2.annset.indexOf( tv2 );
-									if( c2 != tv2.seq ) {
+									if( c2 != tv2.getSeq() ) {
 										count2 += c2.getAnnotationCount();
 									} else {
 										int idx = tv2.indexOf();
@@ -1290,7 +1290,7 @@ public class GeneCompare {
 						for( Sequence ctg2 : contigs2 ) {
 							if( ctg2.annset != null ) {
 								//int idx = ctg2.annset.indexOf( tv2 );
-								if( ctg2 != tv2.seq ) {
+								if( ctg2 != tv2.getSeq() ) {
 									count2 += ctg2.getAnnotationCount();
 								} else {
 									int idx = tv2.indexOf();
