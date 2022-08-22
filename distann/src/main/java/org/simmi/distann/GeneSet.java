@@ -1135,7 +1135,7 @@ public class GeneSet implements GenomeSet {
 	Set<String>	mu = new HashSet<>();
 	private void loci2aasequence(BufferedReader br, Map<String,Annotation> refmap, Map<String,String> designations, String filename,boolean aligned) throws IOException {
 		String line = br.readLine();
-		String lname = null;
+		StringBuilder lname = null;
 		String prevline = null;
 		//Sequence ac = new Sequence( null, null );
 		Annotation tv = new Tegeval();
@@ -1150,7 +1150,7 @@ public class GeneSet implements GenomeSet {
 		while (line != null) {
 			if (line.startsWith(">")) {
 				if( refmap.containsKey(line.substring(1)) ) {
-					if (tv.getLength() > 0 && lname != null && lname.length() > 0) parseTv(tv, lname, filename, prevline, start, stop ,dir);
+					if (tv.getLength() > 0 && lname != null && lname.length() > 0) parseTv(tv, lname.toString(), filename, prevline, start, stop ,dir);
 					tv = refmap.get(line.substring(1)).getGene().getTegeval();
 					if( tv != null ) {
 						if(aligned) tv.setGroup(filename);
@@ -1161,14 +1161,14 @@ public class GeneSet implements GenomeSet {
 						}
 					}
 				} else {
-					if (tv.getLength() > 0 && lname != null && lname.length() > 0) parseTv(tv, lname, filename, prevline, start, stop ,dir);
+					if (tv.getLength() > 0 && lname != null && lname.length() > 0) parseTv(tv, lname.toString(), filename, prevline, start, stop ,dir);
 					tv = new Tegeval();
 					if(aligned) tv.setGroup(filename);
 					String cont = line.substring(1) + "";
 					String[] split = cont.split("#");
-					lname = split[0].trim().replace(".fna", "");
-					if (lname.startsWith("contig")) {
-						lname = filename + "_" + lname;
+					lname = new StringBuilder(split[0].trim().replace(".fna", ""));
+					if (lname.toString().startsWith("contig") || lname.toString().startsWith("NODE")) {
+						lname.insert(0, filename + "_");
 					}
 					boolean succ = false;
 					int i = 0;
@@ -1184,7 +1184,7 @@ public class GeneSet implements GenomeSet {
 							tv.setOri(dir);
 						} catch (Exception e) {
 							succ = false;
-							lname += split[i + 1];
+							lname.append(split[i + 1]);
 							e.printStackTrace();
 						}
 						i++;
@@ -1215,11 +1215,11 @@ public class GeneSet implements GenomeSet {
 			String origin = null;
 			String id;
 			String name;
-			int i = lname.lastIndexOf('[');
+			int i = lname.toString().lastIndexOf('[');
 			if( i == -1 ) {
-				i = Sequence.parseSpec( lname );
+				i = Sequence.parseSpec(lname.toString());
 				//i = Serifier.contigIndex( lname );
-				int u = lname.lastIndexOf('_');
+				int u = lname.toString().lastIndexOf('_');
 				if( u != -1 ) contigstr = lname.substring(0, u);
 				if( i > 0 ) {
 					origin = lname.substring(0, i-1);
@@ -1228,12 +1228,12 @@ public class GeneSet implements GenomeSet {
 					System.err.println( lname );
 					System.err.println();
 				}*/
-				name = lname;
-				id = lname;
+				name = lname.toString();
+				id = lname.toString();
 			} else {
-				int n = lname.indexOf(']', i+1);
+				int n = lname.toString().indexOf(']', i+1);
 				contigstr = lname.substring(i+1, n);
-				int u = lname.indexOf(' ');
+				int u = lname.toString().indexOf(' ');
 				id = lname.substring(0, u);
 				id = idFix( id, contigstr );
 				name = lname.substring(u+1, i).trim();
@@ -1293,10 +1293,10 @@ public class GeneSet implements GenomeSet {
 					}*/
 				}
 				
-				((Tegeval)tv).init( lname, contig, start, stop, dir );
+				((Tegeval)tv).init(lname.toString(), contig, start, stop, dir );
 				tv.setName( prevline.substring(1) );
 				//tv.setAlignedSequence( ac );
-				aas.put(lname, tv );
+				aas.put(lname.toString(), tv );
 				
 				if( contig != null ) contig.addAnnotation( tv );
 				// aass.add( new Aas(name, ac, start, stop, dir) );

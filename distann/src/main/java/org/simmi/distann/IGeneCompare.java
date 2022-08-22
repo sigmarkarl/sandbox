@@ -1004,7 +1004,7 @@ public class IGeneCompare {
 				int count2 = 0;
 				
 				if( ptotal2 > 0 ) {
-					hit = tv2.seq;
+					hit = tv2.getSeq();
 					/*for( Sequence ctg2 : contigs2 ) {
 						if( ctg2.annset != null ) {
 							int idx = ctg2.annset.indexOf( tv2 );
@@ -1019,7 +1019,7 @@ public class IGeneCompare {
 						for( Sequence c2 : contigs2 ) {
 							if( c2.isPlasmid() && c2.annset != null ) {
 								//int idx = c2.annset.indexOf( tv2 );
-								if( c2 != tv2.seq ) {
+								if( c2 != tv2.getSeq() ) {
 									count2 += c2.length();
 								} else {
 									int idx = tv2.start; //c2.annset.indexOf( tv2 );
@@ -1034,7 +1034,7 @@ public class IGeneCompare {
 						for( Sequence c2 : contigs2 ) {
 							if( c2.annset != null ) {
 								//int idx = c2.annset.indexOf( tv2 );
-								if( c2 != tv2.seq ) {
+								if( c2 != tv2.getSeq() ) {
 									count2 += c2.length();
 								} else {
 									int idx = tv2.start; //c2.annset.indexOf( tv2 );
@@ -1068,7 +1068,7 @@ public class IGeneCompare {
 				} else {
 					for( Sequence ctg2 : contigs2 ) {
 						if( ctg2.annset != null ) {
-							if( ctg2 != tv2.seq ) {
+							if( ctg2 != tv2.getSeq() ) {
 								count2 += ctg2.length();
 							} else {
 								int idx = tv2.start;
@@ -1109,7 +1109,7 @@ public class IGeneCompare {
 					int count2 = 0;
 					
 					if( ptotal2 > 0 ) {
-						hit = tv2.seq;
+						hit = tv2.getSeq();
 						/*for( Sequence ctg2 : contigs2 ) {
 							if( ctg2.annset != null ) {
 								int idx = ctg2.annset.indexOf( tv2 );
@@ -1124,7 +1124,7 @@ public class IGeneCompare {
 							for( Sequence c2 : contigs2 ) {
 								if( c2.isPlasmid() && c2.annset != null ) {
 									//int idx = c2.annset.indexOf( tv2 );
-									if( c2 != tv2.seq ) {
+									if( c2 != tv2.getSeq() ) {
 										count2 += c2.length();
 									} else {
 										int idx = tv2.start; //c2.annset.indexOf( tv2 );
@@ -1139,7 +1139,7 @@ public class IGeneCompare {
 							for( Sequence c2 : contigs2 ) {
 								if( c2.annset != null ) {
 									//int idx = c2.annset.indexOf( tv2 );
-									if( c2 != tv2.seq ) {
+									if( c2 != tv2.getSeq() ) {
 										count2 += c2.length();
 									} else {
 										int idx = tv2.start; //c2.annset.indexOf( tv2 );
@@ -1174,7 +1174,7 @@ public class IGeneCompare {
 						for( Sequence ctg2 : contigs2 ) {
 							if( ctg2.annset != null ) {
 								//int idx = ctg2.annset.indexOf( tv2 );
-								if( ctg2 != tv2.seq ) {
+								if( ctg2 != tv2.getSeq() ) {
 									count2 += ctg2.length();
 								} else {
 									int idx = tv2.start; //ctg2.annset.indexOf( tv2 );
@@ -1212,7 +1212,7 @@ public class IGeneCompare {
 					int count2 = 0;
 					int simcount = 0;
 					if( ptotal2 > 0 ) {
-						hit = tv2.seq;
+						hit = tv2.getSeq();
 						/*for( Sequence ctg2 : contigs2 ) {
 							if( ctg2.annset != null ) {
 								int idx = ctg2.annset.indexOf( tv2 );
@@ -1227,7 +1227,7 @@ public class IGeneCompare {
 							for( Sequence c2 : contigs2 ) {
 								if( c2.isPlasmid() && c2.annset != null ) {
 									//int idx = c2.annset.indexOf( tv2 );
-									if( c2 != tv2.seq ) {
+									if( c2 != tv2.getSeq() ) {
 										count2 += c2.length();
 									} else {
 										int idx = tv2.start;
@@ -1274,7 +1274,7 @@ public class IGeneCompare {
 							for( Sequence c2 : contigs2 ) {
 								if( c2.annset != null ) {
 									//int idx = c2.annset.indexOf( tv2 );
-									if( c2 != tv2.seq ) {
+									if( c2 != tv2.getSeq() ) {
 										count2 += c2.length();
 									} else {
 										int idx = tv2.start;
@@ -1289,7 +1289,7 @@ public class IGeneCompare {
 						for( Sequence ctg2 : contigs2 ) {
 							if( ctg2.annset != null ) {
 								//int idx = ctg2.annset.indexOf( tv2 );
-								if( ctg2 != tv2.seq ) {
+								if( ctg2 != tv2.getSeq() ) {
 									count2 += ctg2.length();
 								} else {
 									int idx = tv2.start;

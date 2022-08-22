@@ -4568,7 +4568,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					int start = Integer.MAX_VALUE;
 					int stop = Integer.MIN_VALUE;
 					for (Annotation tv : tvset) {
-						if (contig == tv.seq) {
+						if (contig == tv.getSeq()) {
 							start = Math.min(start, tv.start);
 							stop = Math.max(stop, tv.stop);
 						}
@@ -4577,7 +4577,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					int rstart = 0;
 					int rstop = contig.length();
 					if (contig.annset != null) for (Annotation tv : contig.annset) {
-						if (contig == tv.seq) {
+						if (contig == tv.getSeq()) {
 							if (tv.stop < start && tv.stop > rstart) {
 								rstart = tv.stop;
 							}
@@ -4599,7 +4599,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					serifier.addSequence(newseq);
 					for (Annotation tv : tvset) {
 						Annotation newann = new Annotation(newseq, tv.start - start, tv.stop - start, tv.ori, tv.getName());
-						if (contig == tv.seq) {
+						if (contig == tv.getSeq()) {
 							newseq.addAnnotation(newann);
 						}
 						serifier.addAnnotation(newann);

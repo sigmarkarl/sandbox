@@ -3311,7 +3311,7 @@ public class Neighbour {
 									Annotation newann = new Annotation(seq, -upph+offset, -upph+offset+tv.stop-tv.start, 1, name);
 									newann.setGroup(tv.getGene() != null && tv.getGene().getGeneGroup() != null ? Integer.toString(tv.getGene().getGeneGroup().index) : "");
 									newann.designation = tv.designation;
-									Color color = tv.type != null && tv.type.contains("mummer") ? cdb : tv.isPhage() ? cdg : tv.seq.isPlasmid() ? cdr : Color.gray;
+									Color color = tv.type != null && tv.type.contains("mummer") ? cdb : tv.isPhage() ? cdg : tv.getSeq().isPlasmid() ? cdr : Color.gray;
 									newann.color = color;
 									seq.addAnnotation( newann );
 									serifier.addAnnotation(newann);
@@ -3355,8 +3355,8 @@ public class Neighbour {
 											newann = new Annotation(seq, -upph+offset+bil, -upph+offset+bil+ntev.stop-ntev.start, 1, name);
 										}
 										
-										if( colors.contains(color) ) color = ntev.type != null && ntev.type.contains("mummer") ? cdb : ntev.isPhage() ? cdg : ntev.seq.isPlasmid() ? cdr : Color.gray;
-										else color = ntev.type != null && ntev.type.contains("mummer") ? cb : ntev.isPhage() ? cg : ntev.seq.isPlasmid() ? cr : Color.lightGray;
+										if( colors.contains(color) ) color = ntev.type != null && ntev.type.contains("mummer") ? cdb : ntev.isPhage() ? cdg : ntev.getSeq().isPlasmid() ? cdr : Color.gray;
+										else color = ntev.type != null && ntev.type.contains("mummer") ? cb : ntev.isPhage() ? cg : ntev.getSeq().isPlasmid() ? cr : Color.lightGray;
 										
 										newann.setGroup(ntev.getGene() != null && ntev.getGene().getGeneGroup() != null ? Integer.toString(ntev.getGene().getGeneGroup().index) : "");
 										newann.color = color;
@@ -3376,7 +3376,7 @@ public class Neighbour {
 										}
 									}
 									
-									color = tv.type != null && tv.type.contains("mummer") ? cdb : tv.isPhage() ? cdg : tv.seq.isPlasmid() ? cdr : Color.darkGray;;
+									color = tv.type != null && tv.type.contains("mummer") ? cdb : tv.isPhage() ? cdg : tv.getSeq().isPlasmid() ? cdr : Color.darkGray;;
 									ntev = tv.getPrevious();
 									bil = ntev != null ? (tv.ori == -1 ? ntev.start-tv.stop : ntev.start-tv.start) : -1;
 									int bbil = ntev != null ? (tv.ori == -1 ? ntev.stop-tv.start : ntev.start-tv.start) : -1;
@@ -3416,8 +3416,8 @@ public class Neighbour {
 											newann = new Annotation(seq, -upph+offset+bbil, -upph+offset+bbil+ntev.stop-ntev.start, 1, name);
 										}
 										
-										if( colors.contains(color) ) color = ntev.type != null && ntev.type.contains("mummer") ? cdb : ntev.isPhage() ? cdg : ntev.seq.isPlasmid() ? cdr : Color.gray;
-										else color = ntev.type != null && ntev.type.contains("mummer") ? cb : ntev.isPhage() ? cg : ntev.seq.isPlasmid() ? cr : Color.lightGray;
+										if( colors.contains(color) ) color = ntev.type != null && ntev.type.contains("mummer") ? cdb : ntev.isPhage() ? cdg : ntev.getSeq().isPlasmid() ? cdr : Color.gray;
+										else color = ntev.type != null && ntev.type.contains("mummer") ? cb : ntev.isPhage() ? cg : ntev.getSeq().isPlasmid() ? cr : Color.lightGray;
 										
 										newann.setGroup(ntev.getGene() != null && ntev.getGene().getGeneGroup() != null ? Integer.toString(ntev.getGene().getGeneGroup().index) : "");
 										newann.color = color;
