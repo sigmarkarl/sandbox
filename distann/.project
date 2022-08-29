@@ -24,12 +24,12 @@
 		<link>
 			<name>classes</name>
 			<type>2</type>
-			<location>c:/Users/sigmar/classes</location>
+			<location>/Users/sigmar/sandbox/c::/Users/sigmar/classes</location>
 		</link>
 		<link>
 			<name>java</name>
 			<type>2</type>
-			<location>c:/Users/sigmar/sandbox/distann/src/main/java</location>
+			<location>/Users/sigmar/sandbox/c::/Users/sigmar/sandbox/distann/src/main/java</location>
 		</link>
 	</linkedResources>
 	<filteredResources>
