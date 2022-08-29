@@ -3655,13 +3655,16 @@ public class GeneSet implements GenomeSet {
 			try {
 				gs.loadStuff( p );
 				if( args[1].equalsIgnoreCase("clusterGenes") ) {
-					gs.clusterGenes(gs.getSpecies(), true);
+					System.err.println("clusterGenes");
+					gs.clusterGenes(gs.getSpecies(), true, 0.5f, 0.5f, "", List.of("--ultra-sensitive"));
 				} else if( args[1].equalsIgnoreCase("cogBlast") ) {
 					gs.cogBlast( null, args[2], args.length > 3 ? args[3] : "localhost", true, true, pfam );
 				}
 			} catch (IOException e) {
 				e.printStackTrace();
-			}
+			} /*finally {
+				
+			}*/
 		} else {
 			//Serifier.main(args);
 		}
@@ -7333,73 +7336,75 @@ public class GeneSet implements GenomeSet {
 		}
 	}
 
-	float id;
-	float len;
-	String evalue;
-	List<String> extrapar;
 	public void clusterGenes( Collection<String> species, boolean headless ) throws IOException {
+		clusterGenes(species, headless, 0.5f, 0.5f, "", List.of());
+	}
+
+	public void clusterGenes( Collection<String> species, boolean headless, float id, float len, String evalue, List<String> extrapar ) throws IOException {
 		if( zippath != null ) {
+			if (!headless) {
 		//SwingUtilities.invokeAndWait(() -> {
-			JPanel panel = new JPanel();
-			GridBagLayout grid = new GridBagLayout();
-			GridBagConstraints c = new GridBagConstraints();
-			panel.setLayout(grid);
+				JPanel panel = new JPanel();
+				GridBagLayout grid = new GridBagLayout();
+				GridBagConstraints c = new GridBagConstraints();
+				panel.setLayout(grid);
 
-			JLabel label1 = new JLabel("Id:");
-			JTextField tb11 = new JTextField("0.5");
-			JLabel label2 = new JLabel("Len:");
-			JTextField tb21 = new JTextField("0.5");
+				JLabel label1 = new JLabel("Id:");
+				JTextField tb11 = new JTextField("0.5");
+				JLabel label2 = new JLabel("Len:");
+				JTextField tb21 = new JTextField("0.5");
 
-			Dimension d = new Dimension(300, 30);
-			JTextField epar1 = new JTextField();
-			epar1.setSize(d);
-			epar1.setPreferredSize(d);
+				Dimension d = new Dimension(300, 30);
+				JTextField epar1 = new JTextField();
+				epar1.setSize(d);
+				epar1.setPreferredSize(d);
 
-			//Dimension d = new Dimension(300, 30);
-			JTextField extpar = new JTextField("--ultra-sensitive");
-			extpar.setSize(d);
-			extpar.setPreferredSize(d);
+				//Dimension d = new Dimension(300, 30);
+				JTextField extpar = new JTextField("--ultra-sensitive");
+				extpar.setSize(d);
+				extpar.setPreferredSize(d);
 
-			JCheckBox fromscratch = new JCheckBox("From scratch");
-			fromscratch.setSelected(true);
+				JCheckBox fromscratch = new JCheckBox("From scratch");
+				fromscratch.setSelected(true);
 
-			c.fill = GridBagConstraints.HORIZONTAL;
-			c.gridwidth = 1;
-			c.gridheight = 1;
+				c.fill = GridBagConstraints.HORIZONTAL;
+				c.gridwidth = 1;
+				c.gridheight = 1;
 
-			c.gridx = 0;
-			c.gridy = 0;
-			panel.add(label1, c);
-			c.gridx = 1;
-			c.gridy = 0;
-			panel.add(tb11, c);
-			c.gridx = 0;
-			c.gridy = 1;
-			panel.add(label2, c);
-			c.gridx = 1;
-			c.gridy = 1;
-			panel.add(tb21, c);
-			c.gridx = 0;
-			c.gridy = 2;
-			c.gridwidth = 2;
-			panel.add(epar1, c);
-			c.gridx = 0;
-			c.gridy = 3;
-			c.gridwidth = 2;
-			panel.add(extpar, c);
-			c.gridx = 0;
-			c.gridy = 4;
-			c.gridwidth = 2;
-			panel.add(fromscratch, c);
+				c.gridx = 0;
+				c.gridy = 0;
+				panel.add(label1, c);
+				c.gridx = 1;
+				c.gridy = 0;
+				panel.add(tb11, c);
+				c.gridx = 0;
+				c.gridy = 1;
+				panel.add(label2, c);
+				c.gridx = 1;
+				c.gridy = 1;
+				panel.add(tb21, c);
+				c.gridx = 0;
+				c.gridy = 2;
+				c.gridwidth = 2;
+				panel.add(epar1, c);
+				c.gridx = 0;
+				c.gridy = 3;
+				c.gridwidth = 2;
+				panel.add(extpar, c);
+				c.gridx = 0;
+				c.gridy = 4;
+				c.gridwidth = 2;
+				panel.add(fromscratch, c);
 
-			JOptionPane.showMessageDialog(null, new Object[]{panel}, "Clustering parameters", JOptionPane.PLAIN_MESSAGE);
+				JOptionPane.showMessageDialog(null, new Object[]{panel}, "Clustering parameters", JOptionPane.PLAIN_MESSAGE);
 
-			id = Float.parseFloat(tb11.getText());
-			len = Float.parseFloat(tb21.getText());
-			evalue = epar1.getText();
-			if(evalue==null||evalue.length()==0) evalue = "0.00001";
-			extrapar = Arrays.asList(extpar.getText().split(" "));
-		//});
+				id = Float.parseFloat(tb11.getText());
+				len = Float.parseFloat(tb21.getText());
+				evalue = epar1.getText();
+				if(evalue==null||evalue.length()==0) evalue = "0.00001";
+				extrapar = Arrays.asList(extpar.getText().split(" "));
+			}
+			//});
 
 			Map<String,List<FastaSequence>> sparkSeqMap = new HashMap<>();
 			List<FastaSequence> sparkSeqList = new ArrayList<>();
@@ -7453,7 +7458,7 @@ public class GeneSet implements GenomeSet {
 			//String dbPath = "/home/sks17/tmp";
 			String tmpPath = System.getProperty("java.io.tmpdir");
 			String dbPath = usertmp.toString();
-			 //"/mnt/csa/tmp/glow";
+			//"/mnt/csa/tmp/glow";
 
 			String[] blastp = {"diamond", "blastp"};
 			String[] makeblastdb = {"diamond", "makedb"};

@@ -90,6 +90,7 @@ public class DistannFX extends Application {
         if( args.length == 0 ) {
             launch(args);
 		} else {
+            System.err.println("heyho");
             GeneSet.main( args );
         }
     }

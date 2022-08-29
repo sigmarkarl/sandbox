@@ -2902,7 +2902,7 @@ public class GeneSetHead {
 
                 Set<String> species = getSelspec(null, geneset.getSpecies(), false,null);
 				try {
-					geneset.clusterGenes( species, true );
+					geneset.clusterGenes( species, false );
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
