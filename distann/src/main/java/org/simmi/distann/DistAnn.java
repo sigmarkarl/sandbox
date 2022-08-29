@@ -414,7 +414,7 @@ public class DistAnn extends JPanel {
 	}
 
 	public static void main(String[] args) {
-		try {
+		//try {
 			/*var serverInterceptor = new ServerInterceptor() {
 
 				@Override
@@ -448,12 +448,12 @@ public class DistAnn extends JPanel {
 			}).build();
 			server.start();
 			server.awaitTermination();*/
-			SwingUtilities.invokeAndWait(() -> PlatformImpl.startup(() -> {}));
+			//SwingUtilities.invokeAndWait(() -> PlatformImpl.startup(() -> {}));
 			DistannFX.main(args);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			throw new RuntimeException(e);
-		}
+		//} catch (InterruptedException e) {
+		//	e.printStackTrace();
+		//} catch (IOException e) {
+		//	throw new RuntimeException(e);
+		//}
 	}
 }
