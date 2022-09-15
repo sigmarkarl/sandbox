@@ -4,7 +4,9 @@ import org.simmi.javafasta.shared.Annotation;
 import org.simmi.javafasta.shared.Tegeval;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class AlignUtils {
 
@@ -32,9 +34,10 @@ public class AlignUtils {
 
     public static List<Annotation> align(List<Annotation> lann, int window) {
         var ret = new ArrayList<Annotation>();
+        Annotation currentAnn = null;
         for(var a1 : lann) {
             var gg = a1.getGeneGroup();
-            if (gg != null) {
+            if (a1 != currentAnn && gg != null) {
                 var u = 0;
                 var nn = a1.getNext();
                 while (gg != nn.getGeneGroup() && u < window) {
@@ -57,12 +60,15 @@ public class AlignUtils {
                                 an = an.getNext();
                             }
                             if (an == null) ck = -1;
-                            max = Math.max(max, ck);
+                            if (ck > max) {
+                                max = ck;
+                                currentAnn = a2;
+                            }
                         }
                     }
                     if (max > 0) {
                         boolean b = false;
-                        var an = a1.getNext();
+                        /*var an = a1.getNext();
                         if (an != null && max > 1) {
                             b = checkForward(an, lann, window, max-1);
                             an = an.getNext();
@@ -77,7 +83,7 @@ public class AlignUtils {
                                     }
                                 }
                             }
-                        }
+                        }*/
 
                         if(!b) {
                             var done = false;
@@ -107,10 +113,11 @@ public class AlignUtils {
 
     public static List<Annotation> alignOffset(List<Annotation> lann, int window) {
         var ret = new ArrayList<Annotation>();
+        Set<Annotation> currentAnn = new HashSet<>();
         for(var a1 : lann) {
             var contig = a1.getContig();
             var gg = a1.getGeneGroup();
-            if (gg != null) {
+            if (!currentAnn.contains(a1) && gg != null) {
                 if (gg.getName().startsWith("UvrD")) {
                     System.err.println();
                 }
@@ -137,7 +144,10 @@ public class AlignUtils {
                                 an = an.getNext();
                             }
                             if (an == null) ck = -1;
-                            max = Math.max(max, ck);
+                            if (ck > max) {
+                                max = ck;
+                                currentAnn.add(a2);
+                            }
                         }
                     }
                     if (max > 0) {

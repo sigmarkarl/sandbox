@@ -3515,6 +3515,14 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 			//Set<String> species = getSelspec(null, geneset.getSpecies(), false, null);
 			Platform.runLater(() -> HHBlitsTools.runHHBlits(GeneSetHead.this, GeneSet.HHBLITS_PATH, "/Volumes/Untitled/UniRef30_2020_06", false));
 		}));
+
+        MenuItem	hhblitsphrogaction = new MenuItem("hhblits phrogref");
+        hhblitsphrogaction.setOnAction(  actionEvent -> SwingUtilities.invokeLater(() -> {
+            //Set<String> species = getSelspec(null, geneset.getSpecies(), false, null);
+            Platform.runLater(() -> HHBlitsTools.runHHBlits(GeneSetHead.this, GeneSet.HHBLITS_PHROG_PATH, "/Volumes/Untitled/phrog", false));
+        }));
+
+
 		MenuItem	registerlocusidaction = new MenuItem("Register locus id");
 		registerlocusidaction.setOnAction( actionEvent -> {
 			try {
@@ -10364,11 +10372,11 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		if( dir != null && dir.exists() ) {
 			Path dbPath = dir.toPath();
 			for( GeneGroup gg : allgenegroups ) {
-				if( gg != null && gg.getCommonTag() == null ) {
-					Path file = dbPath.resolve( gg.getCommonId()+".aa" );
-					BufferedWriter bw = Files.newBufferedWriter( file );
-					gg.getFasta( bw, true );
-					bw.close();
+				if( gg != null /*&& gg.getCommonTag() == null*/ ) {
+					Path file = dbPath.resolve( gg.getCommonId()+".faa" );
+					try(BufferedWriter bw = Files.newBufferedWriter( file )) {
+						gg.getAlignedFasta(bw, true);
+					}
 			/*StringBuilder sb = g.tegeval.getProteinSequence();
 			if( sb.toString().contains("0") ) {
 				System.err.println( g.id );

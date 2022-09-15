@@ -195,7 +195,7 @@ public class HHBlitsTools {
                 }).toList();
                 //var allds = spark.createDataset(allSeqList, Encoders.STRING());
                 var res = allSeqList.stream().map(new SparkHHBlits(root, db)).toList();
-                var mapping = Path.of(root).resolve("mapping.txt");
+                var mapping = Path.of(root).resolve("mapping2.txt");
                 Files.writeString(mapping, String.join("\n", res));
             }
         } catch( Exception e ) {

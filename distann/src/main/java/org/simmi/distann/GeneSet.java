@@ -84,6 +84,7 @@ public class GeneSet implements GenomeSet {
 	public boolean noseq = false;
 
 	public static final String HHBLITS_PATH = "/Users/sigmarkarl/tmp5";
+	public static final String HHBLITS_PHROG_PATH = "/Users/sigmarkarl/tmp6";
 
 	public JFrame	fxframe = null;
 
@@ -306,7 +307,11 @@ public class GeneSet implements GenomeSet {
 	}
 
 	public Map<String,String> loadhhblits() throws IOException {
-		try(var flist = Files.list(Path.of(HHBLITS_PATH))) {
+		return loadhhblits(HHBLITS_PATH);
+	}
+
+	public Map<String,String> loadhhblits(String hhblitspath) throws IOException {
+		try(var flist = Files.list(Path.of(hhblitspath))) {
 			var resmap = new HashMap<String,String>();
 			flist.filter(f -> f.toString().endsWith(".hhr")).forEach(f -> {
 				var fstr = f.getFileName().toString();
@@ -5703,6 +5708,7 @@ public class GeneSet implements GenomeSet {
 	Map<String,String>						panmap = new HashMap<>();
 	Map<String,String>						hhblitsmap = new HashMap<>();
 	Map<String,String>						hhblitsunimap = new HashMap<>();
+	Map<String,String>						hhblitsphrogmap = new HashMap<>();
 	Map<String,String>						cazymap = new HashMap<>();
 	Map<String,String>						cazyaamap = new HashMap<>();
 	Map<String,String>						cazycemap = new HashMap<>();
@@ -5953,6 +5959,8 @@ public class GeneSet implements GenomeSet {
 			}
 		}
 
+		hhblitsphrogmap = loadhhblits();
+
 		nf = zipfilesystem.getPath("/dbcan");
 		if( Files.exists( nf ) ) loaddbcan( cazymap, Files.newBufferedReader(nf) );
 		nf = zipfilesystem.getPath("/cazyaa");
@@ -6190,6 +6198,12 @@ public class GeneSet implements GenomeSet {
 				g.hhblitsuni = hhblitsunimap.get(tag);
 			} else if(id != null && hhblitsunimap.containsKey(id)) {
 				g.hhblitsuni = hhblitsunimap.get(id);
+			}
+
+			if (tag != null && hhblitsphrogmap.containsKey(tag)) {
+				g.hhblitsphrog = hhblitsphrogmap.get(tag);
+			} else if(id != null && hhblitsphrogmap.containsKey(id)) {
+				g.hhblitsphrog = hhblitsphrogmap.get(id);
 			}
 		});
 
