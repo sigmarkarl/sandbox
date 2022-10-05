@@ -307,25 +307,36 @@ public class GeneSet implements GenomeSet {
 	}
 
 	public Map<String,String> loadhhblits() throws IOException {
-		return loadhhblits(HHBLITS_PATH);
+		return loadhhblits(HHBLITS_PATH, null);
 	}
 
-	public Map<String,String> loadhhblits(String hhblitspath) throws IOException {
+	public Map<String,String> loadhhblits(String hhblitspath, Map<String,String> lookupMap) throws IOException {
 		try(var flist = Files.list(Path.of(hhblitspath))) {
 			var resmap = new HashMap<String,String>();
 			flist.filter(f -> f.toString().endsWith(".hhr")).forEach(f -> {
 				var fstr = f.getFileName().toString();
-				var gid = fstr.substring(0,fstr.length()-10);
+				var gid1 = fstr.substring(0,fstr.length()-10);
+				var gid2 = fstr.substring(0,fstr.length()-8);
+				var gid = lookupMap == null ? gid1 : gid2;
 				try (var lines = Files.lines(f)) {
 					lines.filter(s -> {
 						if (s.startsWith(">") && !s.contains("Uncharac") && !s.contains("uncharac") && !s.contains("hypot")) {
+							String hit;
 							var i = s.indexOf(' ');
-							var k = s.indexOf("n=", i+1);
-							if (k==-1) {
-								k = s.length()+1;
+							if (lookupMap==null) {
+								var k = s.indexOf("n=", i + 1);
+								if (k == -1) {
+									k = s.length() + 1;
+								}
+								hit = s.substring(i + 1, k - 1).trim();
+								resmap.put(gid, hit);
+							} else {
+								hit = s.substring(7,i);
+								if (lookupMap.containsKey(hit)) {
+									var lhit = lookupMap.get(hit);
+									resmap.put(gid, lhit);
+								}
 							}
-							var hit = s.substring(i+1,k-1).trim();
-							resmap.put(gid, hit);
 						} else if(resmap.containsKey(gid) && s.contains("E-value=")) {
 							return true;
 						}
@@ -5959,7 +5970,8 @@ public class GeneSet implements GenomeSet {
 			}
 		}
 
-		hhblitsphrogmap = loadhhblits();
+		Map<String,String> phrogMap = Files.lines(Path.of("/Volumes/samsung/phrog_annot_v4.tsv")).skip(1).map(l -> l.split("\t")).filter(s -> s.length>2).collect(Collectors.toMap(s -> s[0], s -> s[2]));
+		hhblitsphrogmap = loadhhblits(HHBLITS_PHROG_PATH, phrogMap);
 
 		nf = zipfilesystem.getPath("/dbcan");
 		if( Files.exists( nf ) ) loaddbcan( cazymap, Files.newBufferedReader(nf) );
@@ -6201,9 +6213,10 @@ public class GeneSet implements GenomeSet {
 			}
 
 			if (tag != null && hhblitsphrogmap.containsKey(tag)) {
-				g.hhblitsphrog = hhblitsphrogmap.get(tag);
+				g.setPhrog(hhblitsphrogmap.get(tag));
 			} else if(id != null && hhblitsphrogmap.containsKey(id)) {
-				g.hhblitsphrog = hhblitsphrogmap.get(id);
+				var phrog = hhblitsphrogmap.get(id);
+				g.setPhrog(phrog);
 			}
 		});
 

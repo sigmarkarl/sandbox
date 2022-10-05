@@ -140,17 +140,19 @@ public class Neighbour {
 					
 					if( thenext == null ) {
 						Sequence ncont = next.getContig();
-						if( ncont.isChromosome() ) {
-							thenext = ncont.getFirst();
-						} else {
-							int k = ncont.partof.indexOf( next.getContig() );
-							k = (k+1)%ncont.partof.size();
-							Sequence c = ncont.partof.get(k);
-							while( c.annset == null || c.annset.size() == 0 ) {
-								k = (k+1)%ncont.partof.size();
-								c = ncont.partof.get(k);
+						if (ncont!=null) {
+							if (ncont.isChromosome()) {
+								thenext = ncont.getFirst();
+							} else {
+								int k = ncont.partof.indexOf(next.getContig());
+								k = (k + 1) % ncont.partof.size();
+								Sequence c = ncont.partof.get(k);
+								while (c.annset == null || c.annset.size() == 0) {
+									k = (k + 1) % ncont.partof.size();
+									c = ncont.partof.get(k);
+								}
+								thenext = c.getFirst();
 							}
-							thenext = c.getFirst();
 						}
 						//if( c.isReverse() ) thenext = c.annset.get( c.annset.size()-1 );
 						//else thenext = c.annset.get(0);
@@ -262,7 +264,7 @@ public class Neighbour {
 					Annotation te = hteglocal.get(i);
 					if( te != null ) {
 						Annotation thenext = te.getNext();
-						if( thenext == null ) {
+						if( thenext == null && te.getContig()!=null ) {
 							Sequence cont = te.getContig();
 							int k = cont.partof.indexOf( cont );
 							k = (k+1)%cont.partof.size();
@@ -315,7 +317,7 @@ public class Neighbour {
 					Annotation te = hteglocal.get(i);
 					if( te != null ) {
 						Annotation theprev = te.getPrevious();
-						if( theprev == null ) {
+						if( theprev == null && te.getContig() != null ) {
 							Sequence prevcont = te.getContig();
 							List<Sequence> partof = prevcont.partof;
 							int k = partof.indexOf( prevcont );
@@ -786,8 +788,8 @@ public class Neighbour {
 								xPoints[3] = xoff+offset+(int)len; yPoints[3] = y * rowheight+2+rowheight-4;
 								xPoints[4] = xoff+offset; yPoints[4] = y * rowheight+2+rowheight-4;
 								xPoints[5] = xoff+offset+addon; yPoints[5] = y * rowheight+2+(rowheight-4)/2;
-								var tpaint = new TexturePaint(img, new Rectangle2D.Double(0,0,30,30));
-								g2.setPaint(tpaint);
+								//var tpaint = new TexturePaint(img, new Rectangle2D.Double(0,0,30,30));
+								//g2.setPaint(tpaint);
 								g.fillPolygon(xPoints, yPoints, nPoints);
 								g2.setPaint(paint);
 								g.setColor( next.isSelected() ? Color.black : Color.gray );
@@ -1097,7 +1099,7 @@ public class Neighbour {
 								}*/
 							}
 							
-							boolean revis = (prev.ori == -1) ^ prev.getContig().isReverse();
+							boolean revis = (prev.ori == -1) ^ (prev.getContig() != null && prev.getContig().isReverse());
 							int addon = revis ? -5 : 5;
 							int offset = revis ? 5 : 0;
 							//g.fillRect(xoff, y * rowheight+2, (int)len, rowheight - 4);
@@ -1182,24 +1184,26 @@ public class Neighbour {
 						
 						if( theprev == null ) {
 							Sequence prevcont = prev.getContig();
-							if( prevcont.isChromosome() ) {
-								theprev = prevcont.getLast();
-							} else {
-								List<Sequence> partof = prevcont.partof;
-								int k = partof.indexOf( prevcont );
-								k--;
-								if( k < 0 ) k = partof.size()-1;
-								Sequence c = partof.get(k);
-								while( c.annset == null || c.annset.size() == 0 ) {
+							if (prevcont!=null) {
+								if (prevcont.isChromosome()) {
+									theprev = prevcont.getLast();
+								} else {
+									List<Sequence> partof = prevcont.partof;
+									int k = partof.indexOf(prevcont);
 									k--;
-									if( k < 0 ) k = partof.size()-1;
-									c = partof.get(k);
+									if (k < 0) k = partof.size() - 1;
+									Sequence c = partof.get(k);
+									while (c.annset == null || c.annset.size() == 0) {
+										k--;
+										if (k < 0) k = partof.size() - 1;
+										c = partof.get(k);
+									}
+									theprev = c.getLast();
 								}
-								theprev = c.getLast();
+
+								g.setColor(Color.black);
+								g.fillRect(xPoints[0] - 5, yPoints[2] - 7, 3, rowheight - 4);
 							}
-							
-							g.setColor( Color.black );
-							g.fillRect(xPoints[0]-5, yPoints[2]-7, 3, rowheight-4);
 						}
 						
 						prev = theprev;
@@ -1493,7 +1497,7 @@ public class Neighbour {
 
 
 								var prevColor = g.getColor();
-								boolean revis = (next.ori == -1) ^ next.getContig().isReverse();
+								boolean revis = (next.ori == -1) ^ (next.getContig() != null && next.getContig().isReverse());
 								int addon = revis ? -5 : 5;
 								int offset = revis ? 5 : 0;
 								//g.fillRect(xoff, y * rowheight+2, (int)len, rowheight - 4);
@@ -1748,7 +1752,7 @@ public class Neighbour {
 					Annotation te = hteglocal.get(i);
 					if( te != null ) {
 						Annotation thenext = te.getNext();
-						if( thenext == null ) {
+						if( thenext == null && te.getContig() != null ) {
 							Sequence cont = te.getContig();
 							int k = cont.partof.indexOf( cont );
 							k = (k+1)%cont.partof.size();
@@ -2013,7 +2017,7 @@ public class Neighbour {
 								}
 							}
 							var prevColor = g.getColor();
-							boolean revis = (prev.ori == -1) ^ prev.getContig().isReverse();
+							boolean revis = (prev.ori == -1) ^ (prev.getContig() != null && prev.getContig().isReverse());
 							int addon = revis ? -5 : 5;
 							int offset = revis ? 5 : 0;
 
@@ -2251,7 +2255,7 @@ public class Neighbour {
 					if( te != null ) {
 						Annotation theprev = te.getPrevious();
 						
-						if( theprev == null ) {
+						if( theprev == null && te.getContig() != null ) {
 							Sequence prevcont = te.getContig();
 							List<Sequence> partof = prevcont.partof;
 							int k = partof.indexOf( prevcont );
@@ -2300,7 +2304,7 @@ public class Neighbour {
 				if(!spec.contains("Thermus")) spec = "Thermus phage "+spec;
 				spec = spec.replace('_',' ');
 				var strlen = g2.getFontMetrics().stringWidth(spec);
-				g2.drawString(spec, 0-strlen/2, i*20-60);
+				g2.drawString(spec, -strlen / 2, i*20-60);
 			}
 			g2.setFont(g.getFont().deriveFont((float)fsize));
 
@@ -2310,7 +2314,7 @@ public class Neighbour {
 	
 	public void forward() {
 		for( Annotation te : hteg ) {
-			boolean rev = te.ori == -1 ^ te.getContig().isReverse();
+			boolean rev = te.ori == -1 ^ (te.getContig()!=null&&te.getContig().isReverse());
 			if( rev ) {
 				List<Sequence>	partof = te.getContig().partof;
 				for( Sequence ctg : partof ) {
@@ -3812,7 +3816,7 @@ public class Neighbour {
 				public Object getValueAt(int rowIndex, int columnIndex) {
 					//String species = speclist.get( rowIndex );
 					Annotation te = hteg.get(rowIndex);
-					if(te!=null) {
+					if(te!=null && te.getContig()!=null) {
 						if (columnIndex == 0) {
 							return te.getSpecies(); //geneset.nameFix( te.getSpecies() );
 						} else if (columnIndex == 1) return te.getContig().getName();

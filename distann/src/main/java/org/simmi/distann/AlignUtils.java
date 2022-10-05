@@ -40,34 +40,35 @@ public class AlignUtils {
             if (a1 != currentAnn && gg != null) {
                 var u = 0;
                 var nn = a1.getNext();
-                while (gg != nn.getGeneGroup() && u < window) {
-                    u++;
-                    nn = nn.getNext();
-                }
-                if (u==window) {
-                    var contig = a1.getContig();
-                    var max = 0;
-                    for (var a2 : lann) {
-                        if (a2.getGene() != null && a1 != a2 /*&& gg!=a2.getGeneGroup()*/) {
-                            var k = 0;
-                            var ck = 0;
-                            var an = a2.getNext();
-                            while (an != null && k < window) {
-                                k++;
-                                if (gg == an.getGeneGroup()) {
-                                    ck = k;
+                if (nn!=null) {
+                    while (gg != nn.getGeneGroup() && u < window) {
+                        u++;
+                        nn = nn.getNext();
+                    }
+                    if (u == window) {
+                        var contig = a1.getContig();
+                        var max = 0;
+                        for (var a2 : lann) {
+                            if (a2.getGene() != null && a1 != a2 /*&& gg!=a2.getGeneGroup()*/) {
+                                var k = 0;
+                                var ck = 0;
+                                var an = a2.getNext();
+                                while (an != null && k < window) {
+                                    k++;
+                                    if (gg == an.getGeneGroup()) {
+                                        ck = k;
+                                    }
+                                    an = an.getNext();
                                 }
-                                an = an.getNext();
-                            }
-                            if (an == null) ck = -1;
-                            if (ck > max) {
-                                max = ck;
-                                currentAnn = a2;
+                                if (an == null) ck = -1;
+                                if (ck > max) {
+                                    max = ck;
+                                    currentAnn = a2;
+                                }
                             }
                         }
-                    }
-                    if (max > 0) {
-                        boolean b = false;
+                        if (max > 0) {
+                            boolean b = false;
                         /*var an = a1.getNext();
                         if (an != null && max > 1) {
                             b = checkForward(an, lann, window, max-1);
@@ -85,24 +86,25 @@ public class AlignUtils {
                             }
                         }*/
 
-                        if(!b) {
-                            var done = false;
-                            while (max > 0) {
-                                var te = new Tegeval(null, 0.0, null, contig, 0, 0, 1, false);
-                                if (!done) {
-                                    done = true;
-                                    ret.add(te);
+                            if (!b) {
+                                var done = false;
+                                while (max > 0) {
+                                    var te = new Tegeval(null, 0.0, null, contig, 0, 0, 1, false);
+                                    if (!done) {
+                                        done = true;
+                                        ret.add(te);
+                                    }
+                                    if (contig.isReverse()) contig.injectAfter(a1, te);
+                                    else contig.injectBefore(a1, te);
+                                    max--;
                                 }
-                                if (contig.isReverse()) contig.injectAfter(a1, te);
-                                else contig.injectBefore(a1, te);
-                                max--;
                             }
+                        } else {
+                            ret.add(a1);
                         }
                     } else {
                         ret.add(a1);
                     }
-                } else {
-                    ret.add(a1);
                 }
             } else {
                 ret.add(a1);
