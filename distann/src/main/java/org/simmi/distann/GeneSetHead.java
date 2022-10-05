@@ -1329,7 +1329,7 @@ public class GeneSetHead {
 					OutputStream pos = mp.getOutputStream();
 					Writer ow = new OutputStreamWriter( pos );
 					for( Gene g : geneset.genelist ) {
-						if( g.getTag() == null || g.getTag().length() == 0 ) {
+						//if( g.getTag() == null || g.getTag().length() == 0 ) {
 							GeneGroup gg = g.getGeneGroup();
 
 							if( gg != null ) {
@@ -1359,7 +1359,7 @@ public class GeneSetHead {
 								}
 								pos.write( '\n' );*/
 							}
-						}
+						//}
 					}
 					ow.close();
 					pos.close();
@@ -1395,17 +1395,15 @@ public class GeneSetHead {
 			pb.redirectErrorStream( true );
 			final Process p = pb.start();
 		
-			final Thread t = new Thread() {
-				public void run() {
-					try {
-						OutputStream pos = p.getOutputStream();
-						pos.write( fasta.getBytes() );
-						pos.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+			final Thread t = new Thread(() -> {
+				try {
+					OutputStream pos = p.getOutputStream();
+					pos.write( fasta.getBytes() );
+					pos.close();
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-			};
+			});
 			t.start();
 
 			final Thread t2 = new Thread(() -> {
@@ -1418,10 +1416,10 @@ public class GeneSetHead {
 					String line = br.readLine();
 					while (line != null) {
 						//System.err.println( line );
-						if (line.startsWith("> ")) {
+						if (line.startsWith(">")) {
 							int i = line.indexOf(' ', 2);
 							if (i == -1) i = line.length();
-							String id = line.substring(2, i);
+							String id = line.substring(1, i).trim();
 
 							Gene g = geneset.genemap.get(id);
 							if (g != null) {
@@ -1431,29 +1429,25 @@ public class GeneSetHead {
 							int r = table.convertRowIndexToView( i );
 							table.addRowSelectionInterval(r, r);
 						}*/
-									Platform.runLater(() -> {
-										table.getSelectionModel().select(g.getGeneGroup());
-									});
+									Platform.runLater(() -> table.getSelectionModel().select(g.getGeneGroup()));
 								} else {
 						/*i = geneset.genelist.indexOf( g );
 						if( i != -1 && i < table.getRowCount() ) {
 							int r = table.convertRowIndexToView( i );
 							table.addRowSelectionInterval(r, r);
 						}*/
-									Platform.runLater(() -> {
-										gtable.getSelectionModel().select(g);
-									});
+									Platform.runLater(() -> gtable.getSelectionModel().select(g));
 								}
 							}
 
-							String stuff = line + "\n";
+							StringBuilder stuff = new StringBuilder(line + "\n");
 							line = br.readLine();
 							while (line != null && !line.startsWith("Query=") && !line.startsWith("> ")) {
-								stuff += line + "\n";
+								stuff.append(line).append("\n");
 								line = br.readLine();
 							}
 							if (rr != null) {
-								rr.run(stuff);
+								rr.run(stuff.toString());
 								//res += line+"\n";
 							}
 						} else line = br.readLine();
@@ -7699,8 +7693,8 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 		dbcan.setCellValueFactory( new PropertyValueFactory<>("dbcan"));
 		table.getColumns().add( dbcan );
 
-		TableColumn<GeneGroup, String> phaster = new TableColumn("Phaster");
-		phaster.setCellValueFactory( new PropertyValueFactory<>("phaster"));
+		TableColumn<GeneGroup, String> phaster = new TableColumn("Phrog");
+		phaster.setCellValueFactory( new PropertyValueFactory<>("phrog"));
 		table.getColumns().add( phaster );
 
 		TableColumn<GeneGroup, String> hhpred = new TableColumn("HHPred");
@@ -10322,10 +10316,14 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 	public void exportProteinSequences( List<Gene> genelist ) throws IOException {
 		FileChooser filechooser = new FileChooser();
 		File f = filechooser.showSaveDialog(null);
-		if (f != null && f.exists()) {
+		if (f != null /*&& f.exists()*/) {
 			Path dbPath = f.toPath();
 			BufferedWriter bw = Files.newBufferedWriter(dbPath);
-			for (Gene g : geneset.genelist) {
+			var selist = table.getSelectionModel().getSelectedItems();
+			if (selist.size() > 0) {
+				genelist = selist.stream().flatMap(gg -> gg.genes.stream()).map(Annotation::getGene).toList();
+			}
+			for (Gene g : genelist) {
 				if (g.getTag() == null || g.getTag().equalsIgnoreCase("gene")) {
 					g.getFasta(bw, true);
 				/*StringBuilder sb = g.tegeval.getProteinSequence();
@@ -10357,7 +10355,8 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 					var te = sortTe.get(sortTe.size() / 2);
 					var gene = te.getGene();
 					if (gene != null) {
-						te.getProteinSequence().writeIdSequence(writer);
+						var pseq = te.getProteinSequence();
+						if (pseq!=null) pseq.writeIdSequence(writer);
 					}
 				}
 			} finally {
