@@ -101,6 +101,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -4603,6 +4604,7 @@ sb.append( gs.substring(i, Math.min( i + 70, gs.length() )) + "\n");
 						newseq.reverse();
 						newseq.complement();
 					}*/
+					//Executors.newVirtualThreadPerTaskExecutor();
 
 					serifier.addSequence(newseq);
 					for (Annotation tv : tvset) {
