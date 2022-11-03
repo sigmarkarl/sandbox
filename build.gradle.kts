@@ -78,7 +78,20 @@ fun resolveJpackage(): ToolProvider {
 fun runJpackage(ENDING: String, VERSION: String): String {
     println("Creating GeneSet package installer")
     val jpackage = resolveJpackage()
-    val exitval: Int = 0//jpackage.run(System.out, System.err, "--type", ENDING, "-i", "$rootDir/distann/build/install/distann", "-n", "genset", "--app-version", VERSION, "--dest", "$rootDir","--main-jar", "lib/distann.jar", "--main-class", "org.simmi.distann.DistAnn", "--java-options", "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED", "--java-options", "--add-opens=java.base/java.nio=ALL-UNNAMED", "--verbose")
+    val exitval: Int = jpackage.run(System.out, System.err, "--type", ENDING, "-i", "$rootDir/distann/build/install/distann", "-n", "genset", "--app-version", VERSION, "--dest", "$rootDir",
+        "--main-jar",
+        "lib/distann.jar",
+        "--main-class",
+        "org.simmi.distann.DistAnn",
+        "--java-options",
+        "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+        "--java-options",
+        "--add-opens=java.base/java.nio=ALL-UNNAMED",
+        "--verbose",
+        "--file-associations",
+        "file-association.txt",
+        "--file-associations",
+        "file-association2.txt")
     //"--mac-package-name", "Genset",
     System.err.println(exitval)
     return ""
@@ -92,7 +105,7 @@ tasks.register("genset_build") {
 
 subprojects {
     repositories {
-        jcenter()
+        //jcenter()
         mavenCentral()
         gradlePluginPortal()
         /*maven {

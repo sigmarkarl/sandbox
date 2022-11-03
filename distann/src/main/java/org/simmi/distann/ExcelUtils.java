@@ -120,6 +120,7 @@ public class ExcelUtils {
                 Workbook workbook = new XSSFWorkbook();
                 Sheet sheet = workbook.createSheet(sheetname);
                 Row header = sheet.createRow(0);
+                var xssfColor = new XSSFColor(new byte[] {0,(byte)128,0} );
                 if( gs.isGeneview() ) {
                     int cn = 0;
                     for( TableColumn tc : gs.gtable.getColumns() ) {
@@ -134,7 +135,7 @@ public class ExcelUtils {
                     int rc = 1;
                     Row row = sheet.createRow(rc++);
                     XSSFCellStyle cellstyle = (XSSFCellStyle) workbook.createCellStyle();
-                    cellstyle.setFillBackgroundColor( new XSSFColor(new Color(0,128,0)) );
+                    cellstyle.setFillBackgroundColor( xssfColor );
                     for( int r : gs.gtable.getSelectionModel().getSelectedIndices() ) {
                         cn = 0;
                         for( TableColumn tc : gs.gtable.getColumns() ) {
@@ -194,7 +195,7 @@ public class ExcelUtils {
                         org.apache.poi.ss.usermodel.Cell cell = header.createCell(cn++);
                         cell.setCellValue( tc.getText() );
                     }
-                    for( TableColumn tc : gs.results.getColumns() ) {
+                    for( TableColumn tc : gs.results.getColumns().filtered(p -> selspec.contains(p.getText())) ) {
                         org.apache.poi.ss.usermodel.Cell cell = header.createCell(cn++);
                         cell.setCellValue( tc.getText() );
                     }
@@ -202,7 +203,7 @@ public class ExcelUtils {
                     int rc = 1;
                     Row row = sheet.createRow(rc++);
                     XSSFCellStyle cellstyle = (XSSFCellStyle) workbook.createCellStyle();
-                    cellstyle.setFillBackgroundColor( new XSSFColor(new Color(0,128,0)) );
+                    cellstyle.setFillBackgroundColor( xssfColor );
                     for( int r : gs.table.getSelectionModel().getSelectedIndices() ) {
                         cn = 0;
                         for( TableColumn tc : gs.table.getColumns() ) {
@@ -216,7 +217,7 @@ public class ExcelUtils {
                             cn++;
                         }
                         if (sequences) {
-                            for (TableColumn tc : gs.results.getColumns()) {
+                            for (TableColumn tc : gs.results.getColumns().filtered(p -> selspec.contains(p.getText()))) {
                                 Teginfo o = (Teginfo)tc.getCellData(r);
                                 if (o != null) {
                                     org.apache.poi.ss.usermodel.Cell cell = row.createCell(cn);
@@ -227,7 +228,7 @@ public class ExcelUtils {
                                 cn++;
                             }
                         } else {
-                            for (TableColumn tc : gs.results.getColumns()) {
+                            for (TableColumn tc : gs.results.getColumns().filtered(p -> selspec.contains(p.getText()))) {
                                 Object o = tc.getCellData(r);
                                 if (o != null) {
                                     org.apache.poi.ss.usermodel.Cell cell = row.createCell(cn);

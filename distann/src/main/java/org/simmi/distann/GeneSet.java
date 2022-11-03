@@ -83,8 +83,8 @@ public class GeneSet implements GenomeSet {
 	public String projectname = "geneset";
 	public boolean noseq = false;
 
-	public static final String HHBLITS_PATH = "/Users/sigmarkarl/tmp5";
-	public static final String HHBLITS_PHROG_PATH = "/Users/sigmarkarl/tmp6";
+	public static final String HHBLITS_PATH = "/Users/sigmar/hhblits";
+	public static final String HHBLITS_PHROG_PATH = "/Users/sigmar/phrogs";
 
 	public JFrame	fxframe = null;
 
@@ -311,48 +311,52 @@ public class GeneSet implements GenomeSet {
 	}
 
 	public Map<String,String> loadhhblits(String hhblitspath, Map<String,String> lookupMap) throws IOException {
-		try(var flist = Files.list(Path.of(hhblitspath))) {
-			var resmap = new HashMap<String,String>();
-			flist.filter(f -> f.toString().endsWith(".hhr")).forEach(f -> {
-				var fstr = f.getFileName().toString();
-				var gid1 = fstr.substring(0,fstr.length()-10);
-				var gid2 = fstr.substring(0,fstr.length()-8);
-				var gid = lookupMap == null ? gid1 : gid2;
-				try (var lines = Files.lines(f)) {
-					lines.filter(s -> {
-						if (s.startsWith(">") && !s.contains("Uncharac") && !s.contains("uncharac") && !s.contains("hypot")) {
-							String hit;
-							var i = s.indexOf(' ');
-							if (lookupMap==null) {
-								var k = s.indexOf("n=", i + 1);
-								if (k == -1) {
-									k = s.length() + 1;
+		var blitspath = Path.of(hhblitspath);
+		if (Files.exists(blitspath)) {
+			try (var flist = Files.list(blitspath)) {
+				var resmap = new HashMap<String, String>();
+				flist.filter(f -> f.toString().endsWith(".hhr")).forEach(f -> {
+					var fstr = f.getFileName().toString();
+					var gid1 = fstr.substring(0, fstr.length() - 10);
+					var gid2 = fstr.substring(0, fstr.length() - 8);
+					var gid = lookupMap == null ? gid1 : gid2;
+					try (var lines = Files.lines(f)) {
+						lines.filter(s -> {
+							if (s.startsWith(">") && !s.contains("Uncharac") && !s.contains("uncharac") && !s.contains("hypot")) {
+								String hit;
+								var i = s.indexOf(' ');
+								if (lookupMap == null) {
+									var k = s.indexOf("n=", i + 1);
+									if (k == -1) {
+										k = s.length() + 1;
+									}
+									hit = s.substring(i + 1, k - 1).trim();
+									resmap.put(gid, hit);
+								} else {
+									hit = s.substring(7, i);
+									if (lookupMap.containsKey(hit)) {
+										var lhit = lookupMap.get(hit);
+										resmap.put(gid, lhit);
+									}
 								}
-								hit = s.substring(i + 1, k - 1).trim();
-								resmap.put(gid, hit);
-							} else {
-								hit = s.substring(7,i);
-								if (lookupMap.containsKey(hit)) {
-									var lhit = lookupMap.get(hit);
-									resmap.put(gid, lhit);
-								}
+							} else if (resmap.containsKey(gid) && s.contains("E-value=")) {
+								return true;
 							}
-						} else if(resmap.containsKey(gid) && s.contains("E-value=")) {
-							return true;
-						}
-						return false;
-					}).findFirst().ifPresent(s -> {
-						var i = s.indexOf("E-value=")+8;
-						var k = s.indexOf(" ", i);
-						var eval = s.substring(i,k).trim();
-						resmap.compute(gid, (key,val) -> val+";"+eval);
-					});
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			});
-			return resmap;
+							return false;
+						}).findFirst().ifPresent(s -> {
+							var i = s.indexOf("E-value=") + 8;
+							var k = s.indexOf(" ", i);
+							var eval = s.substring(i, k).trim();
+							resmap.compute(gid, (key, val) -> val + ";" + eval);
+						});
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
+				});
+				return resmap;
+			}
 		}
+		return Collections.emptyMap();
 	}
 
 	public void loadpanmap(Map<String,String> panmap, BufferedReader rd) throws IOException {
@@ -5970,7 +5974,7 @@ public class GeneSet implements GenomeSet {
 			}
 		}
 
-		Map<String,String> phrogMap = Files.lines(Path.of("/Volumes/samsung/phrog_annot_v4.tsv")).skip(1).map(l -> l.split("\t")).filter(s -> s.length>2).collect(Collectors.toMap(s -> s[0], s -> s[2]));
+		Map<String,String> phrogMap = Files.lines(Path.of("/Users/sigmar/phrog_annot_v4.tsv")).skip(1).map(l -> l.split("\t")).filter(s -> s.length>2).collect(Collectors.toMap(s -> s[0], s -> s[2]));
 		hhblitsphrogmap = loadhhblits(HHBLITS_PHROG_PATH, phrogMap);
 
 		nf = zipfilesystem.getPath("/dbcan");

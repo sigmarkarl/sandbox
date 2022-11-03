@@ -44,8 +44,8 @@ dependencies {
 
     implementation("org.java-websocket:Java-WebSocket:1.5.2")
 
-    implementation(group = "org.apache.poi", name = "poi", version = "3.17")
-    implementation(group = "org.apache.poi", name = "poi-ooxml", version = "3.17")
+    implementation(group = "org.apache.poi", name = "poi", version = "5.2.3")
+    implementation(group = "org.apache.poi", name = "poi-ooxml", version = "5.2.3")
     implementation(group = "commons-codec", name = "commons-codec", version = "1.11")
     implementation(group = "org.apache.commons", name = "commons-compress", version = "1.14")
     implementation(group = "org.apache.commons", name = "commons-vfs2", version = "2.2")

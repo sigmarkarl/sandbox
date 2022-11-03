@@ -44,6 +44,7 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
+import javafx.application.Platform;
 import org.simmi.javafasta.shared.Annotation;
 import org.simmi.javafasta.shared.Cog;
 import org.simmi.javafasta.shared.Function;
@@ -552,7 +553,7 @@ public class Neighbour {
 			break;
 		}
 
-		int baseCirc = 239;
+		int baseCirc = 225;
 		String spec1 = null;
 		int 		rs = rowheader.getSelectedRow();
 		if( rs >= 0 && rs < rowheader.getRowCount() ) spec1 = (String)rowheader.getValueAt(rs, 0);
@@ -1275,7 +1276,7 @@ public class Neighbour {
 							var c = g.getColor();
 							g.setColor(Color.black);
 							//jj0 = 0;
-							var start = 11;
+							var start = 10;
 							if (next.getId() != null && next.getId().endsWith("_008")) {
 								jj0 = start;
 							}
@@ -1600,7 +1601,7 @@ public class Neighbour {
 									double ltheta = 2 * (xoff + offset + len - 5000) * Math.PI / div;
 									double theta3 = (xoff + offset - 5000) * 360.0 / div;
 
-									g.translate(5000, 600);
+									g.translate(5000, 650);
 									//g.fillArc(-width+y*rowheight,-width+y*rowheight,width*2-y*rowheight*2,width*2-y*rowheight*2,(int)((xoff+offset-5000)/div), (int)((len)/div));
 
 									int orowheight = rowheight-2;
@@ -1709,7 +1710,7 @@ public class Neighbour {
 									arc = new Arc2D.Double(-width + m * rowheight, -width + m * rowheight, width * 2 - m * rowheight * 2, width * 2 - m * rowheight * 2, -theta3, -(len * 360.0) / div, Arc2D.PIE);
 									g2.fill(arc);
 									//g.fillArc(-width+m*rowheight,-width+m*rowheight,width*2-m*rowheight*2,width*2-m*rowheight*2,(int)((xoff+offset-5000)/div), (int)((len)/div));
-									g.translate(-5000, -600);
+									g.translate(-5000, -650);
 								}
 							}
 						/*g.setColor( Color.green );
@@ -2114,7 +2115,7 @@ public class Neighbour {
 								//g.fillArc(-width+y*rowheight,-width+y*rowheight,width*2-y*rowheight*2,width*2-y*rowheight*2,(int)((xoff+offset-5000)*360/div), (int)((len*360)/div));
 								//g2.fill(arc);
 
-								g.translate(5000, 600);
+								g.translate(5000, 650);
 
 								//g2.setStroke(STROKE);
 								var arc = new Arc2D.Double(-width + y * rowheight +2, -width + y * rowheight +2, width * 2 - y * rowheight * 2 -4, width * 2 - y * rowheight * 2 -4, -theta3, -(len * 360.0 / div), Arc2D.PIE);
@@ -2225,7 +2226,7 @@ public class Neighbour {
 								g2.fill(arc);
 								//g.fillArc(-width+m*rowheight,-width+m*rowheight,width*2-m*rowheight*2,width*2-m*rowheight*2, (xoff+offset-5000)*360/div, (len*360)/div);
 
-								g.translate(-5000, -600);
+								g.translate(-5000, -650);
 							}
 						}
 
@@ -2234,7 +2235,7 @@ public class Neighbour {
 							var c = g.getColor();
 							g.setColor(Color.black);
 							if (prev.getId() != null && prev.getId().endsWith("_007")) {
-								jj1 = 12;
+								jj1 = 11;
 							}
 							var boff = rowcount * rowheight + 9;
 							if (jj1==0) {
@@ -2286,10 +2287,10 @@ public class Neighbour {
 		}
 
 		if(circleView.isSelected()) {
-			g.translate(5000, 600);
+			g.translate(5000, 650);
 
 			g2.setColor(Color.white);
-			int y = 6;
+			int y = 7;
 			int width = 400;
 			//g2.setStroke(STROKE);
 			var arc = new Arc2D.Double(-width + y * rowheight +2, -width + y * rowheight +2, width * 2 - y * rowheight * 2 -4, width * 2 - y * rowheight * 2 -4, 0, 360.0, Arc2D.PIE);
@@ -2308,7 +2309,7 @@ public class Neighbour {
 			}
 			g2.setFont(g.getFont().deriveFont((float)fsize));
 
-			g.translate(-5000,-600);
+			g.translate(-5000,-650);
 		}
 	}
 	
@@ -2362,6 +2363,97 @@ public class Neighbour {
 	static List<Annotation>	hteg;
 	//static int colorscheme = 0;
 	//static List<String>	speclist;
+	List<Annotation> pprev;
+
+	public void stepUndoAlign() {
+		for (Annotation an : pprev) {
+			an.setSelected(false);
+		}
+		var nprev = new ArrayList<Annotation>();
+		for (Annotation an : pprev) {
+			/*var prev = an.getPrevious();
+			while (prev != null && prev.isPseudo()) {
+				var pp= an.getPrevious();
+				an.getContig().annset.remove(prev);
+				prev = pp;
+			}*/
+			while (an!=null && an.isPseudo()) {
+				var nn = an.getNext();
+				an.getContig().annset.remove(an);
+				an = nn;
+			}
+			if (an!=null) nprev.add(an.getPrevious());
+		}
+		pprev = nprev;
+		for (Annotation an : pprev) {
+			an.setSelected(true);
+		}
+		c.repaint();
+	}
+
+	public void stepAlign() {
+		if (pprev==null) {
+			pprev = new ArrayList<>();
+			for (var i : rowheader.getSelectedRows()) {
+				var ann = hteg.get(rowheader.convertRowIndexToModel(i));
+				pprev.add(ann.getNext());
+			}
+		} else {
+			for (Annotation an : pprev) {
+				an.setSelected(false);
+			}
+		}
+		//List<Annotation> prev = prevprev;
+					/*for (var i : rowheader.getSelectedRows()) {
+						var ann = hteg.get(rowheader.convertRowIndexToModel(i));
+						prev.add(ann.getNext());
+					}*/
+		//var k = 0;
+		var ret = AlignUtils.alignOffset(pprev,25);
+		//while (k++ < 500) {
+		var r1 = ret;
+		var p1 = pprev;
+		if (IntStream.range(0,ret.size()).allMatch(i -> r1.get(i).equals(p1.get(i)))) {
+			var fix = false;
+			for (var a : ret) {
+				var i = a.clearPrefix(25, ret);
+				if (i>0) {
+					fix = true;
+					break;
+				}
+			}
+
+			if (fix) {
+				ret = pprev;
+			} else {
+				var lann = new ArrayList<Annotation>();
+				var allPseudo = true;
+				while (ret.size() > 0 && allPseudo) {
+					for (var ann : lann) {
+						ann.getContig().delete(ann);
+					}
+					lann.clear();
+					for (var ann : ret) {
+						var nextann = ann.getNext();
+						if (nextann!=null) {
+							if (!nextann.isPseudo()) allPseudo = false;
+							lann.add(nextann);
+						}
+					}
+				}
+				ret = lann;
+			}
+		}
+		pprev = AlignUtils.alignOffset(ret, 25);
+		for (Annotation an : pprev) {
+			an.setSelected(true);
+		}
+		//ret = AlignUtils.alignOffset(prev, 25);
+		//if (ret==null) break;
+		//}
+		c.repaint();
+	}
+
 	public void neighbourMynd( final GeneSetHead genesethead, final Container comp, final List<Gene> genes, final Map<String,Sequence> contigmap ) throws IOException {
 		GeneSet geneset = genesethead.geneset;
 		
@@ -2538,6 +2630,10 @@ public class Neighbour {
 						}
 					}  else if( e.getKeyCode() == KeyEvent.VK_DELETE ) {
 						deleteForward( c );
+					} else if( e.getKeyChar() == 'k' ) {
+						stepAlign();
+					} else if( e.getKeyChar() == 'l' ) {
+						stepUndoAlign();
 					}
 				}
 			});
@@ -2792,17 +2888,28 @@ public class Neighbour {
 									lann.clear();
 									for (var ann : ret) {
 										var nextann = ann.getNext();
-										if (nextann.getGene() != null) allPseudo = false;
-										lann.add(nextann);
+										if (nextann != null) {
+											if (!nextann.isPseudo()) allPseudo = false;
+											lann.add(nextann);
+										}
 									}
 								}
 								ret = lann;
 							}
 						}
 						prev = ret;
+						pprev = prev;
 						ret = AlignUtils.alignOffset(prev, 25);
+						if (ret==null) break;
 					}
 					c.repaint();
+				}
+			});
+
+			mvmnu.add( new AbstractAction("Step align from center with offset") {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					stepAlign();
 				}
 			});
 			
@@ -3062,8 +3169,9 @@ public class Neighbour {
 			clearInserts.setAction( new AbstractAction("Clear") {
 				@Override
 				public void actionPerformed(ActionEvent e) {
+					pprev = null;
 					for (var seq : contigmap.values()) {
-						seq.annset.removeIf(a -> a.start==0 && a.stop==0 && a.getGene()==null);
+						if (seq.annset!=null) seq.annset.removeIf(a -> a.start==0 && a.stop==0 && a.getGene()==null);
 					}
 					c.repaint();
 				}
@@ -3528,11 +3636,15 @@ public class Neighbour {
 						} else {
 							currentTe = te;
 							te.setSelected( !te.isSelected() );
-							if( !genesethead.isGeneview() ) {
-								genesethead.getGeneGroupTable().getSelectionModel().select( te.getGene().getGeneGroup() );
-							} else {
-								genesethead.getGeneTable().getSelectionModel().select( te.getGene() );
-							}
+							Platform.runLater(() -> {
+								if( !genesethead.isGeneview() ) {
+									var gg = te.getGene().getGeneGroup();
+									genesethead.getGeneGroupTable().getSelectionModel().select( gg );
+									genesethead.getGeneGroupTable().scrollTo( gg );
+								} else {
+									genesethead.getGeneTable().getSelectionModel().select( te.getGene() );
+								}
+							});
 							c.repaint();
 						}
 					}

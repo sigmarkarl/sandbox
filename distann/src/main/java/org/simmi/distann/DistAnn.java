@@ -8,9 +8,8 @@ import org.simmi.GreeterGrpc.GreeterImplBase;
 import org.simmi.HelloReply;
 import org.simmi.HelloRequest;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.Window;
+import java.awt.*;
+import java.awt.desktop.SystemEventListener;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -19,12 +18,15 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -414,6 +416,15 @@ public class DistAnn extends JPanel {
 	}
 
 	public static void main(String[] args) {
+		/*Desktop.getDesktop().setOpenURIHandler((event) -> {
+			URI uri = event.getURI();
+			System.err.println(uri.toString());
+		});
+		Desktop.getDesktop().setOpenFileHandler((event) -> {
+			var flist = event.getFiles();
+			flist.stream().map(File::toPath).map(Path::toString).forEach(System.err::println);
+			Collectors.joi
+		});*/
 		//try {
 			/*var serverInterceptor = new ServerInterceptor() {
 

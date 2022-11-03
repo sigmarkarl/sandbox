@@ -218,7 +218,7 @@ public class TreeUtil {
 			c++;
 		}
 		
-		List<Double> lad = new ArrayList<Double>();
+		List<Double> lad = new ArrayList<>();
 		for( int y = 0; y < corrInd.size()-1; y++ ) {
 			for( int x = y+1; x < corrInd.size(); x++ ) {
 				lad.add( distmat[y*corrInd.size()+x] );
