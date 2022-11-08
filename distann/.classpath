@@ -10,7 +10,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/serifier"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/TreeDraw"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/spilling"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/poi"/>
 	<classpathentry kind="src" output="bin/main" path="src/main/java">
 		<attributes>
 			<attribute name="gradle_scope" value="main"/>

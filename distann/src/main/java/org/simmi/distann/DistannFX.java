@@ -54,6 +54,7 @@ public class DistannFX extends Application {
     	vbox.getChildren().add( toolbar );
 
         GeneSet gs = new GeneSet();
+        gs.init();
         GeneSetHead gsh = new GeneSetHead( this, gs );
         //final JPanel panel = new JPanel();
         //panel.setLayout( new BorderLayout() );

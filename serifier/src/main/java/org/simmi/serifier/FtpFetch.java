@@ -161,6 +161,48 @@ public class FtpFetch {
                                             }
                                             //ftp.completePendingCommand();
                                             //System.err.println("done " + fname);
+                                        } else if (newfname.endsWith(".gff.gz")) {
+                                            String urlstr = "ftp://" + ftpsite + assembly + "/" + subfoldername + "/" + newfname;
+                                            String spec = fname;
+                                            System.err.println("trying to open " + urlstr);
+                                            URL url = new URL(urlstr);
+                                            InputStream is = url.openStream();//ftp.retrieveFileStream( newfname );
+                                            GZIPInputStream gis = new GZIPInputStream(is);
+                                            BufferedReader br = new BufferedReader(new InputStreamReader(gis));
+                                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                            String line = br.readLine();
+                                            while (line != null) {
+                                                baos.write((line + "\n").getBytes());
+                                                line = br.readLine();
+                                            }
+                                            is.close();
+
+                                            Files.createDirectories(cd.resolve("pantools"));
+                                            Path thefile = cd.resolve("pantools/"+spec + ".gff");
+                                            if (!Files.exists(thefile)) {
+                                                Files.write(thefile, baos.toByteArray(), StandardOpenOption.CREATE);
+                                            }
+                                        } else if (newfname.endsWith(".fna.gz")) {
+                                            String urlstr = "ftp://" + ftpsite + assembly + "/" + subfoldername + "/" + newfname;
+                                            String spec = fname;
+                                            System.err.println("trying to open " + urlstr);
+                                            URL url = new URL(urlstr);
+                                            InputStream is = url.openStream();//ftp.retrieveFileStream( newfname );
+                                            GZIPInputStream gis = new GZIPInputStream(is);
+                                            BufferedReader br = new BufferedReader(new InputStreamReader(gis));
+                                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                            String line = br.readLine();
+                                            while (line != null) {
+                                                baos.write((line + "\n").getBytes());
+                                                line = br.readLine();
+                                            }
+                                            is.close();
+
+                                            Files.createDirectories(cd.resolve("pantools"));
+                                            Path thefile = cd.resolve("pantools/"+spec + ".fna");
+                                            if (!Files.exists(thefile)) {
+                                                Files.write(thefile, baos.toByteArray(), StandardOpenOption.CREATE);
+                                            }
                                         }
                                     }
                                     //ftp.cwd( ".." );

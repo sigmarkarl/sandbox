@@ -10,11 +10,11 @@ plugins {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:3.21.1"
+        artifact = "com.google.protobuf:protoc:3.21.9"
     }
     plugins {
         id("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:1.46.0"
+            artifact = "io.grpc:protoc-gen-grpc-java:1.50.2"
         }
     }
     generateProtoTasks {
@@ -27,7 +27,7 @@ protobuf {
 }
 
 javafx {
-    version = "18.0.1"
+    version = "19"
     modules("javafx.base", "javafx.graphics", "javafx.controls", "javafx.fxml", "javafx.swing", "javafx.web")
 }
 
@@ -37,10 +37,10 @@ dependencies {
     implementation(project(":spilling"))
     implementation(project(":TreeDraw"))
 
-    runtimeOnly("io.grpc:grpc-netty:1.47.0")
-    implementation("com.google.protobuf:protobuf-java:3.21.1")
-    implementation("io.grpc:grpc-stub:1.47.0")
-    implementation("io.grpc:grpc-protobuf:1.47.0")
+    runtimeOnly("io.grpc:grpc-netty:1.50.2")
+    implementation("com.google.protobuf:protobuf-java:3.21.9")
+    implementation("io.grpc:grpc-stub:1.50.2")
+    implementation("io.grpc:grpc-protobuf:1.50.2")
 
     implementation("org.java-websocket:Java-WebSocket:1.5.2")
 
@@ -60,15 +60,21 @@ dependencies {
     implementation("org.openjfx:javafx-fxml:17.0.1:mac")
     implementation("org.openjfx:javafx-web:17.0.1:mac")
     implementation("org.openjfx:javafx-swing:17.0.1:mac")*/
+    implementation("org.apache.logging.log4j:log4j-core:2.19.0")
 
-    implementation (group = "org.apache.spark", name = "spark-core_2.13", version = "3.2.1") {
+    implementation("com.fasterxml.jackson:jackson-bom:2.14.0-rc3")
+
+    implementation (group = "org.apache.spark", name = "spark-core_2.13", version = "3.3.1") {
         exclude(group = "avro-mapred")
+        exclude(group = "com.fasterxml.jackson")
     }
-    implementation (group = "org.apache.spark", name = "spark-mllib_2.13", version = "3.2.1") {
+    implementation (group = "org.apache.spark", name = "spark-mllib_2.13", version = "3.3.1") {
         exclude(group = "avro-mapred")
+        exclude(group = "com.fasterxml.jackson")
     }
-    implementation (group = "org.apache.spark", name = "spark-kubernetes_2.13", version = "3.2.1") {
+    implementation (group = "org.apache.spark", name = "spark-kubernetes_2.13", version = "3.3.1") {
         exclude(group = "avro-mapred")
+        exclude(group = "com.fasterxml.jackson")
     }
 
 }

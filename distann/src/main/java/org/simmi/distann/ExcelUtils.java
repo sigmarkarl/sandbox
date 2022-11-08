@@ -120,7 +120,7 @@ public class ExcelUtils {
                 Workbook workbook = new XSSFWorkbook();
                 Sheet sheet = workbook.createSheet(sheetname);
                 Row header = sheet.createRow(0);
-                var xssfColor = new XSSFColor(new byte[] {0,(byte)128,0} );
+                var xssfColor = new XSSFColor(new byte[] {0,(byte)128,0});
                 if( gs.isGeneview() ) {
                     int cn = 0;
                     for( TableColumn tc : gs.gtable.getColumns() ) {

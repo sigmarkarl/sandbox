@@ -32,6 +32,7 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.api.java.function.MapPartitionsFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
+import org.apache.spark.api.python.Py4JServer;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
 import org.simmi.ann.ANIResult;
@@ -3666,10 +3667,30 @@ public class GeneSet implements GenomeSet {
 		super();
 		//gsh = new GeneSetHead( this );
 	}
+
+	public Py4JServer initPy4jServer() {
+		if (py4jServer==null) {
+			py4jServer = new Py4JServer(sparkSession.sparkContext().conf());
+			py4jServer.start();
+		}
+		System.err.println("py4jserver port secret");
+		System.err.println("export PYSPARK_GATEWAY_PORT="+py4jServer.getListeningPort());
+		System.err.println("export PYSPARK_GATEWAY_SECRET="+py4jServer.secret());
+		System.err.println("export PYSPARK_PIN_THREAD=true");
+		return py4jServer;
+	}
+
+	private Py4JServer py4jServer;
+	SparkSession sparkSession;
+	public void init() {
+		sparkSession = SparkSession.builder().master("local[*]").getOrCreate();
+		initPy4jServer();
+	}
 	
 	public static void main(String[] args) {
 		if( args.length > 1 && args[0].endsWith(".zip") ) {
 			GeneSet	gs = new GeneSet();
+			gs.init();
 			Path p = Paths.get(args[0]);
 			boolean pfam = false;
 			try {
@@ -7134,6 +7155,14 @@ public class GeneSet implements GenomeSet {
 		}
 
 		zipfilesystem.close();
+
+		List<? extends BaseGeneGroup> mlist = ggList;
+		List<BaseGeneGroup> bb = (List<BaseGeneGroup>) mlist;
+		sparkSession.createDataset(bb, Encoders.bean(BaseGeneGroup.class)).createOrReplaceTempView("genegroups");
+		System.err.println("py4jserver port secret");
+		System.err.println("export PYSPARK_GATEWAY_PORT="+py4jServer.getListeningPort());
+		System.err.println("export PYSPARK_GATEWAY_SECRET="+py4jServer.secret());
+		System.err.println("export PYSPARK_PIN_THREAD=true");
 	}
 	
 	public void cleanUp() {

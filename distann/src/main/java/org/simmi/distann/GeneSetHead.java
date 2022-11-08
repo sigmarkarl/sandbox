@@ -3318,27 +3318,25 @@ public class GeneSetHead {
                 }*/
 
                 final JProgressBar	pbar = new JProgressBar();
-                final Thread t = new Thread() {
-                    public void run() {
-                        try {
-                            URL url = new URL(tf.getText());
-                            InputStream fis = url.openStream();
-                            InputStream is = new GZIPInputStream( fis );
-                            if( geneset.unimap != null ) geneset.unimap.clear();
-                            geneset.unimap = geneset.idMapping(new InputStreamReader(is), bw, 2, 0, geneset.refmap, geneset.genmap, geneset.gimap);
-                            is.close();
-                            fis.close();
-                            bw.close();
+                final Thread t = new Thread(() -> {
+					try {
+						URL url = new URL(tf.getText());
+						InputStream fis = url.openStream();
+						InputStream is = new GZIPInputStream( fis );
+						if( geneset.unimap != null ) geneset.unimap.clear();
+						geneset.unimap = geneset.idMapping(new InputStreamReader(is), bw, 2, 0, geneset.refmap, geneset.genmap, geneset.gimap);
+						is.close();
+						fis.close();
+						bw.close();
 
-                            try { geneset.zipfilesystem.close(); } catch(Exception ep) { ep.printStackTrace(); };
+						try { geneset.zipfilesystem.close(); } catch(Exception ep) { ep.printStackTrace(); };
 
-                            pbar.setIndeterminate(false);
-                            pbar.setEnabled(false);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                };
+						pbar.setIndeterminate(false);
+						pbar.setEnabled(false);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				});
 
                 ta.setEditable( false );
                 final JScrollPane	sp = new JScrollPane( ta );
