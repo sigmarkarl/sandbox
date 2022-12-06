@@ -7154,6 +7154,8 @@ public class GeneSet implements GenomeSet {
 			});
 		}
 
+		Island.initIslands(allgenegroups);
+
 		zipfilesystem.close();
 
 		List<? extends BaseGeneGroup> mlist = ggList;

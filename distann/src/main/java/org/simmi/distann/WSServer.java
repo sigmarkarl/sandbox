@@ -236,10 +236,10 @@ public class WSServer {
 							if( sgg.size() > 0 ) {
 								for (GeneGroup ngg : genesethead.table.getItems()) {
 									if( sgg.contains(ngg) ) {
-										genesethead.genefilterset.add(ngg.groupIndex);
+										genesethead.gtable.genefilterset.add(ngg.groupIndex);
 									}
 								}
-								genesethead.updateFilter(genesethead.table, genesethead.label);
+								genesethead.updateFilter(genesethead.table, genesethead.table.label);
 							}
 						}
 						
@@ -259,8 +259,8 @@ public class WSServer {
 						} else sg.drawImage( genesethead, g2, null, null, geneset.specList, w, h );
 						
 						if( sgg.size() > 0 ) {
-							genesethead.genefilterset.clear();
-							genesethead.updateFilter(genesethead.table, genesethead.label);
+							genesethead.gtable.genefilterset.clear();
+							genesethead.updateFilter(genesethead.table, genesethead.table.label);
 						}
 						
 						ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -296,7 +296,7 @@ public class WSServer {
 						Gene g = geneset.refmap.get( trim ).getGene();
 						GeneGroup[] gg = { g.getGeneGroup() };
 						
-						Neighbour nb = new Neighbour( new HashSet<GeneGroup>( Arrays.asList(gg) ) );
+						Neighbour nb = new Neighbour(new HashSet<>(Arrays.asList(gg)) );
 						nb.forward();
 						nb.setZoomLevel( 0.3 );
 						nb.names.setSelectedItem("Default names");

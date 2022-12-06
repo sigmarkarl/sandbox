@@ -1,19 +1,30 @@
 package org.simmi.javafasta.shared;
 
-public class BaseGeneGroup {
+import java.io.Serializable;
+
+public class BaseGeneGroup implements Serializable {
+    long id;
+    String name;
+
+    static long globalId = 0;
+
+    public BaseGeneGroup() {
+        id = ++globalId;
+    }
+
     public String getName() {
-        return "simmi";
+        return name;
     }
 
     public void setName(String newname) {
-
+        name = newname;
     }
 
-    public String getCommonId() {
-        return "simmi";
+    public long getId() {
+        return id;
     }
 
-    public void setCommonId(String newname) {
-
+    public void setId(long newid) {
+        id = newid;
     }
 }

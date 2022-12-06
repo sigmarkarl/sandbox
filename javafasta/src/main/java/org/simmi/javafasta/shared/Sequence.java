@@ -6,9 +6,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.math.BigInteger;
 import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -53,6 +56,12 @@ public class Sequence extends FastaSequence implements Comparable<Sequence> {
 	public static Map<String,String>				revcom = new HashMap<>();
 	public static Map<Character,Character>	rc = new HashMap<>();
 	static {
+		try {
+			md = MessageDigest.getInstance("MD5");
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
+		}
+
 		amimap.put("TTT",'F');
 		amimap.put("TTC",'F');
 		amimap.put("TTA",'L');
@@ -579,6 +588,16 @@ public class Sequence extends FastaSequence implements Comparable<Sequence> {
 	public List<Sequence>	partof;
 	
 	public double 			loc;
+	public int			 	hash;
+	static MessageDigest md;
+
+	public int getSequenceHash() {
+		if (hash == 0) {
+			var seqstr = getSequence().toString();
+			hash = seqstr.hashCode();
+		}
+		return hash;
+	}
 	
 	public int getAnnotationCount() {
 		if( annset != null ) {
@@ -1069,9 +1088,9 @@ public class Sequence extends FastaSequence implements Comparable<Sequence> {
 	public static void distanceMatrixNumeric(List<Sequence> lseq, double[] dmat, List<Integer> idxs, boolean bootstrap, boolean cantor, double[] ent, Map<String,Integer> blosum ) {
 		int len = lseq.size();
 		//double[] dmat = new double[ len*len ];
-		for( int x = 0; x < len; x++ ) {
+		/*for( int x = 0; x < len; x++ ) {
 			dmat[x*len+x] = 0.0;
-		}
+		}*/
 		if( idxs != null && idxs.size() > 0 ) {
 			int count = idxs.size();
 			for( int x = 0; x < len-1; x++ ) {

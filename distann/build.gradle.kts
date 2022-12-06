@@ -1,5 +1,4 @@
 import com.google.protobuf.gradle.*
-import org.gradle.kotlin.dsl.provider.gradleKotlinDslOf
 
 plugins {
     id("java")
@@ -61,6 +60,7 @@ dependencies {
     implementation("org.openjfx:javafx-web:17.0.1:mac")
     implementation("org.openjfx:javafx-swing:17.0.1:mac")*/
     implementation("org.apache.logging.log4j:log4j-core:2.19.0")
+    //implementation("graphframes:graphframes:0.8.2-spark3.2-s_2.12")
 
     implementation("com.fasterxml.jackson:jackson-bom:2.14.0-rc3")
 
@@ -73,6 +73,10 @@ dependencies {
         exclude(group = "com.fasterxml.jackson")
     }
     implementation (group = "org.apache.spark", name = "spark-kubernetes_2.13", version = "3.3.1") {
+        exclude(group = "avro-mapred")
+        exclude(group = "com.fasterxml.jackson")
+    }
+    implementation (group = "org.apache.spark", name = "spark-graphx_2.13", version = "3.3.1") {
         exclude(group = "avro-mapred")
         exclude(group = "com.fasterxml.jackson")
     }

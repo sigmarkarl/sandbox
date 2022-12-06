@@ -23,6 +23,7 @@ public class Annotation implements Comparable<Object> {
 	public int				stop;
 	public int				ori;
 	public Object			color = Color.green;
+	public String			md5;
 	private Gene			gene;
 	public boolean			selected = false;
 	double					gc = -1.0;

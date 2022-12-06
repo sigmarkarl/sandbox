@@ -2461,14 +2461,27 @@ public class ActionCollection {
 		});
 		//JButton presabsbutton = new JButton( presabsaction );
 		
+		MenuItem pangraphaction = new MenuItem("Export PanGraph");
+		pangraphaction.setOnAction( actionEvent -> {
+			SwingUtilities.invokeLater(() -> {
+				var specs = genesethead.getSelspec(genesethead, geneset.specList, false, null);
+				var panGraph = new PanGraph(specs, geneset.allgenegroups);
+				try {
+					panGraph.export(Path.of("/Users/sigmar/vert_gs.csv"), Path.of("/Users/sigmar/edge_gs.csv"));
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			});
+		});
+
 		MenuItem keggaction = new MenuItem("KEGG pathway");
 		keggaction.setOnAction( actionEvent -> {
-				Map<String,String> env = new HashMap<String,String>();
-				env.put("create", "true");
-				
-				String uristr = "jar:" + geneset.zippath.toUri();
-				URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-				final List<Path>	lbi = new ArrayList<>();
+			Map<String,String> env = new HashMap<String,String>();
+			env.put("create", "true");
+
+			String uristr = "jar:" + geneset.zippath.toUri();
+			URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+			final List<Path>	lbi = new ArrayList<>();
 				/*try {
 					geneset.zipfilesystem = FileSystems.newFileSystem( zipuri, env );
 					for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
@@ -2508,7 +2521,7 @@ public class ActionCollection {
 							e1.printStackTrace();
 						}
 					}
-					
+
 					JTable tb = new JTable();
 					JScrollPane	sc = new JScrollPane( tb );
 					tb.setModel( new TableModel() {
@@ -2544,17 +2557,17 @@ public class ActionCollection {
 
 						@Override
 						public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-							
+
 						}
 
 						@Override
 						public void addTableModelListener(TableModelListener l) {
-							
+
 						}
 
 						@Override
 						public void removeTableModelListener(TableModelListener l) {
-							
+
 						}
 					});
 					JOptionPane.showMessageDialog(genesethead, sc);
@@ -4662,6 +4675,7 @@ public class ActionCollection {
 		
 		menu.getItems().add( checkbox );
 		menu.getItems().add( new SeparatorMenuItem() );
+		menu.getItems().add( pangraphaction );
 		menu.getItems().add( keggaction );
 		menu.getItems().add( genomestataction );
 		menu.getItems().add( seqstat );
