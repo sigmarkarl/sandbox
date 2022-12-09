@@ -21,6 +21,41 @@ public class PanGraph {
         }
     }
 
+    public void exportSif(Path sif) throws IOException {
+        try (var e = Files.newBufferedWriter(sif)) {
+            for (GeneGroup gg : geneGroupList) {
+                var idCount = new HashMap<String,Integer>();
+                for (String spec : specs) {
+                    if (gg.species.containsKey(spec)) {
+                        var ti = gg.species.get(spec);
+                        for (var a : ti.tset) {
+                            var n = a.getNext();
+                            if (n!=null && n.getContig() == a.getContig()) {
+                                var ngg = n.getGeneGroup();
+                                var id = ngg.getCommonId()+"_"+ngg.getName().replace(' ','_');
+                                idCount.merge(id, 1, (k,v) -> v+1);
+                            }
+                            var p = a.getPrevious();
+                            if (p!=null && p.getContig() == a.getContig()) {
+                                var pgg = p.getGeneGroup();
+                                var id = pgg.getCommonId()+"_"+pgg.getName().replace(' ', '_');
+                                idCount.merge(id, 1, (k,v) -> v+1);
+                            }
+                        }
+                    }
+                }
+                e.write(gg.getCommonId()+"_"+gg.getName().replace(' ','_'));
+                e.write(" ");
+                e.write("1");
+                for (String key : idCount.keySet()) {
+                    e.write(" ");
+                    e.write(key);
+                }
+                e.write("\n");
+            }
+        }
+    }
+
     public void export(Path vertices, Path edges) throws IOException {
         try (var f = Files.newBufferedWriter(vertices); var e = Files.newBufferedWriter(edges)) {
             for (GeneGroup gg : geneGroupList) {

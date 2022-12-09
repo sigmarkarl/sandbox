@@ -64,6 +64,8 @@ dependencies {
 
     implementation("com.fasterxml.jackson:jackson-bom:2.14.0-rc3")
 
+    //implementation("com.github.fommil.netlib:all:1.1.2")
+
     implementation (group = "org.apache.spark", name = "spark-core_2.13", version = "3.3.1") {
         exclude(group = "avro-mapred")
         exclude(group = "com.fasterxml.jackson")

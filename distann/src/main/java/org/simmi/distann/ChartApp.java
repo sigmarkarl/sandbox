@@ -33,17 +33,17 @@ public class ChartApp extends Application {
 	public void start(Stage stage) throws Exception {
 	    final NumberAxis xAxis = new NumberAxis(-0.5, 0.5, 0.025);
         final NumberAxis yAxis = new NumberAxis(-0.5, 0.5, 0.025);    
-        final ScatterChart<Number,Number> sc = new ScatterChart<Number,Number>(xAxis,yAxis);
+        final ScatterChart<Number,Number> sc = new ScatterChart<>(xAxis, yAxis);
         xAxis.setLabel("Dim 1");
         yAxis.setLabel("Dim 2");
         sc.setTitle("Genes");
        
         Random rnd = new Random();
         
-        XYChart.Series<Number,Number> series1 = new XYChart.Series<Number,Number>();
+        XYChart.Series<Number,Number> series1 = new XYChart.Series<>();
         series1.setName("PCA");
         for( int i = 0; i < 5; i++ ) {
-        	XYChart.Data<Number,Number> d = new XYChart.Data<Number,Number>( rnd.nextDouble()-0.5, rnd.nextDouble()-0.5 );
+        	XYChart.Data<Number,Number> d = new XYChart.Data<>(rnd.nextDouble() - 0.5, rnd.nextDouble() - 0.5);
         	//Tooltip.install( d.getNode(), new Tooltip( "bleh" ) );
         	series1.getData().add( d );
         }

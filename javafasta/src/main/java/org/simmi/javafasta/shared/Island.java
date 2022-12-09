@@ -12,6 +12,10 @@ public class Island {
 
     }
 
+    public boolean contains(GeneGroup gg) {
+        return geneGroups.contains(gg);
+    }
+
     public static void connectGeneGroups2(GeneGroup gg, Set<GeneGroup> frontSet, Set<GeneGroup> backSet) {
         if (frontSet.size() == 1 && backSet.size() == 1) {
             var fgg = frontSet.iterator().next();
@@ -62,21 +66,51 @@ public class Island {
 
     public static List<Island>	islands = new ArrayList<>();
 
+    public static boolean frontBackContains(GeneGroup gg, GeneGroup ngg) {
+        return (ngg.front != null && ngg.front.size() == 1 && ngg.front.contains(gg)) || ngg.back != null && ngg.back.size() == 1 && ngg.back.contains(gg);
+    }
+
+    public static boolean frontBackOtherContains(GeneGroup gg, GeneGroup ngg, GeneGroup othergg) {
+        return (ngg.front != null && ngg.front.size() == 2 && ngg.front.contains(gg) && ngg.front.contains(othergg))
+                || (ngg.back != null && ngg.back.size() == 2 && ngg.back.contains(gg) && ngg.back.contains(othergg));
+    }
+
+    public static boolean setSizeCheck(Set<GeneGroup> ggset) {
+        return ggset != null && ggset.size() <= 2;
+    }
+
     public static void connectGeneGroups(List<GeneGroup> allgenegroups) {
         for (var gg : allgenegroups) {
-            if (gg.island == null) {
-                if (gg.front != null) {
-                    if (gg.front.front == gg || gg.front.back == gg) {
-                        if (gg.front.island == null) {
-                            var island = new Island(gg);
-                            islands.add(island);
-                            island.add(gg.front);
-                        } else gg.front.island.add(gg);
-                    }
-                }
-                if (gg.back != null) {
-                    if (gg.back.front == gg || gg.back.back == gg) {
-                        if (gg.back.island == null) {
+            mergeCheck(gg, gg.front);
+            mergeCheck(gg, gg.back);
+            if (gg.island==null) {
+                var island = new Island(gg);
+                islands.add(island);
+                island.add(gg);
+            }
+        }
+    }
+
+    public static Island mergeIslands(GeneGroup gg, GeneGroup ngg) {
+        if (gg.island != ngg.island) {
+            islands.remove(gg.island);
+            islands.remove(ngg.island);
+            var island = new Island();
+            islands.add(island);
+            gg.island.geneGroups.forEach(island::add);
+            ngg.island.geneGroups.forEach(island::add);
+            return island;
+        } else {
+            return gg.island;
+        }
+    }
+
+    public static void mergeCheck(GeneGroup gg, Set<GeneGroup> frontBack) {
+        if (setSizeCheck(frontBack)) {
+            if (frontBack.size() == 1) {
+                for (var ngg : frontBack) {
+                    if (frontBackContains(gg, ngg)) {
+                        if (ngg.island == null) {
                             Island island;
                             if (gg.island != null) {
                                 island = gg.island;
@@ -84,23 +118,57 @@ public class Island {
                                 island = new Island(gg);
                                 islands.add(island);
                             }
-                            island.add(gg.back);
+                            island.add(ngg);
                         } else if (gg.island == null) {
-                            gg.back.island.add(gg);
+                            ngg.island.add(gg);
                         } else {
-                            islands.remove(gg.island);
-                            islands.remove(gg.back.island);
-                            var island = new Island();
-                            islands.add(island);
-                            gg.island.geneGroups.forEach(island::add);
-                            gg.back.island.geneGroups.forEach(island::add);
+                            mergeIslands(gg, ngg);
                         }
                     }
                 }
-                if (gg.island==null) {
-                    var island = new Island(gg);
-                    islands.add(island);
-                    island.add(gg);
+            } else if (frontBack.size() == 2) {
+                var it = frontBack.iterator();
+                var gg1 = it.next();
+                var gg2 = it.next();
+                var b1 = frontBackContains(gg, gg1) && frontBackOtherContains(gg, gg2, gg1);
+                var b2 = frontBackContains(gg, gg2) && frontBackOtherContains(gg, gg1, gg2);
+                if (b1 || b2) {
+                    if (b1) gg1.triangle = true;
+                    else if (b2) gg2.triangle = true;
+
+                    if (gg1.island == null) {
+                        Island island;
+                        if (gg2.island == null) {
+                            if (gg.island != null) {
+                                island = gg.island;
+                            } else {
+                                island = new Island(gg);
+                                islands.add(island);
+                            }
+                            island.add(gg1);
+                            island.add(gg2);
+                        } else {
+                            if (gg.island != null) {
+                                island = mergeIslands(gg, gg2);
+                            } else {
+                                island = gg2.island;
+                            }
+                            island.add(gg1);
+                        }
+                    } else if (gg2.island == null) {
+                        Island island;
+                        if (gg.island != null) {
+                            island = mergeIslands(gg, gg1);
+                        } else {
+                            island = gg1.island;
+                        }
+                        island.add(gg2);
+                    } else if (gg.island == null) {
+                        mergeIslands(gg1, gg2).add(gg);
+                    } else {
+                        mergeIslands(gg1, gg2);
+                        mergeIslands(gg, gg1);
+                    }
                 }
             }
         }
@@ -114,13 +182,13 @@ public class Island {
                 var prev = a.getPrevious();
 
                 var ggset = new HashSet<GeneGroup>();
-                if (next!=null && next.getGeneGroup()!=null) {
+                if (next!=null && next.getContig() == a.getContig() && next.getGeneGroup()!=null) {
                     ggset.add(next.getGeneGroup());
                 }
-                if (prev!=null && prev.getGeneGroup()!=null) {
+                if (prev!=null && prev.getContig() == a.getContig() && prev.getGeneGroup()!=null) {
                     ggset.add(prev.getGeneGroup());
                 }
-                ggsetcount.add(ggset);
+                if (ggset.size() > 0) ggsetcount.add(ggset);
             }
 
             var frontSet = new HashSet<GeneGroup>();
@@ -148,11 +216,10 @@ public class Island {
                 }
             }
 
-            if (frontSet.size() == 1) gg.front = frontSet.iterator().next();
-            if (backSet.size() == 1) gg.back = backSet.iterator().next();
+            gg.front = frontSet;
+            gg.back = backSet;
             //connectGeneGroups(gg, frontSet, backSet);
         }
-
         connectGeneGroups(allgenegroups);
     }
 

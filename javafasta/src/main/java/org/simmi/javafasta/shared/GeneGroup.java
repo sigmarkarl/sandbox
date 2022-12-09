@@ -13,8 +13,8 @@ import java.util.stream.Collectors;
 
 public class GeneGroup extends BaseGeneGroup {
 
-	public GeneGroup						front;
-	public GeneGroup						back;
+	public Set<GeneGroup>						front;
+	public Set<GeneGroup>						back;
 	String							label;
 	double							pageRank;
 	String							connected;
@@ -23,6 +23,7 @@ public class GeneGroup extends BaseGeneGroup {
 	public Map<String, Teginfo>  	species = new TreeMap<>();
 	public Island					island;
 	public int                	 	groupIndex;
+	public boolean					triangle = false;
 	int                 			groupCount = -1;
 	public int						index;
 	Map<Set<String>, ShareNum> 		specset;
@@ -85,6 +86,10 @@ public class GeneGroup extends BaseGeneGroup {
 
 	public String getIslandId() {
 		return island != null ? island.getName() : "";
+	}
+
+	public Boolean getTriangle() {
+		return triangle;
 	}
 
 	public Set<GeneGroup> getNext() {

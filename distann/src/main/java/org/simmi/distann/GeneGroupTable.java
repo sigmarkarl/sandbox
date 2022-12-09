@@ -61,6 +61,9 @@ public class GeneGroupTable extends TableView<GeneGroup> {
         TableColumn<GeneGroup, String> ggislandsizecol = new TableColumn<>("IslandSize");
         ggislandsizecol.setCellValueFactory( new PropertyValueFactory<>("IslandSize"));
         table.getColumns().add( ggislandsizecol );
+        TableColumn<GeneGroup, String> trianglecol = new TableColumn<>("SingleInsert");
+        trianglecol.setCellValueFactory( new PropertyValueFactory<>("Triangle"));
+        table.getColumns().add( trianglecol );
         TableColumn<GeneGroup, String> labelcol = new TableColumn<>("Label");
         labelcol.setCellValueFactory( new PropertyValueFactory<>("Label"));
         table.getColumns().add( labelcol );
