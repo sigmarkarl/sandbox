@@ -2467,10 +2467,12 @@ public class ActionCollection {
 		pangraphaction.setOnAction( actionEvent -> {
 			SwingUtilities.invokeLater(() -> {
 				var specs = genesethead.getSelspec(genesethead, geneset.specList, false, null);
-				var panGraph = new PanGraph(specs, geneset.allgenegroups);
+				var selgg = genesethead.table.getSelectionModel().getSelectedItems();
+				var panGraph = new PanGraph(specs, selgg.isEmpty() ? geneset.allgenegroups : selgg);
 				try {
 					panGraph.export(Path.of("/Users/sigmar/vert_gs.csv"), Path.of("/Users/sigmar/edge_gs.csv"));
 					panGraph.exportSif(Path.of("/Users/sigmar/pangraph.sif"));
+					panGraph.exportSifEdgeNames(Path.of("/Users/sigmar/pangraph_names.sif"));
 				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
@@ -2479,7 +2481,7 @@ public class ActionCollection {
 
 		MenuItem keggaction = new MenuItem("KEGG pathway");
 		keggaction.setOnAction( actionEvent -> {
-			Map<String,String> env = new HashMap<String,String>();
+			Map<String,String> env = new HashMap<>();
 			env.put("create", "true");
 
 			String uristr = "jar:" + geneset.zippath.toUri();

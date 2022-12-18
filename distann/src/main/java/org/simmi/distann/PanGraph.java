@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class PanGraph {
     Set<String> specs;
@@ -17,6 +18,48 @@ public class PanGraph {
             var ospec = gg.getSpecies().stream().filter(specList::contains).findAny();
             if (ospec.isPresent()) {
                 geneGroupList.add(gg);
+            }
+        }
+    }
+
+    public void exportSifEdgeNames(Path sif) throws IOException {
+        try (var e = Files.newBufferedWriter(sif)) {
+            for (GeneGroup gg : geneGroupList) {
+                var idCount = new HashMap<String,String>();
+                for (String spec : specs) {
+                    if (gg.species.containsKey(spec)) {
+                        var ti = gg.species.get(spec);
+                        for (var a : ti.tset) {
+                            var n = a.getNext();
+                            if (n!=null && n.getContig() == a.getContig()) {
+                                var ngg = n.getGeneGroup();
+                                var id = ngg.getCommonId()+"_"+ngg.getName().replace(' ','_');
+                                idCount.merge(id, spec, String::concat);
+                            }
+                            var p = a.getPrevious();
+                            if (p!=null && p.getContig() == a.getContig()) {
+                                var pgg = p.getGeneGroup();
+                                var id = pgg.getCommonId()+"_"+pgg.getName().replace(' ', '_');
+                                idCount.merge(id, spec, String::concat);
+                            }
+                        }
+                    }
+                }
+
+                var countId = new HashMap<String,Set<String>>();
+                idCount.forEach((key, value) -> countId.merge(value.replace(' ','_'), new HashSet<>(Collections.singletonList(key)), (p, c) -> {
+                    p.addAll(c);
+                    return p;
+                }));
+
+                for (var key : countId.keySet()) {
+                    e.write(gg.getCommonId()+"_"+gg.getName().replace(' ','_'));
+                    e.write(" ");
+                    e.write(key);
+                    e.write(" ");
+                    e.write(String.join(" ", countId.get(key)));
+                    e.write("\n");
+                }
             }
         }
     }
@@ -33,25 +76,32 @@ public class PanGraph {
                             if (n!=null && n.getContig() == a.getContig()) {
                                 var ngg = n.getGeneGroup();
                                 var id = ngg.getCommonId()+"_"+ngg.getName().replace(' ','_');
-                                idCount.merge(id, 1, (k,v) -> v+1);
+                                idCount.merge(id, 1, Integer::sum);
                             }
                             var p = a.getPrevious();
                             if (p!=null && p.getContig() == a.getContig()) {
                                 var pgg = p.getGeneGroup();
                                 var id = pgg.getCommonId()+"_"+pgg.getName().replace(' ', '_');
-                                idCount.merge(id, 1, (k,v) -> v+1);
+                                idCount.merge(id, 1, Integer::sum);
                             }
                         }
                     }
                 }
-                e.write(gg.getCommonId()+"_"+gg.getName().replace(' ','_'));
-                e.write(" ");
-                e.write("1");
-                for (String key : idCount.keySet()) {
+
+                var countId = new HashMap<Integer,Set<String>>();
+                idCount.forEach((key, value) -> countId.merge(value, new HashSet<>(Collections.singletonList(key)), (p, c) -> {
+                    p.addAll(c);
+                    return p;
+                }));
+
+                for (var key : countId.keySet()) {
+                    e.write(gg.getCommonId()+"_"+gg.getName().replace(' ','_'));
                     e.write(" ");
-                    e.write(key);
+                    e.write(Integer.toString(key));
+                    e.write(" ");
+                    e.write(String.join(" ", countId.get(key)));
+                    e.write("\n");
                 }
-                e.write("\n");
             }
         }
     }

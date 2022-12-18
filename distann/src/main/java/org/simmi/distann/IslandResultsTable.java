@@ -6,12 +6,12 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.input.MouseEvent;
-import org.simmi.javafasta.shared.Island;
+import org.simmi.javafasta.shared.Cassette;
 import org.simmi.javafasta.shared.Islinfo;
 
 import java.util.List;
 
-public class IslandResultsTable extends TableView<Island> {
+public class IslandResultsTable extends TableView<Cassette> {
     GeneSetHead geneSetHead;
 
     public IslandResultsTable(GeneSetHead geneSetHead) {
@@ -24,10 +24,10 @@ public class IslandResultsTable extends TableView<Island> {
 
     public void popuplate(List<String> specList) {
         for (String spec : specList) {
-            TableColumn<Island, Islinfo> speccol = new TableColumn<>(spec);
+            TableColumn<Cassette, Islinfo> speccol = new TableColumn<>(spec);
             //speccol.getStyleClass().add("tabstyle");
             speccol.setCellFactory(cell -> {
-                final TableCell<Island, Islinfo> tc = new TableCell<>() {
+                final TableCell<Cassette, Islinfo> tc = new TableCell<>() {
                     @Override
                     protected void updateItem(Islinfo item, boolean empty) {
                         super.updateItem(item, empty);
@@ -55,7 +55,7 @@ public class IslandResultsTable extends TableView<Island> {
                 return tc;
             });
             speccol.setCellValueFactory(cellValue -> {
-                Island isl = cellValue.getValue();
+                var isl = cellValue.getValue();
                 Islinfo tes = isl.getInfo(spec);
                 return new ReadOnlyObjectWrapper<>(tes);
                 //return new SimpleStringProperty( tes != null ? tes.toString() : "" );

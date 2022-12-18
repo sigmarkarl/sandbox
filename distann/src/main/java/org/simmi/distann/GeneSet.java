@@ -7168,12 +7168,13 @@ public class GeneSet implements GenomeSet {
 		}
 
 		Island.initIslands(allgenegroups);
+		Island.connectCassettes(allgenegroups);
 
 		zipfilesystem.close();
 
 		List<? extends BaseGeneGroup> mlist = ggList;
 		List<BaseGeneGroup> bb = (List<BaseGeneGroup>) mlist;
-		sparkSession.createDataset(bb, Encoders.bean(BaseGeneGroup.class)).createOrReplaceTempView("genegroups");
+		//sparkSession.createDataset(bb, Encoders.bean(BaseGeneGroup.class)).createOrReplaceTempView("genegroups");
 		System.err.println("py4jserver port secret");
 		System.err.println("export PYSPARK_GATEWAY_PORT="+py4jServer.getListeningPort());
 		System.err.println("export PYSPARK_GATEWAY_SECRET="+py4jServer.secret());

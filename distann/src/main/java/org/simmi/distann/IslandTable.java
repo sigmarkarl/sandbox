@@ -9,16 +9,17 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
+import org.simmi.javafasta.shared.Cassette;
 import org.simmi.javafasta.shared.GeneGroup;
 import org.simmi.javafasta.shared.Island;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class IslandTable extends TableView<Island> {
-    FilteredList<Island>                    islandFilteredList;
+public class IslandTable extends TableView<Cassette> {
+    FilteredList<Cassette>                    islandFilteredList;
     SortedList<GeneGroup>                   sortedData2;
-    SortedList<Island>						islandData;
+    SortedList<Cassette>						islandData;
     GeneSetHead                             geneSetHead;
 
     public IslandTable(GeneSetHead geneSetHead) {
@@ -26,18 +27,18 @@ public class IslandTable extends TableView<Island> {
     }
 
     public void init() {
-        TableColumn<Island, String> islandcol = new TableColumn<>("Island");
+        TableColumn<Cassette, String> islandcol = new TableColumn<>("Island");
         islandcol.setCellValueFactory( new PropertyValueFactory<>("name"));
         getColumns().add( islandcol );
-        TableColumn<Island, String> islandsizecol = new TableColumn<>("Size");
+        TableColumn<Cassette, String> islandsizecol = new TableColumn<>("Size");
         islandsizecol.setCellValueFactory( new PropertyValueFactory<>("size"));
         getColumns().add( islandsizecol );
 
         setOnKeyPressed( ke -> {
             if (ke.getCode() == KeyCode.ESCAPE) {
-                Island seli = getSelectionModel().getSelectedItem();
+                var seli = getSelectionModel().getSelectedItem();
 
-                List<Island> sel = new ArrayList<>( islandFilteredList );
+                List<Cassette> sel = new ArrayList<>( islandFilteredList );
                 islandFilteredList.setPredicate(null);
                 int[] rows = sel.stream().mapToInt( g -> islandData.indexOf(g) ).toArray();
                 if( rows.length > 0 ) getSelectionModel().selectIndices(rows[0], rows);
@@ -52,8 +53,8 @@ public class IslandTable extends TableView<Island> {
         });
     }
 
-    public void popuplate(List<Island> islands) {
-        ObservableList<Island> oislands = FXCollections.observableList( islands );
+    public void popuplate(List<Cassette> islands) {
+        ObservableList<Cassette> oislands = FXCollections.observableList( islands );
         islandFilteredList = new FilteredList<>(oislands, p -> true);
         islandData = new SortedList<>( islandFilteredList );
         islandData.comparatorProperty().bind(comparatorProperty());

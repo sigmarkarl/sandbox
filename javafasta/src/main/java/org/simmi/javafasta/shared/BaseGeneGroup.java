@@ -2,7 +2,7 @@ package org.simmi.javafasta.shared;
 
 import java.io.Serializable;
 
-public class BaseGeneGroup implements Serializable {
+public class BaseGeneGroup extends Cassette implements Serializable {
     long id;
     String name;
 
