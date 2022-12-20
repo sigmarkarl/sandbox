@@ -68,6 +68,10 @@ public class GeneGroup extends BaseGeneGroup {
 		return Set.of(this);
 	}
 
+	public String getConnections() {
+		return getFront() + " " + getBack();
+	}
+
 	public void setSelected(boolean selected) {
 		this.selected.set(selected);
 	}

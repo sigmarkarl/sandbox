@@ -55,6 +55,9 @@ public class GeneGroupTable extends TableView<GeneGroup> {
         namedesccol.setCellValueFactory( new PropertyValueFactory<>("name"));
         namedesccol.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> sortedData.comparatorProperty().bind(table.comparatorProperty()));
         table.getColumns().add( namedesccol );
+        TableColumn<GeneGroup, String> connectionscol = new TableColumn<>("Connections");
+        connectionscol.setCellValueFactory( new PropertyValueFactory<>("Connections"));
+        table.getColumns().add( connectionscol );
         TableColumn<GeneGroup, String> ggislandidcol = new TableColumn<>("IslandID");
         ggislandidcol.setCellValueFactory( new PropertyValueFactory<>("IslandId"));
         table.getColumns().add( ggislandidcol );
