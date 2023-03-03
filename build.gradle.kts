@@ -30,7 +30,7 @@ plugins {
     id("application")
     id("com.palantir.graal") version "0.9.0"
     id("org.openjfx.javafxplugin") version "0.0.13"
-    id("com.github.johnrengelman.shadow") version "7.1.1"
+    //id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
 /*protobuf {
@@ -45,7 +45,37 @@ plugins {
 
 application {
     mainClass.set("org.simmi.distann.DistAnn")
+    //mainClassName = "org.simmi.distann.DistAnn"
 }
+
+/*tasks.register("fat_build") {
+    dependsOn.addAll(listOf("compileJava", "processResources")) // We need this for Gradle optimization to work
+    archiveClassifier.set("genset") // Naming the jar
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest { attributes(mapOf("Main-Class" to application.mainClass)) } // Provided we set it up in the application plugin configuration
+    val sourcesMain = sourceSets.main.get()
+    val contents = configurations.runtimeClasspath.get()
+        .map { if (it.isDirectory) it else zipTree(it) } +
+            sourcesMain.output
+    from(contents)
+}*/
+
+/*tasks {
+    val fatJar = register<Jar>("fatJar") {
+        dependsOn.addAll(listOf("compileJava", "processResources")) // We need this for Gradle optimization to work
+        archiveClassifier.set("genset") // Naming the jar
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        manifest { attributes(mapOf("Main-Class" to application.mainClass)) } // Provided we set it up in the application plugin configuration
+        val sourcesMain = sourceSets.main.get()
+        val contents = configurations.runtimeClasspath.get()
+            .map { if (it.isDirectory) it else zipTree(it) } +
+                sourcesMain.output
+        from(contents)
+    }
+    build {
+        dependsOn(fatJar) // Trigger fat jar creation during build
+    }
+}*/
 
 /*allprojects {
     apply plugin: 'idea'
@@ -60,12 +90,31 @@ application {
 
 //mainClassName='org.simmi.distann.DistannFX'
 
+/*tasks {
+    named<ShadowJar>("shadowJar") {
+        archiveBaseName.set("jarFileNmae")
+    }
+}*/
+
+/*tasks {
+    jar {
+        manifest {
+            attributes(mapOf(
+                    "Main-Class" to "org.simmi.distann.DistannFX"
+            ))
+        }
+    }
+    shadowJar {
+        manifest.inheritFrom(jar.get().manifest) //will make your shadowJar (produced by jar task) runnable
+    }
+}*/
+
 /*jar {
     manifest {
         attributes["Main-Class"] = "org.simmi.distann.DistannFX"
     }
 
-    exclude("META-INF/.RSA", "META-INF/.SF','META-INF/.DSA")
+    //exclude("META-INF/.RSA", "META-INF/.SF','META-INF/.DSA")
 }*/
 
 fun resolveJpackage(): ToolProvider {

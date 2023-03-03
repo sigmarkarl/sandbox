@@ -6008,8 +6008,8 @@ public class GeneSet implements GenomeSet {
 			}
 		}
 
-		Map<String,String> phrogMap = Files.lines(Path.of("/Users/sigmar/phrog_annot_v4.tsv")).skip(1).map(l -> l.split("\t")).filter(s -> s.length>2).collect(Collectors.toMap(s -> s[0], s -> s[2]));
-		hhblitsphrogmap = loadhhblits(HHBLITS_PHROG_PATH, phrogMap);
+		//Map<String,String> phrogMap = Files.lines(Path.of("/Users/sigmar/phrog_annot_v4.tsv")).skip(1).map(l -> l.split("\t")).filter(s -> s.length>2).collect(Collectors.toMap(s -> s[0], s -> s[2]));
+		//hhblitsphrogmap = loadhhblits(HHBLITS_PHROG_PATH, phrogMap);
 
 		nf = zipfilesystem.getPath("/dbcan");
 		if( Files.exists( nf ) ) loaddbcan( cazymap, Files.newBufferedReader(nf) );
