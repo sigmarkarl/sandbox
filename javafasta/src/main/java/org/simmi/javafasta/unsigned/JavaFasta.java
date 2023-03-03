@@ -36,6 +36,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
@@ -47,20 +48,9 @@ import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -121,6 +111,19 @@ public class JavaFasta extends JPanel {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+
+	static Set<Character> agctSet = new HashSet<>();
+	static {
+		agctSet.add('A');
+		agctSet.add('G');
+		agctSet.add('C');
+		agctSet.add('T');
+		agctSet.add('a');
+		agctSet.add('g');
+		agctSet.add('c');
+		agctSet.add('t');
+	}
+
 	JPanel	parentApplet = JavaFasta.this;
 	Container	currentCnt;
 	Serifier	serifier = null;
@@ -1861,6 +1864,33 @@ public class JavaFasta extends JPanel {
 		
 		c.repaint();
 	}
+
+	public void clearNonAGCTSites( Collection<Sequence> seqset ) {
+		int min = Integer.MAX_VALUE;
+		int max = Integer.MIN_VALUE;
+		for( Sequence seq : seqset ) {
+			min = Math.min( min, seq.getStart() );
+			max = Math.max( max, seq.getEnd() );
+		}
+
+		int i = 0;
+		while( i < max-min ) {
+			for( Sequence seq : seqset ) {
+				int r = table.convertRowIndexToView( seq.index );
+				char c = getCharAt(i, r);
+				if (!agctSet.contains(c)) {
+					cleargetCharAt(i, r);
+				}
+			}
+			i++;
+		}
+
+		for( Sequence seq : seqset ) {
+			seq.checkLengths();
+		}
+
+		c.repaint();
+	}
 	
 	public void clearSitesWithGaps( Collection<Sequence> seqset ) {
 		int min = Integer.MAX_VALUE;
@@ -2073,6 +2103,37 @@ public class JavaFasta extends JPanel {
 	
 	public StringBuilder distanceMatrix( boolean excludeGaps, Map<String,Integer> blosumap, List<String> names ) {
 		double[] dd = distanceMatrixNumeric( false, null, blosumap );
+		return printDistanceMatrix( dd, names );
+	}
+
+	public StringBuilder invertedDistanceMatrix( boolean excludeGaps, Map<String,Integer> blosumap, List<String> names ) {
+		int lsize = serifier.lseq.size();
+		double[] dd = new double[ lsize*lsize ];
+		Sequence.distanceMatrixNumeric( serifier.lseq, dd, IntStream.range(0,lsize).boxed().toList(), false, false, null, null );
+		//double[] dd = Sequence.distanceMatrixNumeric( false, null, blosumap );
+		double max = Double.MIN_VALUE;
+		for (int y = 0; y < lsize; y++) {
+			double min = Double.MAX_VALUE;
+			for (int x = 0; x < lsize; x++) {
+				if (x != y) {
+					int i = y*lsize + x;
+					min = Math.min(min, dd[i]);
+				}
+			}
+			max = Math.max(min, max);
+		}
+		for (int i = 0; i < dd.length; i++) {
+			dd[i] = Math.min(dd[i], max);
+		}
+		for (int y = 0; y < lsize; y++) {
+			for (int x = 0; x < lsize; x++) {
+				if (x != y) {
+					int i = y*lsize + x;
+					dd[i] = max - dd[i];
+				}
+			}
+		}
+
 		return printDistanceMatrix( dd, names );
 	}
 	
@@ -2360,9 +2421,8 @@ public class JavaFasta extends JPanel {
 				if( seq.getRealStop() < end ) end = seq.getRealStop();
 			}
 			
-			idxs = new ArrayList<Integer>();
+			idxs = new ArrayList<>();
 			for( int x = start; x < end; x++ ) {
-				int i;
 				boolean skip = false;
 				for( Sequence seq : serifier.lseq ) {
 					char c = seq.getCharAt( x );
@@ -2404,12 +2464,9 @@ public class JavaFasta extends JPanel {
 		Sequence.lann = new ArrayList<Annotation>();
 		Sequence.mann = new HashMap<String,Annotation>();*/
 		
-		Sequence.runbl = new Sequence.RunInt() {
-			@Override
-			public void run( Sequence seq ) {
-				if( seq.getStart() < serifier.getMin() ) serifier.setMin( seq.getStart() );
-				if( seq.getEnd() > serifier.getMax() ) serifier.setMax( seq.getEnd() );
-			}
+		Sequence.runbl = seq -> {
+			if( seq.getStart() < serifier.getMin() ) serifier.setMin( seq.getStart() );
+			if( seq.getEnd() > serifier.getMax() ) serifier.setMax( seq.getEnd() );
 		};
 	}
 	
@@ -2421,7 +2478,7 @@ public class JavaFasta extends JPanel {
 			final String charset = df.getParameter("charset");
 			final Transferable transferable = new Transferable() {
 				@Override
-				public Object getTransferData(DataFlavor arg0) throws UnsupportedFlavorException, IOException {					
+				public Object getTransferData(DataFlavor arg0) throws IOException {
 					if( arg0.equals( ndf ) ) {
 						int[] rr = currentRowSelection; //table.getSelectedRows();
 						List<Sequence>	selseq = new ArrayList<>(rr.length);
@@ -3464,7 +3521,7 @@ public class JavaFasta extends JPanel {
 
 			@Override
 			public int getColumnCount() {
-				return 9;
+				return 10;
 			}
 
 			@Override
@@ -3479,6 +3536,7 @@ public class JavaFasta extends JPanel {
 				else if( columnIndex == 6 ) return "RevComp";
 				else if( columnIndex == 7 ) return "GC%";
 				else if( columnIndex == 8 ) return "Sort";
+				else if( columnIndex == 9 ) return "Hash";
 				return null;
 			}
 
@@ -3493,6 +3551,7 @@ public class JavaFasta extends JPanel {
 				else if( columnIndex == 6 ) return Integer.class;
 				else if( columnIndex == 7 ) return Float.class;
 				else if( columnIndex == 8 ) return String.class;
+				else if( columnIndex == 9 ) return Long.class;
 				return null;
 			}
 
@@ -3528,6 +3587,8 @@ public class JavaFasta extends JPanel {
 						}
 						
 						return "";
+					} else if( columnIndex == 9 ) {
+						return seq.getSequenceHash();
 					}
 				}
 				return null;
@@ -5328,6 +5389,20 @@ public class JavaFasta extends JPanel {
 				clearSites( seqset, true );
 			}
 		});
+
+		edit.add( new AbstractAction("Clear non-AGCT sites") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Set<Sequence> seqset = new HashSet<>();
+				int[] rr = table.getSelectedRows();
+				for( int r : rr ) {
+					int k = table.convertRowIndexToModel( r );
+					Sequence seq = serifier.lseq.get( k );
+					seqset.add( seq );
+				}
+				clearNonAGCTSites( seqset );
+			}
+		});
 		edit.add( new AbstractAction("Retain variant sites allow error") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -6274,7 +6349,40 @@ public class JavaFasta extends JPanel {
 				}
 			}
 		});
-		phylogeny.add( new AbstractAction("Distance matrix") {
+
+		phylogeny.add( new AbstractAction("Inverted Distance Matrix") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				StringBuilder sb = invertedDistanceMatrix( false, null, getSequences().stream().map(FastaSequence::getName).toList() );
+
+				File save = null;
+				try {
+					JFileChooser	fc = new JFileChooser();
+					if( fc.showSaveDialog( parentApplet ) == JFileChooser.APPROVE_OPTION ) {
+						save = fc.getSelectedFile();
+					}
+				} catch( Exception ignored) {
+
+				}
+
+				if( save != null ) {
+					try(FileWriter fw = new FileWriter( save )) {
+						fw.write( sb.toString() );
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+				} else {
+					JTextArea		text = new JTextArea( sb.toString() );
+					JScrollPane	sp = new JScrollPane( text );
+					JFrame	fr = new JFrame("Distance Matrix");
+					fr.add( sp );
+					fr.setSize(800, 600);
+					fr.setDefaultCloseOperation( JFrame.DISPOSE_ON_CLOSE );
+					fr.setVisible( true );
+				}
+			}
+		});
+		phylogeny.add( new AbstractAction("Distance Matrix") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				StringBuilder sb = distanceMatrix( false );
@@ -6665,16 +6773,16 @@ public class JavaFasta extends JPanel {
 		name.add( new AbstractAction("Remove sequence duplicates") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Collection<Integer> sortseqs = new java.util.TreeSet<Integer>();
+				Collection<Integer> sortseqs = new java.util.TreeSet<>();
 				int[] rr = table.getSelectedRows();
 				for( int r = 0; r < rr.length; r++ ) {
 					int i = table.convertRowIndexToModel(r);
 					sortseqs.add( i );
 				}
 				
-				Collection<Sequence> removee = new HashSet<Sequence>();
+				Collection<Sequence> removee = new HashSet<>();
 				while( sortseqs.size() > 0 ) {
-					Collection<Integer> removei = new HashSet<Integer>();
+					Collection<Integer> removei = new HashSet<>();
 					for( int i : sortseqs ) {
 						Sequence seq = serifier.lseq.get(i);
 						String seqstr = seq.getSequence().toString();
@@ -6702,11 +6810,65 @@ public class JavaFasta extends JPanel {
 				c.updateCoords();
 			}
 		});
+		name.add( new AbstractAction("Remove sequence duplicates md5") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				var md5set = new HashSet<Integer>();
+				Collection<Sequence> removee = new HashSet<>();
+
+				for (Sequence seq : serifier.lseq) {
+					var md5 = seq.getSequenceHash();
+					if (md5set.contains(md5)) {
+						removee.add(seq);
+					} else {
+						md5set.add(md5);
+					}
+				}
+
+				serifier.lseq.removeAll(removee);
+				updateIndexes();
+				table.tableChanged(new TableModelEvent(table.getModel()));
+				c.updateCoords();
+			}
+		});
+		name.add( new AbstractAction("Random subsample") {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				var r = new Random();
+				var adds = new HashSet<Sequence>();
+
+				var seqset = new HashMap<String,List<Sequence>>();
+
+				for (Sequence seq : serifier.lseq) {
+					if (seqset.containsKey(seq.country)) {
+						seqset.get(seq.country).add(seq);
+					} else {
+						var list = new LinkedList<Sequence>();
+						list.add(seq);
+						seqset.put(seq.country, list);
+					}
+				}
+
+				while (adds.size() < serifier.lseq.size()/10) {
+					for (String key : seqset.keySet()) {
+						var list = seqset.get(key);
+						adds.add(list.remove(r.nextInt(list.size())));
+						if (list.size() == 0) seqset.remove(key);
+					}
+				}
+
+				serifier.lseq.clear();
+				serifier.lseq.addAll(adds);
+				updateIndexes();
+				table.tableChanged(new TableModelEvent(table.getModel()));
+				c.updateCoords();
+			}
+		});
 		name.add( new AbstractAction("RenameSpec") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String[] colors = {"#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff", "#00ffff", "#ff8800", "#ff0088", "#88ff00", "#00ff88", "#8800ff", "#0088ff"};
-				Map<String,String> ss = new HashMap<String,String>();
+				Map<String,String> ss = new HashMap<>();
 				for( Sequence seq : serifier.lseq ) {
 					String name = seq.getName();
 					
@@ -6794,13 +6956,13 @@ public class JavaFasta extends JPanel {
 		name.add( new AbstractAction("Non-unique names") {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				Map<String,List<Sequence>> un = new HashMap<String,List<Sequence>>();
+				Map<String,List<Sequence>> un = new HashMap<>();
 				for( Sequence seq : serifier.lseq ) {
 					List<Sequence> ul;
 					if( un.containsKey( seq.getName() ) ) {
 						ul = un.get( seq.getName() );
 					} else {
-						ul = new ArrayList<Sequence>();
+						ul = new ArrayList<>();
 						un.put( seq.getName(), ul );
 					}
 					ul.add( seq );
@@ -7000,7 +7162,7 @@ public class JavaFasta extends JPanel {
 				}
 				
 				double[] d = new double[max-min];
-				Map<Character,Integer>	shanmap = new HashMap<Character,Integer>();
+				Map<Character,Integer>	shanmap = new HashMap<>();
 				for( int x = min; x < max; x++ ) {
 					shanmap.clear();
 					
@@ -7078,7 +7240,7 @@ public class JavaFasta extends JPanel {
 				String command = "command";
 				System.err.println("about to call showShannon");
 				double[] d = new double[ serifier.getDiff() ];
-				Map<Character,Integer>	shanmap = new HashMap<Character,Integer>(); 
+				Map<Character,Integer>	shanmap = new HashMap<>();
 				for( int x = serifier.getMin(); x < serifier.getMax(); x++ ) {
 					shanmap.clear();
 					int total = table.getRowCount();
@@ -9243,7 +9405,7 @@ public class JavaFasta extends JPanel {
 
 			@Override
 			public int getColumnCount() {
-				return 8;
+				return 9;
 			}
 
 			@Override
@@ -9256,6 +9418,7 @@ public class JavaFasta extends JPanel {
 				else if( columnIndex == 5 ) return "Start";
 				else if( columnIndex == 6 ) return "Stop";
 				else if( columnIndex == 7 ) return "Length";
+				else if( columnIndex == 8 ) return "Md5";
 				else return "";
 			}
 
@@ -9289,6 +9452,7 @@ public class JavaFasta extends JPanel {
 					else if( columnIndex == 5 ) return ann.start;
 					else if( columnIndex == 6 ) return ann.stop;
 					else if( columnIndex == 7 ) return ann.stop-ann.start;
+					else if( columnIndex == 8 ) return ann.md5;
 				}
 				return "";
 			}
@@ -9630,15 +9794,28 @@ public class JavaFasta extends JPanel {
 			e2.printStackTrace();
 		}
 	}
+
+	static String tre;
 	
-	public static void main(String[] args) {
-		JFrame	frame = new JFrame();
+	public static void main(String[] args) throws IOException {
+		var trePath = Path.of("/Users/sigmar/cov19_pca.tsv");
+		tre = Files.readString(Path.of("/Users/sigmar/cov19_pca.csv"));
+		try (var lines = Files.lines(Path.of("/Users/sigmar/cov19.fasta"))) {
+			lines.filter(s -> s.startsWith(">")).forEach(l -> {
+				var split = l.substring(1).split("\\|");
+				tre = tre.replace(split[0].trim(),split[split.length-1].trim().replace(":","").replace(" ","_"));
+			});
+		}
+		Files.writeString(trePath,tre);
+
+
+		/*JFrame	frame = new JFrame();
 		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 		frame.setSize(800, 600);
 		JavaFasta	jf = new JavaFasta();
 		jf.initGui( frame );
 		
-		frame.setVisible( true );
+		frame.setVisible( true );*/
 	}
 	
 	public Rectangle getSelectedRect() {

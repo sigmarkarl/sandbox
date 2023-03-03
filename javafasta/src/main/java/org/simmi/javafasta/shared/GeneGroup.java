@@ -8,14 +8,18 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.text.NumberFormat;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 public class GeneGroup extends BaseGeneGroup {
-	String							name;
+	String							label;
+	double							pageRank;
+	String							connected;
 	GenomeSet						geneset;
 	public Set<Annotation>          genes = new HashSet<>();
 	public Map<String, Teginfo>  	species = new TreeMap<>();
 	public int                	 	groupIndex;
+	public boolean					triangle = false;
 	int                 			groupCount = -1;
 	public int						index;
 	Map<Set<String>, ShareNum> 		specset;
@@ -60,6 +64,14 @@ public class GeneGroup extends BaseGeneGroup {
 		return selected;
 	}
 
+	public Set<GeneGroup> getGeneGroups() {
+		return Set.of(this);
+	}
+
+	public String getConnections() {
+		return getFront() + " " + getBack();
+	}
+
 	public void setSelected(boolean selected) {
 		this.selected.set(selected);
 	}
@@ -70,6 +82,56 @@ public class GeneGroup extends BaseGeneGroup {
 	
 	public void setSpecSet( Map<Set<String>,ShareNum> specset ) {
 		this.specset = specset;
+	}
+
+	public Boolean getTriangle() {
+		return triangle;
+	}
+
+	public Set<GeneGroup> getNext() {
+		var ret = new HashMap<GeneGroup,Integer>();
+		var bret = new HashMap<GeneGroup,Integer>();
+		for (Annotation a : genes) {
+			var an = a.getNext();
+			if (an!=null && an.getContig() == a.getContig() && an.getGeneGroup()!=null) {
+				ret.merge(an.getGeneGroup(), 1, Integer::sum);
+			} else {
+				var ap = a.getPrevious();
+				if (ap!=null && ap.getContig() == a.getContig() && ap.getGeneGroup()!=null) {
+					//ap.getContig().setReverse(true);
+					bret.merge(ap.getGeneGroup(), 1, Integer::sum);
+				}
+			}
+		}
+
+		var tot = new HashMap<>(ret);
+		for (var entry : bret.entrySet()) {
+			tot.merge(entry.getKey(), entry.getValue(), Integer::sum);
+		}
+
+		if (tot.size() < ret.size()+bret.size()) {
+			var gg = ret.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).findFirst().get();
+		}
+
+		return ret.keySet();
+	}
+
+	public Set<GeneGroup> getPrevious() {
+		var ret = new HashMap<GeneGroup,Integer>();
+		var bret = new HashMap<GeneGroup,Integer>();
+		for (Annotation a : genes) {
+			var ap = a.getPrevious();
+			if (ap!=null && ap.getContig() == a.getContig() && ap.getGeneGroup()!=null) {
+				ret.merge(ap.getGeneGroup(), 1, Integer::sum);
+			} else {
+				var an = a.getNext();
+				if (an!=null && an.getContig() == a.getContig() && an.getGeneGroup()!=null) {
+					//an.getContig().setReverse(true);
+					bret.merge(an.getGeneGroup(), 1, Integer::sum);
+				}
+			}
+		}
+		return ret.keySet();
 	}
 
 	public Map<Set<String>,ShareNum> getSpecSet() {
@@ -150,7 +212,7 @@ public class GeneGroup extends BaseGeneGroup {
 	}
 	
 	public List<Annotation> getTegevals( Set<String> sortspecies ) {
-		List<Annotation>	ltv = new ArrayList();
+		List<Annotation>	ltv = new ArrayList<>();
 		
 		for( String sp : sortspecies )
 		/*for( Gene g : genes ) {
@@ -176,11 +238,18 @@ public class GeneGroup extends BaseGeneGroup {
 		
 		return ltv;
 	}
+
+	@Override
+	public Islinfo getInfo(String spec) {
+		if (getSpecies().contains(spec)) {
+			return new Islinfo(spec);
+		} else {
+			return new Islinfo("");
+		}
+	}
 	
 	public List<Annotation> getTegevals() {
-		List<Annotation>	ltv = new ArrayList();
-		ltv.addAll(genes);
-		return ltv;
+		return new ArrayList<>(genes);
 	}
 	
 	public void setIndex( int i ) {
@@ -357,10 +426,12 @@ public class GeneGroup extends BaseGeneGroup {
 		return ret;
 	}
 
+	public static boolean plainCompare = true;
+
 	@Override
 	public boolean equals(Object ogg) {
-		if (this != ogg) {
-			if (ogg!=null) {
+		if (!plainCompare && ogg instanceof GeneGroup) {
+			if (this != ogg) {
 				var gg = (GeneGroup) ogg;
 				var ggname = gg.getName();
 				var ggnameLow = ggname.toLowerCase();
@@ -378,10 +449,40 @@ public class GeneGroup extends BaseGeneGroup {
 				if (!nameLow.contains("hypo") && (fixName.startsWith("holin") || fixName.startsWith("rna poly") || fixName.contains("rad52") || fixName.contains("cbbq")) && (fixName.startsWith(ggfixName) || ggfixName.startsWith(fixName))) {
 					return true;
 				}
+				return false;
 			}
-			return false;
+			return true;
 		}
-		return true;
+		return super.equals(ogg);
+	}
+
+	@Override
+	public boolean contains(GeneGroup gg) {
+		return gg == this;
+	}
+
+	public String getLabel() {
+		return label;
+	}
+
+	public void setLabel(String label) {
+		this.label = label;
+	}
+
+	public double getPageRank() {
+		return pageRank;
+	}
+
+	public void setPageRank(double pageRank) {
+		this.pageRank = pageRank;
+	}
+
+	public String getConnected() {
+		return connected;
+	}
+
+	public void setConnected(String connected) {
+		this.connected = connected;
 	}
 
 	@Override
@@ -794,7 +895,12 @@ public class GeneGroup extends BaseGeneGroup {
 		//if( ret == null && biosystemsmap != null ) return genes.stream().filter( g -> g.genid != null && biosystemsmap.containsKey(g.genid) ).flatMap( g -> biosystemsmap.get(g.genid).stream() ).collect(Collectors.joining(";"));
 		return ret.toString();
 	}
-	
+
+	@Override
+	public int getSize() {
+		return 1;
+	}
+
 	public int size() {
 		return genes.size();
 	}
@@ -891,12 +997,14 @@ public class GeneGroup extends BaseGeneGroup {
 	}*/
 	
 	public GeneGroup( GenomeSet geneset, int i, Map<Set<String>,ShareNum> specset, Map<String,Cog> cogmap, Map<String,Cog> pfammap, Map<String,String> konamemap, Map<String,Set<String>> biosystemsmap ) {
+		super();
 		this.groupIndex = i;
 		this.specset = specset;
 		this.cogmap = cogmap;
 		this.ko2name = konamemap;
 		this.biosystemsmap = biosystemsmap;
 		this.geneset = geneset;
+		//geneGroups.add(this);
 	}
 
 	public GeneGroup() {

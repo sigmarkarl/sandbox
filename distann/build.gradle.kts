@@ -1,11 +1,28 @@
 import com.google.protobuf.gradle.*
-import org.gradle.kotlin.dsl.provider.gradleKotlinDslOf
 
 plugins {
     id("java")
     id("application")
     id("com.google.protobuf")
     id("org.openjfx.javafxplugin")
+}
+
+tasks {
+    val fatJar = register<Jar>("fatJar") {
+        setProperty("zip64",true)
+        dependsOn.addAll(listOf("compileJava", "processResources")) // We need this for Gradle optimization to work
+        archiveClassifier.set("genset") // Naming the jar
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        manifest { attributes(mapOf("Main-Class" to application.mainClass, "")) } // Provided we set it up in the application plugin configuration
+        val sourcesMain = sourceSets.main.get()
+        val contents = configurations.runtimeClasspath.get()
+            .map { if (it.isDirectory) it else zipTree(it) } +
+                sourcesMain.output
+        from(contents)
+    }
+    build {
+        dependsOn(fatJar) // Trigger fat jar creation during build
+    }
 }
 
 protobuf {
@@ -61,8 +78,11 @@ dependencies {
     implementation("org.openjfx:javafx-web:17.0.1:mac")
     implementation("org.openjfx:javafx-swing:17.0.1:mac")*/
     implementation("org.apache.logging.log4j:log4j-core:2.19.0")
+    //implementation("graphframes:graphframes:0.8.2-spark3.2-s_2.12")
 
     implementation("com.fasterxml.jackson:jackson-bom:2.14.0-rc3")
+
+    //implementation("com.github.fommil.netlib:all:1.1.2")
 
     implementation (group = "org.apache.spark", name = "spark-core_2.13", version = "3.3.1") {
         exclude(group = "avro-mapred")
@@ -76,9 +96,17 @@ dependencies {
         exclude(group = "avro-mapred")
         exclude(group = "com.fasterxml.jackson")
     }
+    implementation (group = "org.apache.spark", name = "spark-graphx_2.13", version = "3.3.1") {
+        exclude(group = "avro-mapred")
+        exclude(group = "com.fasterxml.jackson")
+    }
 
 }
 
 application {
-    mainClassName = "org.simmi.distann.DistAnn"
+    mainClass.set("org.simmi.distann.DistAnn")
+    applicationDefaultJvmArgs = listOf("--add-opens=java.base/java.io=ALL-UNNAMED",
+            "--add-opens=java.base/java.nio=ALL-UNNAMED",
+            "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+            "--add-opens=java.base/sun.security.action=ALL-UNNAMED")
 }

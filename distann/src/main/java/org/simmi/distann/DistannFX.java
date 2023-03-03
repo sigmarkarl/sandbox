@@ -3,9 +3,6 @@ package org.simmi.distann;
 import javafx.application.Platform;
 import javafx.scene.control.*;
 import javafx.stage.Window;
-import org.simmi.javafasta.shared.GeneGroup;
-import org.simmi.javafasta.shared.Function;
-import org.simmi.javafasta.shared.Gene;
 
 /*
  * To change this license header, choose License Headers in Project Properties.
@@ -32,18 +29,26 @@ public class DistannFX extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        GeneSet gs = new GeneSet();
+        gs.init();
+        GeneSetHead gsh = new GeneSetHead( this, gs );
+
     	final VBox 		vbox = new VBox();
     	final MenuBar	menubar = new MenuBar();
     	final ToolBar	toolbar = new ToolBar();
     	final ToolBar	btoolbar = new ToolBar();
-    	final TableView<Function> 	upper = new TableView<>();
-        final TableView<GeneGroup>	lower = new TableView<>();
-        final TableView<GeneGroup>  ggresults = new TableView<>();
-        final TableView<Gene>		gene = new TableView<>();
-        final TableView<Gene>       gresults = new TableView<>();
+        final Label     label = new Label();
+    	final FunctionTable 	     upper = new FunctionTable();
+        final IslandTable	         islands = new IslandTable(gsh);
+        final IslandResultsTable     iresults = new IslandResultsTable(gsh);
+        final GeneTable	        	 gene = new GeneTable(gsh);
+        final GeneResultsTable       gresults = new GeneResultsTable(gsh, gene);
+        final GeneGroupTable    	 lower = new GeneGroupTable(gsh, upper, gene, label);
+        final GeneGroupResultsTable  ggresults = new GeneGroupResultsTable(gsh, upper, gene, lower);
         final SplitPane ggsplit = new SplitPane(lower, ggresults);
-        ggsplit.setOrientation(Orientation.HORIZONTAL );
+        final SplitPane igsplit = new SplitPane(islands, iresults);
         final SplitPane gsplit = new SplitPane(gene, gresults);
+        ggsplit.setOrientation(Orientation.HORIZONTAL );
         gsplit.setOrientation(Orientation.HORIZONTAL );
     	final SplitPane	splitpane = new SplitPane(ggsplit, upper);
     	splitpane.setOrientation( Orientation.VERTICAL );
@@ -52,10 +57,6 @@ public class DistannFX extends Application {
     	
     	vbox.getChildren().add( menubar );
     	vbox.getChildren().add( toolbar );
-
-        GeneSet gs = new GeneSet();
-        gs.init();
-        GeneSetHead gsh = new GeneSetHead( this, gs );
         //final JPanel panel = new JPanel();
         //panel.setLayout( new BorderLayout() );
 
@@ -63,7 +64,7 @@ public class DistannFX extends Application {
         gresults.getSelectionModel().setCellSelectionEnabled(true);
         ggresults.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         gresults.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);*/
-        gsh.init( primaryStage, null, splitpane, ggsplit, gsplit, gene, upper, lower, ggresults, gresults, menubar, toolbar, btoolbar );
+        gsh.init( primaryStage, null, splitpane, ggsplit, gsplit, igsplit, islands, iresults, gene, upper, lower, ggresults, gresults, menubar, toolbar, btoolbar );
         
         BorderPane root = new BorderPane();
         root.setTop( vbox );

@@ -33,8 +33,19 @@ import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.api.java.function.MapPartitionsFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.api.python.Py4JServer;
+import org.apache.spark.ml.feature.PCA;
+import org.apache.spark.ml.linalg.Vector;
+import org.apache.spark.ml.linalg.VectorUDT;
+import org.apache.spark.ml.linalg.Vectors;
+import org.apache.spark.mllib.linalg.distributed.BlockMatrix;
 import org.apache.spark.sql.*;
+import org.apache.spark.sql.api.java.UDF0;
+import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
+import org.apache.spark.sql.catalyst.encoders.RowEncoder;
+import org.apache.spark.sql.execution.command.DDLUtils;
+import org.apache.spark.sql.expressions.UserDefinedAggregateFunction;
+import org.apache.spark.sql.types.*;
 import org.simmi.ann.ANIResult;
 import org.simmi.javafasta.shared.*;
 import org.simmi.serifier.SerifyApplet;
@@ -70,9 +81,11 @@ import javafx.scene.layout.Background;
 import javafx.scene.layout.HBox;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import scala.Function1;
 import scala.Function2;
 import scala.Tuple2;
 
+import static org.apache.spark.sql.types.DataTypes.*;
 import static org.simmi.distann.StaticMethods.*;
 
 public class GeneSet implements GenomeSet {
@@ -7157,11 +7170,14 @@ public class GeneSet implements GenomeSet {
 			});
 		}
 
+		Island.initIslands(allgenegroups);
+		Island.connectCassettes(allgenegroups);
+
 		zipfilesystem.close();
 
 		List<? extends BaseGeneGroup> mlist = ggList;
 		List<BaseGeneGroup> bb = (List<BaseGeneGroup>) mlist;
-		sparkSession.createDataset(bb, Encoders.bean(BaseGeneGroup.class)).createOrReplaceTempView("genegroups");
+		//sparkSession.createDataset(bb, Encoders.bean(BaseGeneGroup.class)).createOrReplaceTempView("genegroups");
 		System.err.println("py4jserver port secret");
 		System.err.println("export PYSPARK_GATEWAY_PORT="+py4jServer.getListeningPort());
 		System.err.println("export PYSPARK_GATEWAY_SECRET="+py4jServer.secret());

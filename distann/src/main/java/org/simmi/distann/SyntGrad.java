@@ -156,7 +156,7 @@ public class SyntGrad {
 		cmp.add( scroll2 );
 
 		table2.setDragEnabled( true );
-		TransferHandler th = genesethead.dragRows( table2, species );
+		TransferHandler th = new SpeciesSelection(geneset).dragRows( table2, species );
 		scroll2.setTransferHandler( th );
 		table2.setTransferHandler( th );
 		

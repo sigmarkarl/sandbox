@@ -6,6 +6,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -62,6 +63,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.spark.ml.feature.PCA;
 import org.simmi.serifier.SerifyApplet;
 import org.simmi.spilling.Connectron;
 import org.simmi.spilling.Corp;
@@ -2383,7 +2385,7 @@ public class ActionCollection {
 										System.err.println("blehbheh");
 									}*/
 							}
-							distmat.append("\t" + (double) (total - count) / (double) total);
+							distmat.append("\t").append((double) (total - count) / (double) total);
 						}
 					}
 					distmat.append("\n");
@@ -2426,7 +2428,7 @@ public class ActionCollection {
 					}
 					restext = sb.toString();*/
 
-				List<Sequence> ls = new ArrayList<Sequence>();
+				List<Sequence> ls = new ArrayList<>();
 				for (String s : sbmap.keySet()) {
 					StringBuilder sb = sbmap.get(s);
 					Sequence seq = new Sequence(s, s, sb, null);
@@ -2461,14 +2463,30 @@ public class ActionCollection {
 		});
 		//JButton presabsbutton = new JButton( presabsaction );
 		
+		MenuItem pangraphaction = new MenuItem("Export PanGraph");
+		pangraphaction.setOnAction( actionEvent -> {
+			SwingUtilities.invokeLater(() -> {
+				var specs = genesethead.getSelspec(genesethead, geneset.specList, false, null);
+				var selgg = genesethead.table.getSelectionModel().getSelectedItems();
+				var panGraph = new PanGraph(specs, selgg.isEmpty() ? geneset.allgenegroups : selgg);
+				try {
+					panGraph.export(Path.of("/Users/sigmar/vert_gs.csv"), Path.of("/Users/sigmar/edge_gs.csv"));
+					panGraph.exportSif(Path.of("/Users/sigmar/pangraph.sif"));
+					panGraph.exportSifEdgeNames(Path.of("/Users/sigmar/pangraph_names.sif"));
+				} catch (IOException e) {
+					throw new RuntimeException(e);
+				}
+			});
+		});
+
 		MenuItem keggaction = new MenuItem("KEGG pathway");
 		keggaction.setOnAction( actionEvent -> {
-				Map<String,String> env = new HashMap<String,String>();
-				env.put("create", "true");
-				
-				String uristr = "jar:" + geneset.zippath.toUri();
-				URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
-				final List<Path>	lbi = new ArrayList<>();
+			Map<String,String> env = new HashMap<>();
+			env.put("create", "true");
+
+			String uristr = "jar:" + geneset.zippath.toUri();
+			URI zipuri = URI.create( uristr /*.replace("file://", "file:")*/ );
+			final List<Path>	lbi = new ArrayList<>();
 				/*try {
 					geneset.zipfilesystem = FileSystems.newFileSystem( zipuri, env );
 					for( Path root : geneset.zipfilesystem.getRootDirectories() ) {
@@ -2508,7 +2526,7 @@ public class ActionCollection {
 							e1.printStackTrace();
 						}
 					}
-					
+
 					JTable tb = new JTable();
 					JScrollPane	sc = new JScrollPane( tb );
 					tb.setModel( new TableModel() {
@@ -2544,17 +2562,17 @@ public class ActionCollection {
 
 						@Override
 						public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-							
+
 						}
 
 						@Override
 						public void addTableModelListener(TableModelListener l) {
-							
+
 						}
 
 						@Override
 						public void removeTableModelListener(TableModelListener l) {
-							
+
 						}
 					});
 					JOptionPane.showMessageDialog(genesethead, sc);
@@ -4469,6 +4487,16 @@ public class ActionCollection {
 		
 		//PrincipleComponentAnalysis pca = new PrincipleComponentAnalysis();
 		//pca.
+
+		MenuItem	presabspca = new MenuItem("Presence-absence PCA");
+		presabspca.setOnAction( actionEvent -> {
+			new PresAbs(geneset).pca();
+		});
+
+		MenuItem	presabsphylo = new MenuItem("Presence-absence Phylogeny");
+		presabsphylo.setOnAction( actionEvent -> {
+			new PresAbs(geneset).phylo();
+		});
 		
 		MenuItem	genephyl = new MenuItem("Gene phylogeny");
 		genephyl.setOnAction( actionEvent -> {
@@ -4662,6 +4690,7 @@ public class ActionCollection {
 		
 		menu.getItems().add( checkbox );
 		menu.getItems().add( new SeparatorMenuItem() );
+		menu.getItems().add( pangraphaction );
 		menu.getItems().add( keggaction );
 		menu.getItems().add( genomestataction );
 		menu.getItems().add( seqstat );
@@ -4690,6 +4719,8 @@ public class ActionCollection {
 		menu.getItems().add( showflankingaction );
 		menu.getItems().add( showcontigsaction );
 		menu.getItems().add( showunresolved );
+		menu.getItems().add( presabsphylo );
+		menu.getItems().add( presabspca );
 		menu.getItems().add( genephyl );
 	}
 }
